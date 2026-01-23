@@ -160,15 +160,38 @@ const updateMeta = (message) => {
   wordMeta.textContent = message;
 };
 
-const updateList = (listEl, items) => {
+const updateList = (listEl, items, options = {}) => {
+  const { onRemove, emptyMessage } = options;
   listEl.innerHTML = "";
-  [...items]
-    .sort((a, b) => a.localeCompare(b))
-    .forEach((word) => {
+  const sortedItems = [...items].sort((a, b) => a.localeCompare(b));
+  if (!sortedItems.length) {
+    if (emptyMessage) {
       const li = document.createElement("li");
-      li.textContent = word;
+      li.classList.add("empty");
+      li.textContent = emptyMessage;
       listEl.appendChild(li);
-    });
+    }
+    return;
+  }
+
+  sortedItems.forEach((word) => {
+    const li = document.createElement("li");
+    const text = document.createElement("span");
+    text.textContent = word;
+    li.appendChild(text);
+
+    if (onRemove) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-word";
+      removeButton.textContent = "Remove";
+      removeButton.setAttribute("aria-label", `Remove ${word}`);
+      removeButton.addEventListener("click", () => onRemove(word));
+      li.appendChild(removeButton);
+    }
+
+    listEl.appendChild(li);
+  });
 };
 
 const updateQuarterLists = () => {
@@ -190,8 +213,20 @@ const updateQuarterLists = () => {
 const updateStatus = () => {
   passedCount.textContent = passedWords.size;
   practiceCount.textContent = practiceWords.size;
-  updateList(passedList, passedWords);
-  updateList(practiceList, practiceWords);
+  updateList(passedList, passedWords, {
+    emptyMessage: "No passed words yet.",
+    onRemove: (word) => {
+      passedWords.delete(word);
+      updateStatus();
+    },
+  });
+  updateList(practiceList, practiceWords, {
+    emptyMessage: "No practice words yet.",
+    onRemove: (word) => {
+      practiceWords.delete(word);
+      updateStatus();
+    },
+  });
   saveSessionStatus();
 };
 
