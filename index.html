@@ -13,21 +13,26 @@
         <p class="subtitle">Practice a word, then mark it off or flag it for more practice.</p>
       </header>
 
-      <section class="controls" aria-label="Quarter filters">
-        <h2>Include quarters</h2>
-        <div class="quarter-options">
-          <label><input type="checkbox" value="1" checked /> Q1</label>
-          <label><input type="checkbox" value="2" checked /> Q2</label>
-          <label><input type="checkbox" value="3" checked /> Q3</label>
-          <label><input type="checkbox" value="4" checked /> Q4</label>
-        </div>
-        <label class="mix-toggle">
-          <input type="checkbox" id="mixMode" />
-          <span>Mix in already seen words (50% new, 35% try again, 15% passed)</span>
-        </label>
-        <button class="toggle-list" id="toggleListButton" type="button" aria-expanded="false">
-          Show quarter word lists
+      <section class="controls" aria-label="Settings">
+        <button class="accordion-toggle" id="settingsToggle" type="button" aria-expanded="true">
+          <span>Settings</span>
+          <span class="accordion-icon" aria-hidden="true">▾</span>
         </button>
+        <div class="settings-body" id="settingsBody">
+          <div class="quarter-options">
+            <label><input type="checkbox" value="1" checked /> Q1</label>
+            <label><input type="checkbox" value="2" checked /> Q2</label>
+            <label><input type="checkbox" value="3" checked /> Q3</label>
+            <label><input type="checkbox" value="4" checked /> Q4</label>
+          </div>
+          <label class="mix-toggle">
+            <input type="checkbox" id="mixMode" />
+            <span>Mix in already seen words (50% new, 35% try again, 15% passed)</span>
+          </label>
+          <button class="toggle-list" id="toggleListButton" type="button" aria-expanded="false">
+            Show quarter word lists
+          </button>
+        </div>
       </section>
 
       <section class="quarter-lists" id="quarterLists" hidden>
@@ -57,12 +62,22 @@
         <div class="meta" id="wordMeta">Select a quarter and tap ▶</div>
       </section>
 
-      <section class="timer" id="practiceTimer" aria-live="polite">
-        <div class="timer-header">
-          <span class="timer-label">Practice timer</span>
-          <span class="timer-display" id="timerDisplay">00:00</span>
+      <section class="timer" id="practiceTimer" data-open="false" aria-live="polite">
+        <div class="timer-panel" id="timerPanel">
+          <div class="timer-header">
+            <span class="timer-label">Practice timer</span>
+            <span class="timer-display" id="timerDisplayPanel">00:00</span>
+          </div>
+          <p class="timer-hint">Shakes every 5 minutes so you can practice in quick bursts.</p>
+          <div class="timer-controls">
+            <button class="timer-action" id="timerPauseButton" type="button">Start</button>
+            <button class="timer-action ghost" id="timerResetButton" type="button">Reset</button>
+          </div>
         </div>
-        <p class="timer-hint">Shakes every 5 minutes so you can practice in quick bursts.</p>
+        <button class="timer-tab" id="timerToggle" type="button" aria-expanded="false">
+          <span class="timer-tab-label">Timer</span>
+          <span class="timer-display" id="timerDisplay">00:00</span>
+        </button>
       </section>
 
       <section class="actions" aria-label="Practice actions">
@@ -88,11 +103,21 @@
         </div>
         <div class="lists">
           <div>
-            <h3>Passed words</h3>
+            <div class="list-header">
+              <h3>Passed words</h3>
+              <button class="clear-list" id="clearPassedButton" type="button">
+                Clear all
+              </button>
+            </div>
             <ul id="passedList"></ul>
           </div>
           <div>
-            <h3>Try again words</h3>
+            <div class="list-header">
+              <h3>Try again words</h3>
+              <button class="clear-list" id="clearPracticeButton" type="button">
+                Clear all
+              </button>
+            </div>
             <ul id="practiceList"></ul>
           </div>
         </div>
