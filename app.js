@@ -111,6 +111,9 @@ const practiceCount = document.getElementById("practiceCount");
 const passedList = document.getElementById("passedList");
 const practiceList = document.getElementById("practiceList");
 const toggleListButton = document.getElementById("toggleListButton");
+const mixModeToggle = document.getElementById("mixMode");
+const timerDisplay = document.getElementById("timerDisplay");
+const practiceTimer = document.getElementById("practiceTimer");
 const quarterListsSection = document.getElementById("quarterLists");
 const quarterListElements = {
   1: document.getElementById("quarter1List"),
@@ -126,6 +129,10 @@ const storageKey = "heartWordsStatus";
 const passedWords = new Set();
 const practiceWords = new Set();
 let currentWord = null;
+let timerStarted = false;
+let timerIntervalId = null;
+let timerStartTime = null;
+let nextBurstTime = null;
 
 const loadSessionStatus = () => {
   const saved = sessionStorage.getItem(storageKey);
@@ -221,7 +228,7 @@ const updateStatus = () => {
     },
   });
   updateList(practiceList, practiceWords, {
-    emptyMessage: "No practice words yet.",
+    emptyMessage: "No try again words yet.",
     onRemove: (word) => {
       practiceWords.delete(word);
       updateStatus();
@@ -237,15 +244,51 @@ const getWordPool = () => {
   );
 };
 
+const pickWeightedBucket = (buckets) => {
+  const available = buckets.filter((bucket) => bucket.items.length);
+  if (!available.length) {
+    return null;
+  }
+  const totalWeight = available.reduce((sum, bucket) => sum + bucket.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const bucket of available) {
+    roll -= bucket.weight;
+    if (roll <= 0) {
+      return bucket;
+    }
+  }
+  return available[available.length - 1];
+};
+
 const getNextWord = () => {
   const pool = getWordPool();
   if (!pool.length) {
     return null;
   }
 
-  const remaining = pool.filter((entry) => !passedWords.has(entry.word));
-  const choices = remaining.length ? remaining : pool;
-  return choices[Math.floor(Math.random() * choices.length)];
+  if (!mixModeToggle.checked) {
+    const remaining = pool.filter((entry) => !passedWords.has(entry.word));
+    const choices = remaining.length ? remaining : pool;
+    return choices[Math.floor(Math.random() * choices.length)];
+  }
+
+  const unseen = pool.filter(
+    (entry) =>
+      !passedWords.has(entry.word) && !practiceWords.has(entry.word)
+  );
+  const tryAgain = pool.filter((entry) => practiceWords.has(entry.word));
+  const passed = pool.filter((entry) => passedWords.has(entry.word));
+  const bucket = pickWeightedBucket([
+    { label: "unseen", items: unseen, weight: 0.5 },
+    { label: "tryAgain", items: tryAgain, weight: 0.35 },
+    { label: "passed", items: passed, weight: 0.15 },
+  ]);
+
+  if (!bucket) {
+    return null;
+  }
+
+  return bucket.items[Math.floor(Math.random() * bucket.items.length)];
 };
 
 const showWord = (entry) => {
@@ -261,7 +304,34 @@ const showWord = (entry) => {
   currentWord = entry;
 };
 
+const startTimer = () => {
+  if (timerStarted) {
+    return;
+  }
+  timerStarted = true;
+  timerStartTime = Date.now();
+  nextBurstTime = timerStartTime + 5 * 60 * 1000;
+  timerIntervalId = setInterval(() => {
+    const elapsed = Date.now() - timerStartTime;
+    const minutes = Math.floor(elapsed / 60000)
+      .toString()
+      .padStart(2, "0");
+    const seconds = Math.floor((elapsed % 60000) / 1000)
+      .toString()
+      .padStart(2, "0");
+    timerDisplay.textContent = `${minutes}:${seconds}`;
+
+    while (Date.now() >= nextBurstTime) {
+      practiceTimer.classList.remove("burst");
+      void practiceTimer.offsetWidth;
+      practiceTimer.classList.add("burst");
+      nextBurstTime += 5 * 60 * 1000;
+    }
+  }, 1000);
+};
+
 const handlePass = () => {
+  startTimer();
   if (!currentWord) {
     return;
   }
@@ -272,6 +342,7 @@ const handlePass = () => {
 };
 
 const handlePractice = () => {
+  startTimer();
   if (!currentWord) {
     return;
   }
@@ -282,6 +353,7 @@ const handlePractice = () => {
 };
 
 const handleNext = () => {
+  startTimer();
   showWord(getNextWord());
 };
 
@@ -289,6 +361,10 @@ quarterCheckboxes.forEach((checkbox) => {
   checkbox.addEventListener("change", () => {
     showWord(getNextWord());
   });
+});
+
+mixModeToggle.addEventListener("change", () => {
+  showWord(getNextWord());
 });
 
 passButton.addEventListener("click", handlePass);
