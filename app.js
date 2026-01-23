@@ -193,6 +193,33 @@ const updateTimerDisplay = () => {
   timerDisplayPanel.textContent = formatted;
 };
 
+const timerPositionRange = {
+  top: 30,
+  bottom: 50,
+};
+let timerPositionFrame = null;
+
+const updateTimerPosition = () => {
+  const scrollTop = window.scrollY;
+  const maxScroll =
+    document.documentElement.scrollHeight - window.innerHeight;
+  const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+  const topValue =
+    timerPositionRange.top +
+    (timerPositionRange.bottom - timerPositionRange.top) * progress;
+  practiceTimer.style.top = `${topValue}%`;
+};
+
+const scheduleTimerPositionUpdate = () => {
+  if (timerPositionFrame) {
+    return;
+  }
+  timerPositionFrame = window.requestAnimationFrame(() => {
+    timerPositionFrame = null;
+    updateTimerPosition();
+  });
+};
+
 const updateList = (listEl, items, options = {}) => {
   const { onRemove, emptyMessage } = options;
   listEl.innerHTML = "";
@@ -458,8 +485,13 @@ settingsToggle.addEventListener("click", () => {
   const isCollapsed = controlsSection.classList.toggle("is-collapsed");
   settingsToggle.setAttribute("aria-expanded", String(!isCollapsed));
 });
+window.addEventListener("scroll", scheduleTimerPositionUpdate, {
+  passive: true,
+});
+window.addEventListener("resize", scheduleTimerPositionUpdate);
 
 loadSessionStatus();
 updateStatus();
 updateQuarterLists();
 updateTimerDisplay();
+updateTimerPosition();

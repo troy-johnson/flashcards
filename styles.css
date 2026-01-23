@@ -176,7 +176,7 @@ header h1 {
 .timer {
   position: fixed;
   right: 0;
-  top: 40%;
+  top: 30%;
   display: flex;
   align-items: stretch;
   gap: 0;
@@ -184,6 +184,15 @@ header h1 {
   background: transparent;
   box-shadow: none;
   z-index: 20;
+  transition: opacity 0.2s ease;
+}
+
+.timer[data-open="false"] {
+  opacity: 0.75;
+}
+
+.timer[data-open="true"] {
+  opacity: 1;
 }
 
 .timer-header {
