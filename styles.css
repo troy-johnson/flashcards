@@ -106,6 +106,18 @@ header h1 {
   font-weight: 600;
 }
 
+.mix-toggle {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-weight: 600;
+  color: #2d2d47;
+}
+
+.mix-toggle input {
+  margin-top: 0.2rem;
+}
+
 .card {
   background: white;
   padding: 2rem;
@@ -128,6 +140,66 @@ header h1 {
 .meta {
   color: #5b5b78;
   font-size: 1rem;
+}
+
+.timer {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(27, 27, 47, 0.08);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.timer-label {
+  font-weight: 700;
+  color: #1a3d8f;
+}
+
+.timer-display {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.timer-hint {
+  margin: 0;
+  color: #5b5b78;
+}
+
+.timer.burst {
+  animation: timer-burst 5s ease-in-out;
+}
+
+@keyframes timer-burst {
+  0% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.08) rotate(1deg);
+  }
+  20% {
+    transform: scale(1.05) rotate(-1deg);
+  }
+  30% {
+    transform: scale(1.08) rotate(1deg);
+  }
+  40% {
+    transform: scale(1.03) rotate(-1deg);
+  }
+  60% {
+    transform: scale(1.05) rotate(0deg);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .actions {

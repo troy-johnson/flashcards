@@ -21,6 +21,10 @@
           <label><input type="checkbox" value="3" checked /> Q3</label>
           <label><input type="checkbox" value="4" checked /> Q4</label>
         </div>
+        <label class="mix-toggle">
+          <input type="checkbox" id="mixMode" />
+          <span>Mix in already seen words (50% new, 35% try again, 15% passed)</span>
+        </label>
         <button class="toggle-list" id="toggleListButton" type="button" aria-expanded="false">
           Show quarter word lists
         </button>
@@ -53,14 +57,22 @@
         <div class="meta" id="wordMeta">Select a quarter and tap ▶</div>
       </section>
 
+      <section class="timer" id="practiceTimer" aria-live="polite">
+        <div class="timer-header">
+          <span class="timer-label">Practice timer</span>
+          <span class="timer-display" id="timerDisplay">00:00</span>
+        </div>
+        <p class="timer-hint">Shakes every 5 minutes so you can practice in quick bursts.</p>
+      </section>
+
       <section class="actions" aria-label="Practice actions">
         <button class="action pass" id="passButton" type="button" aria-label="Passed">
           👍
           <span>Passed</span>
         </button>
-        <button class="action practice" id="practiceButton" type="button" aria-label="Needs practice">
+        <button class="action practice" id="practiceButton" type="button" aria-label="Try again">
           👎
-          <span>Practice</span>
+          <span>Try again</span>
         </button>
         <button class="action next" id="nextButton" type="button" aria-label="Next random word">
           ▶
@@ -72,7 +84,7 @@
         <div>
           <h2>Session progress</h2>
           <p><strong>Passed:</strong> <span id="passedCount">0</span></p>
-          <p><strong>Needs practice:</strong> <span id="practiceCount">0</span></p>
+          <p><strong>Try again:</strong> <span id="practiceCount">0</span></p>
         </div>
         <div class="lists">
           <div>
@@ -80,7 +92,7 @@
             <ul id="passedList"></ul>
           </div>
           <div>
-            <h3>Practice words</h3>
+            <h3>Try again words</h3>
             <ul id="practiceList"></ul>
           </div>
         </div>
