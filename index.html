@@ -21,6 +21,31 @@
           <label><input type="checkbox" value="3" checked /> Q3</label>
           <label><input type="checkbox" value="4" checked /> Q4</label>
         </div>
+        <button class="toggle-list" id="toggleListButton" type="button" aria-expanded="false">
+          Show quarter word lists
+        </button>
+      </section>
+
+      <section class="quarter-lists" id="quarterLists" hidden>
+        <h2>Quarter word lists</h2>
+        <div class="lists-grid">
+          <div class="list-card">
+            <h3>Quarter 1</h3>
+            <ul id="quarter1List"></ul>
+          </div>
+          <div class="list-card">
+            <h3>Quarter 2</h3>
+            <ul id="quarter2List"></ul>
+          </div>
+          <div class="list-card">
+            <h3>Quarter 3</h3>
+            <ul id="quarter3List"></ul>
+          </div>
+          <div class="list-card">
+            <h3>Quarter 4</h3>
+            <ul id="quarter4List"></ul>
+          </div>
+        </div>
       </section>
 
       <section class="card" aria-live="polite">

@@ -39,6 +39,8 @@ header h1 {
   padding: 1rem;
   border-radius: 1rem;
   box-shadow: 0 8px 20px rgba(27, 27, 47, 0.08);
+  display: grid;
+  gap: 1rem;
 }
 
 .controls h2 {
@@ -50,6 +52,47 @@ header h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 0.75rem;
+}
+
+.toggle-list {
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.2rem;
+  background: #1a3d8f;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.toggle-list:focus-visible {
+  outline: 3px solid #8fb4ff;
+  outline-offset: 2px;
+}
+
+.quarter-lists {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(27, 27, 47, 0.08);
+  display: grid;
+  gap: 1rem;
+}
+
+.lists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.list-card {
+  background: #f9f9ff;
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.list-card h3 {
+  margin-top: 0;
 }
 
 .quarter-options label {
