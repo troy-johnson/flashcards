@@ -113,8 +113,16 @@ const practiceList = document.getElementById("practiceList");
 const toggleListButton = document.getElementById("toggleListButton");
 const mixModeToggle = document.getElementById("mixMode");
 const timerDisplay = document.getElementById("timerDisplay");
+const timerDisplayPanel = document.getElementById("timerDisplayPanel");
 const practiceTimer = document.getElementById("practiceTimer");
+const timerToggle = document.getElementById("timerToggle");
+const timerPauseButton = document.getElementById("timerPauseButton");
+const timerResetButton = document.getElementById("timerResetButton");
+const clearPassedButton = document.getElementById("clearPassedButton");
+const clearPracticeButton = document.getElementById("clearPracticeButton");
 const quarterListsSection = document.getElementById("quarterLists");
+const settingsToggle = document.getElementById("settingsToggle");
+const controlsSection = document.querySelector(".controls");
 const quarterListElements = {
   1: document.getElementById("quarter1List"),
   2: document.getElementById("quarter2List"),
@@ -130,9 +138,11 @@ const passedWords = new Set();
 const practiceWords = new Set();
 let currentWord = null;
 let timerStarted = false;
+let timerRunning = false;
 let timerIntervalId = null;
 let timerStartTime = null;
-let nextBurstTime = null;
+let elapsedTime = 0;
+let nextBurstMark = 5 * 60 * 1000;
 
 const loadSessionStatus = () => {
   const saved = sessionStorage.getItem(storageKey);
@@ -165,6 +175,22 @@ const getSelectedQuarters = () =>
 
 const updateMeta = (message) => {
   wordMeta.textContent = message;
+};
+
+const formatElapsedTime = (timeMs) => {
+  const minutes = Math.floor(timeMs / 60000)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor((timeMs % 60000) / 1000)
+    .toString()
+    .padStart(2, "0");
+  return `${minutes}:${seconds}`;
+};
+
+const updateTimerDisplay = () => {
+  const formatted = formatElapsedTime(elapsedTime);
+  timerDisplay.textContent = formatted;
+  timerDisplayPanel.textContent = formatted;
 };
 
 const updateList = (listEl, items, options = {}) => {
@@ -304,30 +330,55 @@ const showWord = (entry) => {
   currentWord = entry;
 };
 
-const startTimer = () => {
-  if (timerStarted) {
+const ensureTimerInterval = () => {
+  if (timerIntervalId) {
     return;
   }
-  timerStarted = true;
-  timerStartTime = Date.now();
-  nextBurstTime = timerStartTime + 5 * 60 * 1000;
   timerIntervalId = setInterval(() => {
-    const elapsed = Date.now() - timerStartTime;
-    const minutes = Math.floor(elapsed / 60000)
-      .toString()
-      .padStart(2, "0");
-    const seconds = Math.floor((elapsed % 60000) / 1000)
-      .toString()
-      .padStart(2, "0");
-    timerDisplay.textContent = `${minutes}:${seconds}`;
+    if (!timerRunning) {
+      return;
+    }
+    elapsedTime = Date.now() - timerStartTime;
+    updateTimerDisplay();
 
-    while (Date.now() >= nextBurstTime) {
+    while (elapsedTime >= nextBurstMark) {
       practiceTimer.classList.remove("burst");
       void practiceTimer.offsetWidth;
       practiceTimer.classList.add("burst");
-      nextBurstTime += 5 * 60 * 1000;
+      nextBurstMark += 5 * 60 * 1000;
     }
   }, 1000);
+};
+
+const startTimer = () => {
+  if (timerRunning) {
+    return;
+  }
+  timerStarted = true;
+  timerRunning = true;
+  timerStartTime = Date.now() - elapsedTime;
+  const remainder = elapsedTime % (5 * 60 * 1000);
+  nextBurstMark = elapsedTime - remainder + 5 * 60 * 1000;
+  ensureTimerInterval();
+  timerPauseButton.textContent = "Pause";
+};
+
+const pauseTimer = () => {
+  if (!timerRunning) {
+    return;
+  }
+  timerRunning = false;
+  timerPauseButton.textContent = "Resume";
+};
+
+const resetTimer = () => {
+  timerRunning = false;
+  timerStarted = false;
+  elapsedTime = 0;
+  timerStartTime = null;
+  nextBurstMark = 5 * 60 * 1000;
+  updateTimerDisplay();
+  timerPauseButton.textContent = "Start";
 };
 
 const handlePass = () => {
@@ -370,6 +421,27 @@ mixModeToggle.addEventListener("change", () => {
 passButton.addEventListener("click", handlePass);
 practiceButton.addEventListener("click", handlePractice);
 nextButton.addEventListener("click", handleNext);
+clearPassedButton.addEventListener("click", () => {
+  passedWords.clear();
+  updateStatus();
+});
+clearPracticeButton.addEventListener("click", () => {
+  practiceWords.clear();
+  updateStatus();
+});
+timerToggle.addEventListener("click", () => {
+  const isOpen = practiceTimer.dataset.open === "true";
+  practiceTimer.dataset.open = isOpen ? "false" : "true";
+  timerToggle.setAttribute("aria-expanded", String(!isOpen));
+});
+timerPauseButton.addEventListener("click", () => {
+  if (!timerStarted || !timerRunning) {
+    startTimer();
+    return;
+  }
+  pauseTimer();
+});
+timerResetButton.addEventListener("click", resetTimer);
 toggleListButton.addEventListener("click", () => {
   const isHidden = quarterListsSection.hasAttribute("hidden");
   if (isHidden) {
@@ -382,7 +454,12 @@ toggleListButton.addEventListener("click", () => {
     toggleListButton.setAttribute("aria-expanded", "false");
   }
 });
+settingsToggle.addEventListener("click", () => {
+  const isCollapsed = controlsSection.classList.toggle("is-collapsed");
+  settingsToggle.setAttribute("aria-expanded", String(!isCollapsed));
+});
 
 loadSessionStatus();
 updateStatus();
 updateQuarterLists();
+updateTimerDisplay();

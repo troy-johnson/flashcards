@@ -43,9 +43,40 @@ header h1 {
   gap: 1rem;
 }
 
-.controls h2 {
-  margin: 0 0 0.75rem;
+.accordion-toggle {
+  border: none;
+  background: none;
   font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.accordion-toggle:focus-visible {
+  outline: 3px solid #8fb4ff;
+  outline-offset: 4px;
+}
+
+.accordion-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.controls.is-collapsed .accordion-icon {
+  transform: rotate(-90deg);
+}
+
+.settings-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.controls.is-collapsed .settings-body {
+  display: none;
 }
 
 .quarter-options {
@@ -143,12 +174,16 @@ header h1 {
 }
 
 .timer {
-  background: white;
-  padding: 1rem 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 8px 20px rgba(27, 27, 47, 0.08);
-  display: grid;
-  gap: 0.4rem;
+  position: fixed;
+  right: 0;
+  top: 40%;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  z-index: 20;
 }
 
 .timer-header {
@@ -172,6 +207,74 @@ header h1 {
 .timer-hint {
   margin: 0;
   color: #5b5b78;
+}
+
+.timer-panel {
+  background: white;
+  padding: 1rem 1.2rem;
+  border-radius: 1rem 0 0 1rem;
+  box-shadow: 0 8px 20px rgba(27, 27, 47, 0.16);
+  display: grid;
+  gap: 0.6rem;
+  width: min(260px, 70vw);
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 1;
+}
+
+.timer[data-open="true"] .timer-panel {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.timer-tab {
+  border: none;
+  background: #1a3d8f;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 1rem 0 0 1rem;
+  cursor: pointer;
+  min-width: 72px;
+  z-index: 2;
+}
+
+.timer-tab:focus-visible {
+  outline: 3px solid #8fb4ff;
+  outline-offset: 3px;
+}
+
+.timer-tab .timer-display {
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.timer-action {
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  background: #1a3d8f;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.timer-action.ghost {
+  background: #e0ebff;
+  color: #1a3d8f;
 }
 
 .timer.burst {
@@ -248,6 +351,28 @@ header h1 {
   box-shadow: 0 8px 20px rgba(27, 27, 47, 0.08);
   display: grid;
   gap: 1rem;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.clear-list {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  background: #f0f2ff;
+  color: #1a3d8f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clear-list:focus-visible {
+  outline: 3px solid #8fb4ff;
+  outline-offset: 2px;
 }
 
 .status h2 {
