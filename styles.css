@@ -160,6 +160,7 @@ header h1 {
   justify-content: center;
   gap: 0.75rem;
   box-shadow: 0 12px 30px rgba(27, 27, 47, 0.08);
+  cursor: pointer;
 }
 
 .word {

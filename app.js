@@ -56,6 +56,7 @@ const wordMeta = document.getElementById("wordMeta");
 const passButton = document.getElementById("passButton");
 const practiceButton = document.getElementById("practiceButton");
 const nextButton = document.getElementById("nextButton");
+const practiceCard = document.getElementById("practiceCard");
 const passedCount = document.getElementById("passedCount");
 const practiceCount = document.getElementById("practiceCount");
 const passedList = document.getElementById("passedList");
@@ -398,6 +399,11 @@ mixModeToggle.addEventListener("change", () => {
 passButton.addEventListener("click", handlePass);
 practiceButton.addEventListener("click", handlePractice);
 nextButton.addEventListener("click", handleNext);
+practiceCard.addEventListener("click", () => {
+  if (!currentWord) {
+    handleNext();
+  }
+});
 clearPassedButton.addEventListener("click", () => {
   passedWords.clear();
   updateStatus();
