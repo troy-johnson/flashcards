@@ -1,8 +1,8 @@
 # Literacy App — v1.0 Design
 
-**Date:** 2026-05-16
-**Status:** Approved-in-conversation; pending written-spec review
-**Scope:** v1.0 (with explicit forward path to v1.1, v1.2, v1.5, v2.0)
+**Date:** 2026-05-16 (arch-review applied 2026-05-17)
+**Status:** Draft — arch-review feedback incorporated; pending final user sign-off
+**Scope:** v1.0 (with explicit forward path to v1.0.1, v1.1, v1.2, v1.5, v2.0)
 
 ---
 
@@ -24,14 +24,28 @@ Co-engagement is the default: a guardian sits with a student during practice. "S
 - **Learning algorithm:** mastery-keyed scheduler combining spaced retrieval, interleaving, and prerequisite gating.
 - **Motivation:** mastery skill-map fills in over time; one calm celebration per real milestone. No streaks, no coins, no avatars, no carnival rewards.
 - **Session shape:** daily plan with per-skill targets, clear "you're done" signal, optional bonus round, optional 5-minute focus timer.
+- **Scoring in v1.0:** guardian-tap only. Mic-based auto-scoring is deferred to v1.0.1 so initial ship is not blocked by STT consent/QA work.
 - **Devices:** mobile web first; PWA-installable; same codebase Capacitor-wraps as iOS/Android later.
+
+### v1.0 "shippable" content bar
+
+The app is not callable v1.0 until the content layer hits these floors:
+
+- **Phonics scope/sequence:** full K Unit 1 + Unit 2 + 1st Unit 1 (≈12 skills with prerequisites wired).
+- **Heart words:** ~50 entries with `regular_parts` / `irregular_parts` tagged.
+- **Decodable words:** ~200 entries, each tagged to the skill it practices.
+- **Fluency sentences:** ~30 short decodable sentences spanning the K + 1-U1 skills.
+- **Audio:** all 44 phonemes + the common digraphs (sh, ch, th, wh, ck, ng, qu, ll, ss, ff, zz, ph). TTS fallback for words/sentences in v1.0; recorded audio is a v1.5 milestone.
 
 ### v1.0 scope — out (deferred)
 
+- **v1.0.1 (first post-launch increment):** opt-in mic-based scoring with explicit guardian disclosure (browser STT consent copy reviewed; cross-browser fallback verified).
 - **v1.1:** 50-state standards crosswalk + per-state content filter.
 - **v1.2:** scope/sequence migrates from JSON to D1 (foundation for in-app curriculum admin).
 - **v1.5:** complete recorded audio for all words/sentences; Capacitor wrap for app-store presence.
 - **v2.0:** teacher/classroom role; 2nd grade content; vocabulary + early comprehension modes.
+
+**Forward-compatibility discipline:** the data model uses `guardian` / `student` / nullable `classroom_id` to keep v2.0 a content + UI addition, not a rename. v1.0 ships **zero** classroom UI, teacher affordances, or roster code. Any temptation to add even a "future-proof" classroom screen in v1.0 gets refused — that work waits for v2.0.
 
 ### Research grounding
 
@@ -79,9 +93,10 @@ A React + Vite SPA served from Cloudflare Pages, talking to a Cloudflare Workers
 
 ### Deployment
 
-- GitHub → Cloudflare Pages on push to `main`.
+- GitHub → Cloudflare Pages on push to `main` → production.
+- **Per-PR preview deployments** (Cloudflare Pages previews are free and automatic). Each PR gets its own URL backed by a D1 **preview branch** (Cloudflare D1 branching) and a preview Workers deployment. This is our pre-prod environment — no separate "staging" stack to maintain.
 - Workers deployed via `wrangler` from CI.
-- Single production environment to start (no staging). A staging/preview environment becomes worth it once breakage would affect users beyond the immediate testers.
+- **Release gate for production:** child-facing changes (drill UX, scheduler, content) must be exercised on the preview URL before the PR merges. PRs that touch `app/src/drill/`, `app/src/components/cards/`, or `/content/` require this explicitly in the PR template.
 
 ### Why this shape
 
@@ -475,6 +490,15 @@ When all currently-active phonics/PA skills hit level ≥ 2, the scheduler intro
 
 All thresholds live in `/content/scheduler-config.json`. The append-only `attempt` table lets us replay history against new parameters and back-test changes before shipping.
 
+### Telemetry & quality review
+
+The scheduler is the most behaviourally-load-bearing piece of v1.0, so we instrument it from day one:
+
+- **Per-attempt logging is already the design** (§3). No additional capture needed; the `attempt` table is the source of truth.
+- **`/guardian/diag` dashboard** — a route gated by the admin guardian's email (configured in `/api/wrangler.toml` via a `DIAG_GUARDIAN_EMAIL` env var). Surfaces, per student and per skill: items shown, items correct, error-rate over the last N attempts, items currently above an error-rate threshold (likely pathological cards). Read-only; no behavior changes.
+- **Weekly two-tester review** — during the v1.0 pilot, manually walk the diag dashboard once per week. Goals: catch scheduler pathologies (skills graduating too fast/slow), spot bad content (single card driving most of a skill's errors), validate that the mastery thresholds map to real-world "knows it." Findings drive `scheduler-config.json` tweaks.
+- **Replay tooling** (`scripts/replay-attempts.ts`) — reads the `attempt` log, runs it through a candidate `scheduler-config.json`, and prints the resulting mastery trajectory. Lets us back-test threshold changes before shipping them to the live students.
+
 ### Mastery surfacing
 
 The skill map shows skills as nodes (gray → blue when active → green when mastered). One calm celebration fires when a skill flips to mastered: brief scale-and-fade of the chip. No sounds competing with the audio model. Respects `prefers-reduced-motion`.
@@ -622,8 +646,22 @@ The drill screen has a small ⚙ icon (tap-and-hold 1 s to open, kid-resistant) 
 
 /scripts/
   audio-batch.ts             # WAV → trim → normalize → mp3
-  content-validate.ts        # CI: every skill_id / item_id reference resolves
+  content-validate.ts        # CI gate: see below
+  replay-attempts.ts         # replays attempt log against a candidate scheduler-config
 ```
+
+### Content validation as a release gate
+
+`scripts/content-validate.ts` runs in CI on every PR and **blocks merge** on any failure. It enforces:
+
+- Every `skill_id` referenced (prerequisites, scope/sequence units, item bindings) resolves to a defined skill.
+- Every `item_id` resolves to a defined item.
+- Every `audio` ID resolves to a manifest entry (manifest entries may have `url: null` for "TTS fallback" — that's valid, just tracked).
+- No duplicate IDs anywhere.
+- Grade-band sanity: a skill's prerequisites must be in the same or earlier grade band.
+- Scope/sequence units list only defined skills; each grade's first unit has no unmet prerequisites.
+
+**ID stability rule:** `skill_id` and `item_id` values are immutable once shipped. Removing a skill or item means setting `"deprecated": true` and removing it from the active scope/sequence — never deleting the record. This keeps the `attempt` log replayable forever and prepares for the v1.2 D1 migration without an ID rewrite. `content-validate.ts` enforces this by comparing against the previous `main` snapshot.
 
 ### Replacing the existing code
 
@@ -634,7 +672,21 @@ No coexistence, no migration plan. The first PR deletes `index.html`, `app.js`, 
 - `/app/` → Cloudflare Pages (static SPA, PWA-installable).
 - `/api/` → Cloudflare Workers under a subdomain (e.g., `api.<domain>`).
 - `/content/audio/*.mp3` (post-record) → R2, fronted by a Workers route.
-- Single production environment.
+- Production environment + per-PR Cloudflare Pages previews backed by D1 preview branches (see §2 Deployment).
+
+### Rollback boundaries
+
+Defined ahead of time so an issue in any layer can be reverted without dragging in the others:
+
+| Layer | Rollback mechanism | Time-to-revert |
+|---|---|---|
+| App code (frontend / Workers) | Cloudflare Pages instant rollback to the previous deployment via dashboard or `wrangler pages deployment rollback`. | < 1 min |
+| Content (JSON in `/content/`) | Revert the content PR; bump `/content/VERSION`. PWA cache invalidates on next launch. | < 5 min |
+| Scheduler config (`/content/scheduler-config.json`) | Always committed in its own PR (separate from skill/item content). Revert is a one-file PR. | < 5 min |
+| D1 schema | Migrations are forward-only by default. For a destructive bug, the policy is **forward-fix** via a new migration, not rollback (D1 doesn't safely undo a migration that's already touched data). For non-destructive bugs (added column, added table), the unused field is left alone. | hours |
+| Audio (R2) | R2 objects are immutable per URL; bugs surface as bad recordings → re-upload under a new ID + manifest update. The bad ID is marked `"deprecated": true`. | minutes |
+| Mic feature (v1.0.1+) | Mic is **off by default per student**. A single guardian-side default flip in `scheduler-config.json` (`"mic_default_enabled": false`) is the kill switch; existing opted-in students stay on unless we also push a forced-off migration via a `prefs_json` updater. | < 30 min |
+| Auth (magic link issuer) | Resend / Cloudflare Email Routing is swappable via env var; an outage forces guardians to wait for the existing 24-hour session cookies to lapse. No data loss. | env-var change |
 
 ---
 
@@ -642,7 +694,11 @@ No coexistence, no migration plan. The first PR deletes `index.html`, `app.js`, 
 
 ### v1.0 — shippable foundation
 
-Guardian magic-link auth; student profiles (K, 1st); all four drill modes; SRS scheduler with daily plan + bonus + clear "done"; comprehensive heart-words pool (no state filter yet); pre-recorded audio for the 44 phonemes + ~20 digraphs; TTS fallback elsewhere; opt-in mic scoring (off by default, with disclosure) where supported; mastery skill-map dashboard; PWA-installable; no streaks/notifications/carnival.
+Guardian magic-link auth; student profiles (K, 1st); all four drill modes; SRS scheduler with daily plan + bonus + clear "done"; comprehensive heart-words pool (no state filter yet); pre-recorded audio for the 44 phonemes + ~20 digraphs; TTS fallback elsewhere; **guardian-tap scoring only — no mic**; mastery skill-map dashboard; `/guardian/diag` telemetry view; PWA-installable; per-PR Cloudflare Pages previews wired in; no streaks/notifications/carnival.
+
+### v1.0.1 — opt-in mic scoring
+
+Reintroduce mic-based auto-scoring (off by default per student; opt-in via Settings with the disclosure paragraph from §8). Verify cross-browser fallback (iOS Safari and Firefox stay guardian-only). Require the disclosure copy to have been reviewed by someone COPPA-aware before this ships. `mic_default_enabled` flag in `scheduler-config.json` exists as a kill switch.
 
 ### v1.1 — state crosswalk + UX polish
 
