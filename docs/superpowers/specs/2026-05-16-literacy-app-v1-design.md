@@ -61,7 +61,7 @@ A React + Vite SPA served from Cloudflare Pages, talking to a Cloudflare Workers
 - **Styling:** Tailwind. Typography uses Lexend (designed for early readers).
 - **PWA:** `vite-plugin-pwa` for installability and offline content/audio cache.
 - **Audio:** Web Audio API for phonemes; `<audio>` for longer clips.
-- **Mic:** `webkitSpeechRecognition` where available, graceful fallback elsewhere.
+- **Mic:** `SpeechRecognition` / `webkitSpeechRecognition` where available; **opt-in with disclosure** (default audio path is the browser's cloud speech service — see §8); graceful fallback to guardian-only scoring elsewhere.
 
 ### Backend
 
@@ -177,6 +177,8 @@ attempt (                              -- append-only; source of truth
   item_id              TEXT NOT NULL,
   result               TEXT NOT NULL,  -- 'correct' | 'incorrect' | 'skipped'
   scoring_source       TEXT NOT NULL,  -- 'parent' | 'mic_auto' | 'mic_then_parent_override'
+  mic_transcript       TEXT,            -- raw transcript when scoring_source uses mic; NULL otherwise
+  mic_confidence       REAL,            -- 0.0–1.0 from the speech engine; NULL when not mic-scored
   duration_ms          INTEGER,
   shown_at             INTEGER NOT NULL,
   scored_at            INTEGER NOT NULL
@@ -541,16 +543,23 @@ The drill screen has a small ⚙ icon (tap-and-hold 1 s to open, kid-resistant) 
 
 ### Mic input (speech recognition)
 
-- **API:** Web Speech Recognition (`webkitSpeechRecognition`). On-device on Chromium; **audio never leaves the device or traverses our backend**.
+- **API:** Web Speech Recognition (`SpeechRecognition` / `webkitSpeechRecognition`).
+- **Privacy reality (important):** the default Chrome/Edge implementation **streams audio to Google's cloud speech service**, not on-device. Chrome 138+ exposes an experimental on-device mode (`SpeechRecognition.processLocally` / `onDeviceWebSpeech`), but it's not universally available and can't be relied on as the default. Our backend never receives the audio in either case — but Google does in the default path. This is material for a kids' app, so v1.0 treats mic as **opt-in with explicit disclosure**, not a silently-on feature.
+- **Mic UX in v1.0:**
+  - Off by default for every newly-created student.
+  - Guardian must toggle it on in Settings; that screen displays the plain-language disclosure ("When the microphone is on, your child's voice is sent to your browser's speech recognition service to compare against the expected word. We never record or store the audio. On most devices this service is provided by Google.").
+  - The implementation attempts on-device mode first where the browser supports it, then falls back to the default (cloud) mode. Settings shows the current mode for transparency.
+  - The recorded `attempt.scoring_source` distinguishes `mic_auto` from `mic_then_parent_override` so we can track real-world reliability without needing the audio itself.
+- **What `attempt` logs from mic:** transcript text and confidence score (numeric). **No raw audio is ever captured by our code or stored.** Logging the transcript is the same trust boundary as logging which button the guardian tapped — it's the recognition result, not the recording.
 - **Browser support matrix:**
 
-| Browser | Status | Behavior |
-|---|---|---|
-| Chrome desktop | ✓ | Mic-first; guardian override on low confidence |
-| Edge desktop | ✓ | Same as Chrome |
-| Android Chrome | ✓ | Same as Chrome |
-| iOS Safari | ✗ (still inconsistent in 2026) | Falls back to guardian-only; mic toggle hidden |
-| Firefox | ✗ | Guardian-only |
+| Browser | Status | Default audio path | Behavior |
+|---|---|---|---|
+| Chrome desktop | ✓ | Google cloud (on-device experimental) | Mic-first when opted-in; guardian override on low confidence |
+| Edge desktop | ✓ | Microsoft cloud | Same as Chrome |
+| Android Chrome | ✓ | Google cloud (on-device experimental) | Same as Chrome |
+| iOS Safari | ✗ (still inconsistent in 2026) | n/a | Falls back to guardian-only; mic toggle hidden |
+| Firefox | ✗ | n/a | Guardian-only |
 
 - **Confidence flow:**
   ```
@@ -633,7 +642,7 @@ No coexistence, no migration plan. The first PR deletes `index.html`, `app.js`, 
 
 ### v1.0 — shippable foundation
 
-Guardian magic-link auth; student profiles (K, 1st); all four drill modes; SRS scheduler with daily plan + bonus + clear "done"; comprehensive heart-words pool (no state filter yet); pre-recorded audio for the 44 phonemes + ~20 digraphs; TTS fallback elsewhere; mic-first scoring where supported; mastery skill-map dashboard; PWA-installable; no streaks/notifications/carnival.
+Guardian magic-link auth; student profiles (K, 1st); all four drill modes; SRS scheduler with daily plan + bonus + clear "done"; comprehensive heart-words pool (no state filter yet); pre-recorded audio for the 44 phonemes + ~20 digraphs; TTS fallback elsewhere; opt-in mic scoring (off by default, with disclosure) where supported; mastery skill-map dashboard; PWA-installable; no streaks/notifications/carnival.
 
 ### v1.1 — state crosswalk + UX polish
 
