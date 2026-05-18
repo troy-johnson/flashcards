@@ -4,4 +4,4 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 
 | # | Slug | Status | Date | Summary |
 |---|------|--------|------|---------|
-| _none yet_ | | | | |
+| 001a | literacy-app-v1 | revision after adversarial rejection | 2026-05-17 | First previewable foundation slice with per-task payloads for workspace scripts, Wrangler/D1, content validation, magic-link auth, guardian-tap API/app loop, mandatory PR gates, telemetry, and replay scaffold. |

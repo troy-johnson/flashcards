@@ -1,7 +1,7 @@
 # Literacy App — v1.0 Design
 
-**Date:** 2026-05-16 (arch-review applied 2026-05-17)
-**Status:** Draft — arch-review feedback incorporated; pending final user sign-off
+**Date:** 2026-05-16 (arch-review applied 2026-05-17; scoring_source enum aligned 2026-05-17)
+**Status:** Draft — arch-review feedback incorporated; `attempt.scoring_source` enum renamed `'parent'` → `'guardian_tap'` to match v1.0 vocabulary; pending final user sign-off
 **Scope:** v1.0 (with explicit forward path to v1.0.1, v1.1, v1.2, v1.5, v2.0)
 
 ---
@@ -191,7 +191,7 @@ attempt (                              -- append-only; source of truth
   skill_id             TEXT NOT NULL,
   item_id              TEXT NOT NULL,
   result               TEXT NOT NULL,  -- 'correct' | 'incorrect' | 'skipped'
-  scoring_source       TEXT NOT NULL,  -- 'parent' | 'mic_auto' | 'mic_then_parent_override'
+  scoring_source       TEXT NOT NULL,  -- 'guardian_tap' | 'mic_auto' | 'mic_then_parent_override' (v1.0 writes only 'guardian_tap')
   mic_transcript       TEXT,            -- raw transcript when scoring_source uses mic; NULL otherwise
   mic_confidence       REAL,            -- 0.0–1.0 from the speech engine; NULL when not mic-scored
   duration_ms          INTEGER,
