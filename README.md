@@ -1,10 +1,15 @@
 # flashcards
 
-## GitHub Pages deployment
+Literacy App v1 preview foundation: a React/Vite SPA and Cloudflare Workers API for short guardian-guided reading practice.
 
-1. Push this repo to GitHub.
-2. In GitHub, go to **Settings → Pages**.
-3. Select **Deploy from a branch**, then choose the branch (for example, `main`) and `/ (root)` folder.
-4. Save. GitHub Pages will publish `index.html` from the repository root.
+## Development
 
-You can also use any static hosting provider by uploading `index.html`, `styles.css`, and `app.js` together.
+- `pnpm install`
+- `pnpm dev`
+- `pnpm lint && pnpm typecheck && pnpm test`
+- `pnpm content:validate`
+- `pnpm replay:attempts` (informational until pilot attempts exist; see plan §8 cadence)
+
+## Preview checklist
+
+Attach the preview URL and exercise guardian sign-in, student creation, drill scoring, done page, and `/guardian/diag` when applicable.
