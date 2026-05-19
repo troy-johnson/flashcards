@@ -4,10 +4,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { createStudent, listStudents, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, listStudents, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => undefined),
+  consumeMagicLink: vi.fn(async () => undefined),
   listStudents: vi.fn(async () => ({ students: [{ id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null }] })),
   createStudent: vi.fn(async () => ({ student: { id: "student2", display_name: "Ben", grade: "1", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
   getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
@@ -81,5 +82,30 @@ describe("guardian and sign-in routes", () => {
 
     expect(createStudent).toHaveBeenCalledWith({ display_name: "Ben", grade: "1" });
     expect(container.textContent).toContain("Ben is ready");
+  });
+
+  it("consumes a magic link from /auth/consume and navigates to /guardian", async () => {
+    window.history.pushState({}, "", "/auth/consume?token=abc123");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+    await act(async () => { await flush(); });
+
+    expect(consumeMagicLink).toHaveBeenCalledWith("abc123");
+    expect(window.location.pathname).toBe("/guardian");
+  });
+
+  it("shows an error on /auth/consume when the token is rejected", async () => {
+    (consumeMagicLink as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("401"));
+    window.history.pushState({}, "", "/auth/consume?token=bad");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+    await act(async () => { await flush(); });
+
+    expect(window.location.pathname).toBe("/auth/consume");
+    expect(container.textContent).toContain("invalid or expired");
   });
 });

@@ -1,5 +1,15 @@
 const apiOrigin = (): string => import.meta.env.VITE_API_ORIGIN ?? "http://localhost:8787";
 
+export class ApiError extends Error {
+  status: number;
+  body: string;
+  constructor(status: number, body: string) {
+    super(`api ${status}: ${body || "(empty body)"}`);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export const apiFetch = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const response = await fetch(`${apiOrigin()}${path}`, {
     ...init,
@@ -7,7 +17,7 @@ export const apiFetch = async <T>(path: string, init: RequestInit = {}): Promise
     headers: { "content-type": "application/json", ...init.headers }
   });
 
-  if (!response.ok) throw new Error(await response.text());
+  if (!response.ok) throw new ApiError(response.status, await response.text());
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 };

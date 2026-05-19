@@ -14,6 +14,7 @@
 | Round 2 | BLOCKED | Criticals largely fixed; importants/coverage gaps still failing; 8 new issues introduced by revision; one direct spec/plan enum conflict |
 | Round 3 | APPROVED WITH NITS | Every Round-1 and Round-2 finding scored as Fixed or Fixed-deferred; engineer can start Wave 1 immediately; five nits recorded below. |
 | Stage-2 review (post Wave 5) | REVISE → READY FOR MERGE (pending sentinel) | 2 blockers + 4 importants + 2 minors against the implementation; all in-code findings resolved; sentinel replacement remains procedural. See §9. |
+| Stage-2.5 review (PR #13) | REVISE → READY FOR MERGE (pending sentinel) | 1 new blocker (magic-link consume) + 1 important (auth error masking) caught after open of PR #13; both fixed. See §10. |
 
 ## 2. Round 3 nits
 
@@ -219,3 +220,31 @@ Requested disposition from adversarial reviewer:
 - TTS, R2 audio binding, mic stub — 001d.
 - Drill modes 2–4 (Heart, Fluency, PA) — 001e.
 - Magic-link issuer beyond `dev-log` — 001f.
+
+## 10. Stage-2.5 review (PR #13 follow-up)
+
+**Date:** 2026-05-18
+**Branch under review:** `plan/001a-literacy-app-v1` (post-commit `01c2c8e`)
+**Disposition entering review:** REVISE — 1 blocker (magic-link consume flow broken), 1 important (auth error masking).
+**Disposition after fixes:** READY FOR MERGE pending sentinel D1 replacement.
+
+### Findings and responses
+
+| # | Severity | Finding | Disposition | Where addressed |
+|---|---|---|---|---|
+| S25-1 | Blocker | Magic-link URL pointed to `${APP_ORIGIN}/auth/consume?token=...` but the app had no route for that path and never called `GET /auth/consume`. A guardian clicking the link would land on an unhandled route and never get a session cookie. | Fixed | New `AuthConsumeRoute` in `app/src/App.tsx` reads `?token=`, calls `consumeMagicLink()` (new helper in `app/src/api/literacy.ts`) with `credentials:"include"`, and navigates to `/guardian` on success. Two new app tests cover success + invalid-token branches. |
+| S25-2 | Blocker | Sentinel D1 UUID still present; CI fails on `check-sentinel.sh`. | Procedural — not auto-resolvable | Preview D1 must be provisioned out-of-band; see also S2-2. |
+| S25-3 | Important | `loadAuthState()` treated every API error as anonymous, masking 5xx and network failures during preview testing. | Fixed | `apiFetch` now throws a typed `ApiError` with `status`. `loadAuthState()` branches: 401 → `anonymous`, otherwise → new `error` state with the failure message; also logs to `console.error`. Two new auth-state tests cover the 401 vs 503 paths. |
+| S25-4 | Important | Preview-deploy smoke still owed. | Procedural | Listed in PR #13 test plan as `[reviewer]` items: sign-in, student creation, drill scoring, done page, `/guardian/diag` 403 behavior. |
+| S25-5 | Minor | React `act(...)` warnings in test stderr. | Acknowledged | Cosmetic; `vitest` + React 19 `act` interop quirk. Real test outcomes pass; deferred to a follow-up. |
+| S25-6 | Minor | Cloudflare runtime compat-date warning (installed runtime older than requested date). | Acknowledged | Falls back to `2024-12-30`; deferred to dependency bump in a follow-up. |
+
+### Why same-origin app `/auth/consume` rather than API redirect
+
+Both approaches were viable. App-side consume keeps the guardian on the app domain throughout sign-in (no flash of API origin), routes the call through the existing `apiFetch` plumbing (so cookies, credentials, error typing are uniform), and avoids adding an `API_ORIGIN` env to the email issuer. SameSite=Lax + same-site deployment (app/api on the same eTLD+1) supports `Set-Cookie` from the cross-origin fetch. If a future deployment splits across true cross-site domains, this should be revisited (likely by switching to the API-side redirect pattern or moving the cookie to `SameSite=None; Secure`).
+
+### Verification at end of Stage-2.5 review
+
+- `pnpm -r typecheck` — passes.
+- `pnpm -r test` — passes (10 api + 12 app tests; new app tests cover consume-success, consume-error, auth-state 401, auth-state 503).
+- `bash scripts/check-sentinel.sh` — fails as expected.

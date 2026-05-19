@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  consumeMagicLink,
   createStudent,
   getCurrentGuardian,
   getGuardianDiag,
@@ -90,6 +91,43 @@ function SignInRoute() {
         </form>
         {status === "sent" && <p role="status">Check your email for the magic link.</p>}
         {status === "error" && <p role="alert">We could not send that magic link. Try again.</p>}
+      </section>
+    </main>
+  );
+}
+
+function AuthConsumeRoute() {
+  const [status, setStatus] = useState<"loading" | "error">("loading");
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (!token) {
+      setStatus("error");
+      return;
+    }
+    let active = true;
+    consumeMagicLink(token)
+      .then(() => {
+        if (!active) return;
+        navigate("/guardian");
+      })
+      .catch(() => active && setStatus("error"));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <main className="page-shell">
+      <section className="panel narrow-panel">
+        <h1>Signing you in…</h1>
+        {status === "loading" && <p>Finishing sign-in. One moment.</p>}
+        {status === "error" && (
+          <>
+            <p role="alert">That magic link is invalid or expired.</p>
+            <p><a className="primary-link" href="/signin">Request a new magic link</a></p>
+          </>
+        )}
       </section>
     </main>
   );
@@ -461,6 +499,7 @@ function App() {
 
   let route;
   if (path === "/signin") route = <SignInRoute />;
+  else if (path === "/auth/consume") route = <AuthConsumeRoute />;
   else if (path === "/guardian") route = <GuardianRoute />;
   else if (path === "/guardian/add-student") route = <AddStudentRoute />;
   else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
@@ -475,7 +514,7 @@ function App() {
   }
 
   const isStudentMode = segments[0] === "play";
-  const isPublicRoute = path === "/" || path === "/signin";
+  const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume";
   const showNav = !isStudentMode && !isPublicRoute;
   return (
     <>

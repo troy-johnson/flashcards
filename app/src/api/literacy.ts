@@ -4,6 +4,9 @@ import type { AttemptInput, DiagnosticSummaryRow, Guardian, PracticeSession, Stu
 export const signIn = (email: string): Promise<void> =>
   apiFetch<void>("/auth/start", { method: "POST", body: JSON.stringify({ email }) });
 
+export const consumeMagicLink = (token: string): Promise<void> =>
+  apiFetch<void>(`/auth/consume?token=${encodeURIComponent(token)}`);
+
 export const getCurrentGuardian = (): Promise<{ guardian: Guardian }> =>
   apiFetch<{ guardian: Guardian }>("/auth/me");
 

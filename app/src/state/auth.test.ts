@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../api/client";
+import { getCurrentGuardian } from "../api/literacy";
 import { authState, loadAuthState, resetAuthState } from "./auth";
 
 vi.mock("../api/literacy", () => ({
@@ -13,5 +15,20 @@ describe("auth state", () => {
 
     expect(authState.status).toBe("authenticated");
     expect(authState.guardian?.email).toBe("guardian@example.com");
+    expect(authState.error).toBeNull();
+  });
+
+  it("treats a 401 as anonymous without recording an error", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new ApiError(401, "unauthorized"));
+    await loadAuthState();
+    expect(authState.status).toBe("anonymous");
+    expect(authState.error).toBeNull();
+  });
+
+  it("surfaces non-401 failures so backend errors are not masked", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new ApiError(503, "service unavailable"));
+    await loadAuthState();
+    expect(authState.status).toBe("error");
+    expect(authState.error).toContain("503");
   });
 });
