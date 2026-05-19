@@ -9,7 +9,7 @@ import type { AuthenticatedGuardian, Env } from "../types";
 const createSchema = z.object({
   display_name: z.string().trim().min(1),
   grade: z.enum(["K", "1"]),
-  birth_month: z.string().regex(/^\d{4}-\d{2}$/).optional()
+  birth_month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional()
 });
 
 const patchSchema = z.object({

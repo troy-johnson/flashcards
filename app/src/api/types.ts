@@ -10,7 +10,7 @@ export type Student = {
   display_name: string;
   grade: "K" | "1";
   birth_month: string | null;
-  prefs_json: string;
+  prefs_json: Record<string, unknown>;
   created_at: string;
   archived_at: string | null;
 };

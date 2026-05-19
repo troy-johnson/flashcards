@@ -1,9 +1,21 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createStudent, getStudent, listStudents, scoreAttempt, signIn, startPractice } from "./api/literacy";
-import type { AttemptResult, Student } from "./api/types";
+import {
+  createStudent,
+  getCurrentGuardian,
+  getGuardianDiag,
+  getStudent,
+  listStudents,
+  logout,
+  scoreAttempt,
+  signIn,
+  startPractice
+} from "./api/literacy";
+import type { AttemptResult, DiagnosticSummaryRow, Guardian, Student } from "./api/types";
 import { PhonicsCard } from "./components/cards/PhonicsCard";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
 import "./App.css";
+
+type FetchStatus = "loading" | "ready" | "error";
 
 const navigate = (path: string): void => {
   window.history.pushState({}, "", path);
@@ -18,6 +30,22 @@ function usePath(): string {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
   return path;
+}
+
+function GuardianNav({ guardian }: { guardian: Guardian | null }) {
+  const onLogout = async (event: FormEvent) => {
+    event.preventDefault();
+    try { await logout(); } catch { /* ignore */ }
+    navigate("/");
+  };
+  if (!guardian) return null;
+  return (
+    <nav className="guardian-nav" aria-label="Guardian navigation">
+      <a href="/guardian">Students</a>
+      <a href="/guardian/diag">Diagnostics</a>
+      <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
+    </nav>
+  );
 }
 
 function LandingRoute() {
@@ -69,7 +97,7 @@ function SignInRoute() {
 
 function GuardianRoute() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<FetchStatus>("loading");
 
   useEffect(() => {
     let active = true;
@@ -89,10 +117,17 @@ function GuardianRoute() {
     <main className="page-shell">
       <section className="panel">
         <h1>Guardian dashboard</h1>
-        <a className="primary-link" href="/guardian/add-student">Add a student</a>
+        <p className="muted">Students you&apos;ve added show up here. Open one to start practice or view progress.</p>
+        <div className="actions">
+          <a className="primary-link" href="/guardian/add-student">Add a student</a>
+          <a href="/guardian/diag">View diagnostics</a>
+        </div>
         {status === "loading" && <p>Loading students…</p>}
-        {status === "error" && <p role="alert">Could not load students.</p>}
-        {status === "ready" && (
+        {status === "error" && <p role="alert">Could not load students. Try refreshing.</p>}
+        {status === "ready" && students.length === 0 && (
+          <p className="empty">No students yet. Add your first student to get started.</p>
+        )}
+        {status === "ready" && students.length > 0 && (
           <ul className="card-list">
             {students.map((student) => (
               <li key={student.id}>
@@ -109,14 +144,21 @@ function GuardianRoute() {
 
 function AddStudentRoute() {
   const [created, setCreated] = useState<Student | null>(null);
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
     const submittedName = String(new FormData(form).get("display_name") ?? "");
     const submittedGrade = String(new FormData(form).get("grade") ?? "K") as "K" | "1";
-    const { student } = await createStudent({ display_name: submittedName, grade: submittedGrade });
-    setCreated(student);
+    setStatus("submitting");
+    try {
+      const { student } = await createStudent({ display_name: submittedName, grade: submittedGrade });
+      setCreated(student);
+      setStatus("idle");
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -135,27 +177,104 @@ function AddStudentRoute() {
               <option value="1">1</option>
             </select>
           </label>
-          <button type="submit">Create student</button>
+          <button type="submit" disabled={status === "submitting"}>Create student</button>
         </form>
-        {created && <p role="status">{created.display_name} is ready for practice.</p>}
+        {status === "error" && <p role="alert">Could not create student. Try again.</p>}
+        {created && (
+          <p role="status">
+            {created.display_name} is ready for practice. <a href={`/guardian/${created.id}`}>Open dashboard</a>
+          </p>
+        )}
       </section>
     </main>
   );
 }
 
+type StudentProgress = {
+  totalAttempts: number;
+  correct: number;
+  perSkill: { skill_id: string; attempts: number; correct: number }[];
+};
+
+const summarizeForStudent = (rows: DiagnosticSummaryRow[], studentId: string): StudentProgress => {
+  const studentRows = rows.filter((row) => row.student_id === studentId);
+  let totalAttempts = 0;
+  let correct = 0;
+  const skillMap = new Map<string, { attempts: number; correct: number }>();
+  for (const row of studentRows) {
+    totalAttempts += row.attempts;
+    if (row.result === "correct") correct += row.attempts;
+    const skill = skillMap.get(row.skill_id) ?? { attempts: 0, correct: 0 };
+    skill.attempts += row.attempts;
+    if (row.result === "correct") skill.correct += row.attempts;
+    skillMap.set(row.skill_id, skill);
+  }
+  const perSkill = Array.from(skillMap.entries())
+    .map(([skill_id, s]) => ({ skill_id, ...s }))
+    .sort((a, b) => a.skill_id.localeCompare(b.skill_id));
+  return { totalAttempts, correct, perSkill };
+};
+
 function StudentDashboardRoute({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<Student | null>(null);
+  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [status, setStatus] = useState<FetchStatus>("loading");
+
   useEffect(() => {
-    getStudent(studentId).then(({ student }) => setStudent(student));
+    let active = true;
+    Promise.all([getStudent(studentId), getGuardianDiag().catch(() => ({ summary: [] as DiagnosticSummaryRow[] }))])
+      .then(([{ student }, diag]) => {
+        if (!active) return;
+        setStudent(student);
+        setProgress(summarizeForStudent(diag.summary, studentId));
+        setStatus("ready");
+      })
+      .catch(() => active && setStatus("error"));
+    return () => {
+      active = false;
+    };
   }, [studentId]);
+
+  const accuracyPct = progress && progress.totalAttempts > 0
+    ? Math.round((progress.correct / progress.totalAttempts) * 100)
+    : null;
 
   return (
     <main className="page-shell">
       <section className="panel">
         <h1>{student ? `${student.display_name}'s progress` : "Student progress"}</h1>
-        <p>Today&apos;s preview loop uses one text-only Phonics card and guardian tap scoring.</p>
-        <a className="primary-link" href={`/play/${studentId}`}>Start practice</a>
-        <a href={`/guardian/${studentId}/settings`}>Settings</a>
+        {status === "loading" && <p>Loading progress…</p>}
+        {status === "error" && <p role="alert">Could not load student progress.</p>}
+        {status === "ready" && progress && (
+          <>
+            <div className="actions">
+              <a className="primary-link" href={`/play/${studentId}`}>Start practice</a>
+              <a href={`/guardian/${studentId}/settings`}>Settings</a>
+            </div>
+            <h2>Overall</h2>
+            {progress.totalAttempts === 0 ? (
+              <p className="empty">No attempts yet. Start today&apos;s practice to begin tracking.</p>
+            ) : (
+              <p>
+                {progress.correct} of {progress.totalAttempts} correct
+                {accuracyPct !== null ? ` (${accuracyPct}%)` : ""}.
+              </p>
+            )}
+            {progress.perSkill.length > 0 && (
+              <>
+                <h2>By skill</h2>
+                <ul className="card-list">
+                  {progress.perSkill.map((skill) => (
+                    <li key={skill.skill_id}>
+                      <span>{skill.skill_id}</span>
+                      <span>{skill.correct}/{skill.attempts}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
       </section>
     </main>
   );
@@ -173,9 +292,62 @@ function StudentSettingsRoute({ studentId }: { studentId: string }) {
   );
 }
 
+function GuardianDiagRoute() {
+  const [data, setData] = useState<{ guardian: Guardian; summary: DiagnosticSummaryRow[] } | null>(null);
+  const [status, setStatus] = useState<FetchStatus>("loading");
+
+  useEffect(() => {
+    let active = true;
+    getGuardianDiag()
+      .then((res) => {
+        if (!active) return;
+        setData(res);
+        setStatus("ready");
+      })
+      .catch(() => active && setStatus("error"));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <main className="page-shell">
+      <section className="panel">
+        <h1>Diagnostics</h1>
+        <p className="muted">Read-only attempt summary across your students. Available only to the designated diagnostics guardian.</p>
+        {status === "loading" && <p>Loading diagnostics…</p>}
+        {status === "error" && <p role="alert">Could not load diagnostics. You may not have access on this account.</p>}
+        {status === "ready" && data && (
+          data.summary.length === 0 ? (
+            <p className="empty">No attempts recorded yet.</p>
+          ) : (
+            <table className="diag-table">
+              <thead>
+                <tr><th>Student</th><th>Skill</th><th>Item</th><th>Result</th><th>Attempts</th></tr>
+              </thead>
+              <tbody>
+                {data.summary.map((row, i) => (
+                  <tr key={`${row.student_id}:${row.skill_id}:${row.item_id}:${row.result}:${i}`}>
+                    <td>{row.student_id}</td>
+                    <td>{row.skill_id}</td>
+                    <td>{row.item_id}</td>
+                    <td>{row.result}</td>
+                    <td>{row.attempts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        )}
+        <p><a href="/guardian">Back to dashboard</a></p>
+      </section>
+    </main>
+  );
+}
+
 function PlayStartRoute({ studentId }: { studentId: string }) {
   const [practice, setPractice] = useState<ActivePractice | null>(() => loadPractice(studentId));
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(practice ? "ready" : "loading");
+  const [status, setStatus] = useState<FetchStatus>(practice ? "ready" : "loading");
 
   useEffect(() => {
     if (practice) return;
@@ -200,8 +372,13 @@ function PlayStartRoute({ studentId }: { studentId: string }) {
         <h1>Today: {practice?.session.plan.cards.length ?? 0} things</h1>
         <p>Read each word. Your guardian taps how it went.</p>
         {status === "loading" && <p>Getting today&apos;s cards…</p>}
-        {status === "error" && <p role="alert">Could not start practice.</p>}
-        {status === "ready" && <button type="button" onClick={() => navigate(`/play/${studentId}/drill`)}>Start</button>}
+        {status === "error" && <p role="alert">Could not start practice. <a href={`/guardian/${studentId}`}>Back</a></p>}
+        {status === "ready" && practice && practice.session.plan.cards.length === 0 && (
+          <p className="empty">No cards available for today.</p>
+        )}
+        {status === "ready" && practice && practice.session.plan.cards.length > 0 && (
+          <button type="button" onClick={() => navigate(`/play/${studentId}/drill`)}>Start</button>
+        )}
       </section>
     </main>
   );
@@ -210,6 +387,7 @@ function PlayStartRoute({ studentId }: { studentId: string }) {
 function DrillRoute({ studentId }: { studentId: string }) {
   const [practice, setPractice] = useState<ActivePractice | null>(() => loadPractice(studentId));
   const [busy, setBusy] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const card = practice ? currentCard(practice) : null;
 
@@ -220,14 +398,21 @@ function DrillRoute({ studentId }: { studentId: string }) {
   const onScore = async (result: AttemptResult) => {
     if (!practice || !card || busy) return;
     setBusy(true);
-    await scoreAttempt(studentId, {
-      practice_session_id: practice.session.id,
-      skill_id: card.skill_id,
-      item_id: card.item_id,
-      result,
-      duration_ms: Math.max(0, Date.now() - Date.parse(practice.shown_at)),
-      shown_at: practice.shown_at
-    });
+    setSubmitError(null);
+    try {
+      await scoreAttempt(studentId, {
+        practice_session_id: practice.session.id,
+        skill_id: card.skill_id,
+        item_id: card.item_id,
+        result,
+        duration_ms: Math.max(0, Date.now() - Date.parse(practice.shown_at)),
+        shown_at: practice.shown_at
+      });
+    } catch {
+      setSubmitError("Could not save that tap. Try again.");
+      setBusy(false);
+      return;
+    }
     const next = advancePractice(studentId, practice);
     if (!next) {
       navigate(`/play/${studentId}/done`);
@@ -241,7 +426,8 @@ function DrillRoute({ studentId }: { studentId: string }) {
 
   return (
     <main className="page-shell student-mode">
-      <PhonicsCard card={card} onScore={onScore} />
+      <PhonicsCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
+      {submitError && <p role="alert">{submitError}</p>}
     </main>
   );
 }
@@ -261,17 +447,42 @@ function DoneRoute({ studentId }: { studentId: string }) {
 function App() {
   const path = usePath();
   const segments = useMemo(() => path.split("/").filter(Boolean), [path]);
+  const [guardian, setGuardian] = useState<Guardian | null>(null);
 
-  if (path === "/signin") return <SignInRoute />;
-  if (path === "/guardian") return <GuardianRoute />;
-  if (path === "/guardian/add-student") return <AddStudentRoute />;
-  if (segments[0] === "guardian" && segments[1] && segments[2] === "settings") return <StudentSettingsRoute studentId={segments[1]} />;
-  if (segments[0] === "guardian" && segments[1]) return <StudentDashboardRoute studentId={segments[1]} />;
-  if (segments[0] === "play" && segments[1] && segments[2] === "drill") return <DrillRoute studentId={segments[1]} />;
-  if (segments[0] === "play" && segments[1] && segments[2] === "done") return <DoneRoute studentId={segments[1]} />;
-  if (segments[0] === "play" && segments[1]) return <PlayStartRoute studentId={segments[1]} />;
-  if (path !== "/") navigate("/");
-  return <LandingRoute />;
+  useEffect(() => {
+    let active = true;
+    getCurrentGuardian()
+      .then(({ guardian }) => active && setGuardian(guardian))
+      .catch(() => active && setGuardian(null));
+    return () => {
+      active = false;
+    };
+  }, [path]);
+
+  let route;
+  if (path === "/signin") route = <SignInRoute />;
+  else if (path === "/guardian") route = <GuardianRoute />;
+  else if (path === "/guardian/add-student") route = <AddStudentRoute />;
+  else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
+  else if (segments[0] === "guardian" && segments[1] && segments[2] === "settings") route = <StudentSettingsRoute studentId={segments[1]} />;
+  else if (segments[0] === "guardian" && segments[1]) route = <StudentDashboardRoute studentId={segments[1]} />;
+  else if (segments[0] === "play" && segments[1] && segments[2] === "drill") route = <DrillRoute studentId={segments[1]} />;
+  else if (segments[0] === "play" && segments[1] && segments[2] === "done") route = <DoneRoute studentId={segments[1]} />;
+  else if (segments[0] === "play" && segments[1]) route = <PlayStartRoute studentId={segments[1]} />;
+  else {
+    if (path !== "/") navigate("/");
+    route = <LandingRoute />;
+  }
+
+  const isStudentMode = segments[0] === "play";
+  const isPublicRoute = path === "/" || path === "/signin";
+  const showNav = !isStudentMode && !isPublicRoute;
+  return (
+    <>
+      {showNav && <GuardianNav guardian={guardian} />}
+      {route}
+    </>
+  );
 }
 
 export default App;

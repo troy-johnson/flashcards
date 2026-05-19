@@ -44,7 +44,7 @@ practiceRoutes.post("/:studentId/start", async (c) => {
   };
   await c.env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
     .bind(id, studentId, JSON.stringify(plan), new Date().toISOString()).run();
-  return json({ practice_session: { id, student_id: studentId, plan_json: plan } }, { status: 201 });
+  return json({ practice_session: { id, student_id: studentId, plan } }, { status: 201 });
 });
 
 practiceRoutes.post("/:studentId/attempt", async (c) => {
@@ -55,9 +55,13 @@ practiceRoutes.post("/:studentId/attempt", async (c) => {
   if (body?.scoring_source && body.scoring_source !== "guardian_tap") return c.text("invalid scoring source", 400);
   const parsed = attemptSchema.safeParse(body);
   if (!parsed.success) return c.text("invalid attempt", 400);
-  const session = await c.env.DB.prepare("SELECT id FROM practice_session WHERE id = ? AND student_id = ?")
-    .bind(parsed.data.practice_session_id, studentId).first<{ id: string }>();
+  const session = await c.env.DB.prepare("SELECT id, plan_json, completed_at FROM practice_session WHERE id = ? AND student_id = ?")
+    .bind(parsed.data.practice_session_id, studentId).first<{ id: string; plan_json: string; completed_at: string | null }>();
   if (!session) return c.text("practice session not found", 404);
+  if (session.completed_at) return c.text("practice session completed", 409);
+  const plan = JSON.parse(session.plan_json) as { cards: { skill_id: string; item_id: string }[] };
+  const planMatch = plan.cards.some((card) => card.skill_id === parsed.data.skill_id && card.item_id === parsed.data.item_id);
+  if (!planMatch) return c.text("attempt does not match plan", 400);
   const id = ulid();
   await c.env.DB.prepare(
     `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)

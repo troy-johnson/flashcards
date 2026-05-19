@@ -8,9 +8,12 @@ import { createStudent, listStudents, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => undefined),
-  listStudents: vi.fn(async () => ({ students: [{ id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: "{}", created_at: "now", archived_at: null }] })),
-  createStudent: vi.fn(async () => ({ student: { id: "student2", display_name: "Ben", grade: "1", birth_month: null, prefs_json: "{}", created_at: "now", archived_at: null } })),
-  getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: "{}", created_at: "now", archived_at: null } })),
+  listStudents: vi.fn(async () => ({ students: [{ id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null }] })),
+  createStudent: vi.fn(async () => ({ student: { id: "student2", display_name: "Ben", grade: "1", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
+  getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
+  getCurrentGuardian: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null } })),
+  getGuardianDiag: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null }, summary: [] })),
+  logout: vi.fn(async () => undefined),
   startPractice: vi.fn(),
   scoreAttempt: vi.fn()
 }));
@@ -66,11 +69,13 @@ describe("guardian and sign-in routes", () => {
     await act(async () => root.render(<App />));
 
     await act(async () => {
-      (container.querySelector("input[name=display_name]") as HTMLInputElement).value = "Ben";
-      container.querySelector("input[name=display_name]")?.dispatchEvent(new Event("input", { bubbles: true }));
-      (container.querySelector("select[name=grade]") as HTMLSelectElement).value = "1";
-      container.querySelector("select[name=grade]")?.dispatchEvent(new Event("change", { bubbles: true }));
-      container.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      const nameInput = container.querySelector("input[name=display_name]") as HTMLInputElement;
+      nameInput.value = "Ben";
+      nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      const gradeSelect = container.querySelector("select[name=grade]") as HTMLSelectElement;
+      gradeSelect.value = "1";
+      gradeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      nameInput.closest("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
       await flush();
     });
 

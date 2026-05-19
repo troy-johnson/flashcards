@@ -115,3 +115,72 @@ button,
     grid-template-columns: 1fr;
   }
 }
+
+.guardian-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fffdf8;
+  border-bottom: 2px solid #eadfc9;
+}
+
+.guardian-nav a {
+  color: #315c3f;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.guardian-nav form {
+  margin-left: auto;
+}
+
+.guardian-nav button {
+  min-height: 36px;
+  padding: 0 14px;
+  background: transparent;
+  color: #315c3f;
+  border: 2px solid #315c3f;
+}
+
+.muted {
+  color: #5b6f4f;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.empty {
+  color: #5b6f4f;
+  font-style: italic;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.diag-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.diag-table th,
+.diag-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eadfc9;
+  font-size: 0.95rem;
+}
+
+.diag-table th {
+  background: #f7f3ea;
+  font-weight: 800;
+}

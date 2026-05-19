@@ -19,9 +19,9 @@ describe("practice and diagnostic routes", () => {
   it("creates a practice session and persists guardian-tap attempts", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
     expect(start.status).toBe(201);
-    const started = await start.json<{ practice_session: { id: string; plan_json: { cards: { item_id: string; skill_id: string }[] } } }>();
-    expect(started.practice_session.plan_json.cards.length).toBeGreaterThan(0);
-    const card = started.practice_session.plan_json.cards[0]!;
+    const started = await start.json<{ practice_session: { id: string; plan: { cards: { item_id: string; skill_id: string }[] } } }>();
+    expect(started.practice_session.plan.cards.length).toBeGreaterThan(0);
+    const card = started.practice_session.plan.cards[0]!;
 
     const attempt = await SELF.fetch("https://api.test/practice/student1/attempt", {
       method: "POST",
@@ -35,8 +35,8 @@ describe("practice and diagnostic routes", () => {
 
   it("rejects non-guardian-tap scoring sources and gates diagnostics", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
-    const started = await start.json<{ practice_session: { id: string; plan_json: { cards: { item_id: string; skill_id: string }[] } } }>();
-    const card = started.practice_session.plan_json.cards[0]!;
+    const started = await start.json<{ practice_session: { id: string; plan: { cards: { item_id: string; skill_id: string }[] } } }>();
+    const card = started.practice_session.plan.cards[0]!;
     const rejected = await SELF.fetch("https://api.test/practice/student1/attempt", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: "session=s_diag" },
@@ -48,5 +48,23 @@ describe("practice and diagnostic routes", () => {
     expect(forbidden.status).toBe(403);
     const allowed = await SELF.fetch("https://api.test/guardian/diag", { headers: { cookie: "session=s_diag" } });
     expect(allowed.status).toBe(200);
+  });
+
+  it("rejects attempts whose skill_id/item_id are not in the started plan", async () => {
+    const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    const started = await start.json<{ practice_session: { id: string; plan: { cards: { item_id: string; skill_id: string }[] } } }>();
+    const forged = await SELF.fetch("https://api.test/practice/student1/attempt", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: "session=s_diag" },
+      body: JSON.stringify({
+        practice_session_id: started.practice_session.id,
+        skill_id: "phonics_k_u1_short_a",
+        item_id: "not_in_plan",
+        result: "correct",
+        duration_ms: 100,
+        shown_at: new Date().toISOString()
+      })
+    });
+    expect(forged.status).toBe(400);
   });
 });

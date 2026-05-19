@@ -32,6 +32,15 @@ describe("student routes", () => {
     expect(body.students.map((s: { id: string }) => s.id)).toEqual([created.student.id]);
   });
 
+  it("rejects birth_month outside the 01-12 month range", async () => {
+    const bad = await SELF.fetch("https://api.test/students", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: "session=s1" },
+      body: JSON.stringify({ display_name: "Ada", grade: "K", birth_month: "2021-13" })
+    });
+    expect(bad.status).toBe(400);
+  });
+
   it("prevents a guardian from reading or mutating another guardian's student", async () => {
     const read = await SELF.fetch("https://api.test/students/student_other", { headers: { cookie: "session=s1" } });
     expect(read.status).toBe(404);

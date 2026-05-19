@@ -13,6 +13,7 @@
 | Round 1 | Reject — revise and re-review | 5 critical, 7 important, 5 minor, 14 coverage-gap rows, 5 scope-leak findings |
 | Round 2 | BLOCKED | Criticals largely fixed; importants/coverage gaps still failing; 8 new issues introduced by revision; one direct spec/plan enum conflict |
 | Round 3 | APPROVED WITH NITS | Every Round-1 and Round-2 finding scored as Fixed or Fixed-deferred; engineer can start Wave 1 immediately; five nits recorded below. |
+| Stage-2 review (post Wave 5) | REVISE → READY FOR MERGE (pending sentinel) | 2 blockers + 4 importants + 2 minors against the implementation; all in-code findings resolved; sentinel replacement remains procedural. See §9. |
 
 ## 2. Round 3 nits
 
@@ -176,3 +177,45 @@ Requested disposition from adversarial reviewer:
 - `APPROVED WITH NITS` — implementation may proceed after minor plan nits are patched.
 - `BLOCKED` — implementation must not proceed; list blocking findings.
 - `NEEDS CLARIFICATION` — user decision required before approval.
+
+## 9. Stage-2 implementation review (post Wave 5)
+
+**Date:** 2026-05-18
+**Branch under review:** `plan/001a-literacy-app-v1` @ `74ab474`
+**Disposition entering review:** REVISE — two blockers and four importants identified against the merged implementation.
+**Disposition after fixes:** READY FOR MERGE pending sentinel D1 replacement.
+
+### Findings and responses
+
+| # | Severity | Finding | Disposition | Where addressed |
+|---|---|---|---|---|
+| S2-1 | Blocker | API/app contract mismatch: API returned `practice_session.plan_json`; app types and code expected `practice_session.plan`. Practice loop would fail end-to-end against real API. | Fixed | `api/src/routes/practice.ts:47` returns `plan` (parsed object); DB column remains `plan_json`. `api/src/routes/practice.test.ts` updated. App types already matched. |
+| S2-2 | Blocker | Sentinel D1 UUID still present in diff vs `origin/main`; merge gate refuses. | Procedural — not auto-resolvable | Real preview D1 must be provisioned and migration substituted before opening the merge PR. `scripts/check-sentinel.sh` enforces. |
+| S2-3 | Important | Attempt submission integrity too permissive: server accepted any `(skill_id, item_id)` for an owned session, allowing forged or buggy clients to pollute the source-of-truth attempt log. | Fixed | `api/src/routes/practice.ts` now loads `plan_json` for the submitted session, parses it, and rejects 400 if `(skill_id, item_id)` is not in the started plan. Rejects 409 if the session is already completed. New test in `api/src/routes/practice.test.ts`. |
+| S2-4 | Important | Guardian progress UI was a static placeholder. | Fixed (skeletal but real) | `StudentDashboardRoute` in `app/src/App.tsx` fetches `/guardian/diag`, summarizes attempts per skill for the current student, and renders overall accuracy + per-skill breakdown. UX polish deferred to 001b/001e. |
+| S2-5 | Important | No UI path to diagnostics; `/guardian/diag` was backend-only. | Fixed | New `/guardian/diag` route in `app/src/App.tsx` renders the summary table. `GuardianNav` and `GuardianRoute` link to it. |
+| S2-6 | Important | `Student.prefs_json` type mismatch: backend serialized as parsed object; app type said `string`. | Fixed | `app/src/api/types.ts` `Student.prefs_json` changed to `Record<string, unknown>`; test mocks updated. |
+| S2-7 | Minor | PhonicsCard buttons could double-submit if a guardian tapped fast. | Fixed | PhonicsCard now tracks `scored` state and disables all three buttons after the first tap; App.tsx keys the card by `${skill_id}:${item_id}` so each card mounts fresh. |
+| S2-8 | Minor | `birth_month` validation accepted any two digits. | Fixed | `api/src/routes/students.ts` regex narrowed to `^\d{4}-(0[1-9]|1[0-2])$`; new test in `students.test.ts`. |
+| S2-9 | Minor | `scripts/replay-attempts.ts` is a stub. | Accepted per plan | Plan §9 Task 5.x explicitly defers to first scheduler PR (§13 → 001c). |
+| S2-10 | Note | UI / IA pass requested before expanding child-facing modes. | Partially addressed | This pass added: top-level GuardianNav, diag route, per-skill progress view, loading/empty/error states across every fetch view, mobile-first layout, button disabled state, secondary actions surface. Visual design system (Figma, motion, audio cues, full skill-map UX) remains deferred to 001b. |
+
+### Verification at end of Stage-2 review
+
+- `pnpm -r typecheck` — passes (api + app).
+- `pnpm -r test` — passes (10 api tests + 8 app tests; new tests cover attempt-integrity 400 and birth_month 400).
+- `bash scripts/check-sentinel.sh` — fails as expected; sentinel still present (procedural blocker S2-2).
+
+### Remaining for merge
+
+1. Provision real preview D1 (Cloudflare side, out-of-band) and replace the sentinel UUID in `api/wrangler.toml` + migration filenames as applicable.
+2. Re-run `bash scripts/check-sentinel.sh` until clean.
+3. Open merge PR; CI workflow at `.github/workflows/ci.yml` re-runs typecheck, tests, and sentinel gate.
+
+### Out of scope for this branch (deferred)
+
+- Visual/design-system pass — 001b.
+- SRS scheduler + skill-map view — 001c.
+- TTS, R2 audio binding, mic stub — 001d.
+- Drill modes 2–4 (Heart, Fluency, PA) — 001e.
+- Magic-link issuer beyond `dev-log` — 001f.
