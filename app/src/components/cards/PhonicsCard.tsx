@@ -3,7 +3,7 @@ import type { AttemptResult, PracticeCard } from "../../api/types";
 
 type PhonicsCardProps = {
   card: PracticeCard;
-  onScore: (result: AttemptResult) => void;
+  onScore: (result: AttemptResult) => void | Promise<void>;
 };
 
 export function PhonicsCard({ card, onScore }: PhonicsCardProps) {
@@ -12,7 +12,7 @@ export function PhonicsCard({ card, onScore }: PhonicsCardProps) {
   const handle = (result: AttemptResult) => {
     if (scored) return;
     setScored(result);
-    onScore(result);
+    Promise.resolve(onScore(result)).catch(() => setScored(null));
   };
 
   return (

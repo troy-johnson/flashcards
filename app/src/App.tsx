@@ -446,10 +446,10 @@ function DrillRoute({ studentId }: { studentId: string }) {
         duration_ms: Math.max(0, Date.now() - Date.parse(practice.shown_at)),
         shown_at: practice.shown_at
       });
-    } catch {
+    } catch (err) {
       setSubmitError("Could not save that tap. Try again.");
       setBusy(false);
-      return;
+      throw err;
     }
     const next = advancePractice(studentId, practice);
     if (!next) {

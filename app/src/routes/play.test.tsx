@@ -79,4 +79,37 @@ describe("play and drill routes", () => {
     expect(window.location.pathname).toBe("/play/student1/done");
     expect(container.textContent).toContain("You’re done");
   });
+
+  it("lets guardians retry the current card after a failed score save", async () => {
+    (scoreAttempt as unknown as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce({ attempt: { id: "attempt2", scoring_source: "guardian_tap" } });
+
+    window.history.pushState({}, "", "/play/student1");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    await act(async () => {
+      container.querySelector("button")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+
+    await act(async () => {
+      container.querySelector('button[data-result="correct"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+
+    expect(container.textContent).toContain("Could not save that tap");
+    expect(container.textContent).toContain("cat");
+
+    await act(async () => {
+      container.querySelector('button[data-result="correct"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+
+    expect(scoreAttempt).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain("mat");
+  });
 });
