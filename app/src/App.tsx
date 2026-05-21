@@ -96,6 +96,8 @@ function SignInRoute() {
   );
 }
 
+const consumeInFlight = new Map<string, Promise<void>>();
+
 function AuthConsumeRoute() {
   const [status, setStatus] = useState<"loading" | "error">("loading");
 
@@ -106,7 +108,12 @@ function AuthConsumeRoute() {
       return;
     }
     let active = true;
-    consumeMagicLink(token)
+    let pending = consumeInFlight.get(token);
+    if (!pending) {
+      pending = consumeMagicLink(token);
+      consumeInFlight.set(token, pending);
+    }
+    pending
       .then(() => {
         if (!active) return;
         navigate("/guardian");
