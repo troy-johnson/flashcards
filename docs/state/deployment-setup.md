@@ -31,15 +31,23 @@ The new `migrate` job in `.github/workflows/ci.yml` needs API access on push-to-
    - `CLOUDFLARE_API_TOKEN = <token>`
    - `CLOUDFLARE_ACCOUNT_ID = 2b33f66afd354338cb987943a3be1ec1`
 
-## 3. Update Workers Build deploy commands
+## 3. Connect backend API Worker to GitHub Builds
 
-Workers Builds currently deploys with `--env preview` regardless of branch. Switch to per-branch envs.
+The backend API Worker was created by Wrangler as `api-flashcards`. Connect it to
+GitHub so Cloudflare deploys API changes automatically instead of relying on
+manual `wrangler deploy` uploads.
 
 Dashboard → Workers & Pages → `api-flashcards` → Settings → Build → edit:
+- Repository: `troy-johnson/flashcards`
+- Production branch: `main`
+- Build command: `pnpm install --frozen-lockfile`
 - Non-production branch deploy command:
   `pnpm --filter api exec wrangler versions upload --env preview`
 - Production branch deploy command:
   `pnpm --filter api exec wrangler deploy --env production`
+- Root directory: leave empty (monorepo)
+- Environment variables:
+  - `NODE_VERSION = 24`
 
 ## Current naming
 
