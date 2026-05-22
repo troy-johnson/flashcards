@@ -2,21 +2,25 @@
 
 These steps must be completed once in the Cloudflare and GitHub dashboards to make the new deploy pipeline work. Code changes are already on this branch.
 
-## 1. Connect Pages project to GitHub
+## 1. Create the frontend Worker with Static Assets
 
-Project `literacy-app-preview` exists but has no source.
+Cloudflare Pages was deleted because the dashboard-created project had no Git
+connection and could not be retrofitted. The frontend now deploys as a Worker
+with Static Assets from `app/wrangler.toml`.
 
-1. Dashboard → Workers & Pages → `literacy-app-preview` → Settings → Builds & deployments → Connect to Git.
-2. Pick `troy-johnson/flashcards`, production branch `main`.
-3. Build settings:
+1. Dashboard → Workers & Pages → Create application → Worker.
+2. Project name: `flashcards`.
+3. Pick `troy-johnson/flashcards`, production branch `main`.
+4. Build settings:
    - Build command: `pnpm install --frozen-lockfile && pnpm --filter app build`
-   - Build output directory: `app/dist`
+   - Deploy command: `pnpm --filter app exec wrangler deploy`
    - Root directory: leave empty (monorepo)
-4. Environment variables (Production + Preview):
-   - `VITE_API_ORIGIN = https://flashcards.troyjohnson.workers.dev`
+5. Environment variables (Production + Preview):
+   - `VITE_API_ORIGIN = https://api-flashcards.troyjohnson.workers.dev`
    - `NODE_VERSION = 24`
 
-Production deploys land at `https://literacy-app-preview.pages.dev/`; PR previews at `https://<commit>.literacy-app-preview.pages.dev/`.
+Production deploys land at `https://flashcards.troyjohnson.workers.dev/`.
+The API `APP_ORIGIN` for preview and production must match that URL.
 
 ## 2. Add CLOUDFLARE_API_TOKEN secret to GitHub
 
@@ -31,13 +35,14 @@ The new `migrate` job in `.github/workflows/ci.yml` needs API access on push-to-
 
 Workers Builds currently deploys with `--env preview` regardless of branch. Switch to per-branch envs.
 
-Dashboard → Workers & Pages → `flashcards` → Settings → Build → edit:
+Dashboard → Workers & Pages → `api-flashcards` → Settings → Build → edit:
 - Non-production branch deploy command:
   `pnpm --filter api exec wrangler versions upload --env preview`
 - Production branch deploy command:
   `pnpm --filter api exec wrangler deploy --env production`
 
-## Known mismatches (defer)
+## Current naming
 
-- The deployed Worker is named `flashcards` in the dashboard but `literacy-api` in `wrangler.toml`. Renaming would change the public URL — leave alone until v1 launch.
+- Frontend Worker name: `flashcards`.
+- Backend API Worker name: `api-flashcards` (`api-flashcards-preview` for preview env deploys).
 - Production and preview share the `literacy_preview` D1. Split before real users exist; add `[[env.production.d1_databases]]` pointing at a new `literacy_prod` DB and run migrations against it.

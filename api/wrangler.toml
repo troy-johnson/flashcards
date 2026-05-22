@@ -1,4 +1,4 @@
-name = "literacy-api"
+name = "api-flashcards"
 main = "src/index.ts"
 compatibility_date = "2026-05-17"
 compatibility_flags = ["nodejs_compat"]
@@ -13,8 +13,11 @@ binding = "DB"
 database_name = "literacy_preview"
 database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"
 
+[env.preview]
+name = "api-flashcards-preview"
+
 [env.preview.vars]
-APP_ORIGIN = "https://literacy-app-preview.pages.dev"
+APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
 DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "dev-log"
 
@@ -25,8 +28,11 @@ database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"
 
 # Production env. Single-DB strategy for v1: shares literacy_preview D1 until
 # real users exist. Split into a literacy_prod D1 before launch.
+[env.production]
+name = "api-flashcards"
+
 [env.production.vars]
-APP_ORIGIN = "https://literacy-app-preview.pages.dev"
+APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
 DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "dev-log"
 
