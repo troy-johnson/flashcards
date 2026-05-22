@@ -1,0 +1,28 @@
+[
+  {
+    "item_id": "pa_k_u1_blend_at",
+    "skill_id": "pa_k_u1_blend_two_sound",
+    "prompt": "Blend /a/ and /t/.",
+    "answer": "at"
+  },
+  {
+    "item_id": "phonics_k_u1_short_a_cat",
+    "skill_id": "phonics_k_u1_short_a",
+    "text": "cat",
+    "audio_id": "tts_word_cat"
+  },
+  {
+    "item_id": "heart_k_u1_the",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "the",
+    "regular_parts": ["th"],
+    "irregular_parts": ["e"],
+    "audio_id": "tts_word_the"
+  },
+  {
+    "item_id": "fluency_k_u1_cat_sat",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "The cat sat.",
+    "audio_id": "tts_sentence_the_cat_sat"
+  }
+]

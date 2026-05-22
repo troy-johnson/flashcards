@@ -1,0 +1,186 @@
+.page-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f7f3ea;
+  color: #253126;
+}
+
+.panel {
+  width: min(760px, 100%);
+  border-radius: 28px;
+  background: #fffdf8;
+  box-shadow: 0 18px 48px rgb(63 47 20 / 14%);
+  padding: 32px;
+}
+
+.narrow-panel {
+  width: min(480px, 100%);
+}
+
+.hero-panel h1 {
+  font-size: clamp(2rem, 7vw, 4rem);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #5b6f4f;
+}
+
+.stack {
+  display: grid;
+  gap: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+input,
+select,
+button,
+.primary-link {
+  min-height: 48px;
+  border-radius: 14px;
+  font: inherit;
+}
+
+input,
+select {
+  border: 2px solid #d8cbb3;
+  padding: 0 14px;
+}
+
+button,
+.primary-link {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: #315c3f;
+  color: white;
+  padding: 0 18px;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.card-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+}
+
+.card-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border: 2px solid #eadfc9;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.student-mode {
+  background: #f0f6ff;
+}
+
+.phonics-card {
+  width: min(720px, 100%);
+  border-radius: 36px;
+  background: #fffdf8;
+  box-shadow: 0 18px 48px rgb(20 44 63 / 14%);
+  padding: 32px;
+  text-align: center;
+}
+
+.card-word {
+  font-size: clamp(5rem, 28vw, 11rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  margin: 32px 0;
+}
+
+.tap-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .tap-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guardian-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fffdf8;
+  border-bottom: 2px solid #eadfc9;
+}
+
+.guardian-nav a {
+  color: #315c3f;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.guardian-nav form {
+  margin-left: auto;
+}
+
+.guardian-nav button {
+  min-height: 36px;
+  padding: 0 14px;
+  background: transparent;
+  color: #315c3f;
+  border: 2px solid #315c3f;
+}
+
+.muted {
+  color: #5b6f4f;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.empty {
+  color: #5b6f4f;
+  font-style: italic;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.diag-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.diag-table th,
+.diag-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eadfc9;
+  font-size: 0.95rem;
+}
+
+.diag-table th {
+  background: #f7f3ea;
+  font-weight: 800;
+}

@@ -13,6 +13,9 @@
 | Round 1 | Reject — revise and re-review | 5 critical, 7 important, 5 minor, 14 coverage-gap rows, 5 scope-leak findings |
 | Round 2 | BLOCKED | Criticals largely fixed; importants/coverage gaps still failing; 8 new issues introduced by revision; one direct spec/plan enum conflict |
 | Round 3 | APPROVED WITH NITS | Every Round-1 and Round-2 finding scored as Fixed or Fixed-deferred; engineer can start Wave 1 immediately; five nits recorded below. |
+| Stage-2 review (post Wave 5) | REVISE → READY FOR MERGE (pending sentinel) | 2 blockers + 4 importants + 2 minors against the implementation; all in-code findings resolved; sentinel replacement remains procedural. See §9. |
+| Stage-2.5 review (PR #13) | REVISE → READY FOR MERGE (pending sentinel) | 1 new blocker (magic-link consume) + 1 important (auth error masking) caught after open of PR #13; both fixed. See §10. |
+| Stage-2.6 smoke (PR #13) | PASS, with one fix | Playwright smoke executed against local stack pointed at deployed Worker. Caught and fixed a StrictMode double-mount bug in `AuthConsumeRoute`. See §11. |
 
 ## 2. Round 3 nits
 
@@ -176,3 +179,117 @@ Requested disposition from adversarial reviewer:
 - `APPROVED WITH NITS` — implementation may proceed after minor plan nits are patched.
 - `BLOCKED` — implementation must not proceed; list blocking findings.
 - `NEEDS CLARIFICATION` — user decision required before approval.
+
+## 9. Stage-2 implementation review (post Wave 5)
+
+**Date:** 2026-05-18
+**Branch under review:** `plan/001a-literacy-app-v1` @ `74ab474`
+**Disposition entering review:** REVISE — two blockers and four importants identified against the merged implementation.
+**Disposition after fixes:** READY FOR MERGE pending sentinel D1 replacement.
+
+### Findings and responses
+
+| # | Severity | Finding | Disposition | Where addressed |
+|---|---|---|---|---|
+| S2-1 | Blocker | API/app contract mismatch: API returned `practice_session.plan_json`; app types and code expected `practice_session.plan`. Practice loop would fail end-to-end against real API. | Fixed | `api/src/routes/practice.ts:47` returns `plan` (parsed object); DB column remains `plan_json`. `api/src/routes/practice.test.ts` updated. App types already matched. |
+| S2-2 | Blocker | Sentinel D1 UUID still present in diff vs `origin/main`; merge gate refuses. | Procedural — not auto-resolvable | Real preview D1 must be provisioned and migration substituted before opening the merge PR. `scripts/check-sentinel.sh` enforces. |
+| S2-3 | Important | Attempt submission integrity too permissive: server accepted any `(skill_id, item_id)` for an owned session, allowing forged or buggy clients to pollute the source-of-truth attempt log. | Fixed | `api/src/routes/practice.ts` now loads `plan_json` for the submitted session, parses it, and rejects 400 if `(skill_id, item_id)` is not in the started plan. Rejects 409 if the session is already completed. New test in `api/src/routes/practice.test.ts`. |
+| S2-4 | Important | Guardian progress UI was a static placeholder. | Fixed (skeletal but real) | `StudentDashboardRoute` in `app/src/App.tsx` fetches `/guardian/diag`, summarizes attempts per skill for the current student, and renders overall accuracy + per-skill breakdown. UX polish deferred to 001b/001e. |
+| S2-5 | Important | No UI path to diagnostics; `/guardian/diag` was backend-only. | Fixed | New `/guardian/diag` route in `app/src/App.tsx` renders the summary table. `GuardianNav` and `GuardianRoute` link to it. |
+| S2-6 | Important | `Student.prefs_json` type mismatch: backend serialized as parsed object; app type said `string`. | Fixed | `app/src/api/types.ts` `Student.prefs_json` changed to `Record<string, unknown>`; test mocks updated. |
+| S2-7 | Minor | PhonicsCard buttons could double-submit if a guardian tapped fast. | Fixed | PhonicsCard now tracks `scored` state and disables all three buttons after the first tap; App.tsx keys the card by `${skill_id}:${item_id}` so each card mounts fresh. |
+| S2-8 | Minor | `birth_month` validation accepted any two digits. | Fixed | `api/src/routes/students.ts` regex narrowed to `^\d{4}-(0[1-9]|1[0-2])$`; new test in `students.test.ts`. |
+| S2-9 | Minor | `scripts/replay-attempts.ts` is a stub. | Accepted per plan | Plan §9 Task 5.x explicitly defers to first scheduler PR (§13 → 001c). |
+| S2-10 | Note | UI / IA pass requested before expanding child-facing modes. | Partially addressed | This pass added: top-level GuardianNav, diag route, per-skill progress view, loading/empty/error states across every fetch view, mobile-first layout, button disabled state, secondary actions surface. Visual design system (Figma, motion, audio cues, full skill-map UX) remains deferred to 001b. |
+
+### Verification at end of Stage-2 review
+
+- `pnpm -r typecheck` — passes (api + app).
+- `pnpm -r test` — passes (10 api tests + 8 app tests; new tests cover attempt-integrity 400 and birth_month 400).
+- `bash scripts/check-sentinel.sh` — fails as expected; sentinel still present (procedural blocker S2-2).
+
+### Remaining for merge
+
+1. Provision real preview D1 (Cloudflare side, out-of-band) and replace the sentinel UUID in `api/wrangler.toml` + migration filenames as applicable.
+2. Re-run `bash scripts/check-sentinel.sh` until clean.
+3. Open merge PR; CI workflow at `.github/workflows/ci.yml` re-runs typecheck, tests, and sentinel gate.
+
+### Out of scope for this branch (deferred)
+
+- Visual/design-system pass — 001b.
+- SRS scheduler + skill-map view — 001c.
+- TTS, R2 audio binding, mic stub — 001d.
+- Drill modes 2–4 (Heart, Fluency, PA) — 001e.
+- Magic-link issuer beyond `dev-log` — 001f.
+
+## 10. Stage-2.5 review (PR #13 follow-up)
+
+**Date:** 2026-05-18
+**Branch under review:** `plan/001a-literacy-app-v1` (post-commit `01c2c8e`)
+**Disposition entering review:** REVISE — 1 blocker (magic-link consume flow broken), 1 important (auth error masking).
+**Disposition after fixes:** READY FOR MERGE pending sentinel D1 replacement.
+
+### Findings and responses
+
+| # | Severity | Finding | Disposition | Where addressed |
+|---|---|---|---|---|
+| S25-1 | Blocker | Magic-link URL pointed to `${APP_ORIGIN}/auth/consume?token=...` but the app had no route for that path and never called `GET /auth/consume`. A guardian clicking the link would land on an unhandled route and never get a session cookie. | Fixed | New `AuthConsumeRoute` in `app/src/App.tsx` reads `?token=`, calls `consumeMagicLink()` (new helper in `app/src/api/literacy.ts`) with `credentials:"include"`, and navigates to `/guardian` on success. Two new app tests cover success + invalid-token branches. |
+| S25-2 | Blocker | Sentinel D1 UUID still present; CI fails on `check-sentinel.sh`. | Procedural — not auto-resolvable | Preview D1 must be provisioned out-of-band; see also S2-2. |
+| S25-3 | Important | `loadAuthState()` treated every API error as anonymous, masking 5xx and network failures during preview testing. | Fixed | `apiFetch` now throws a typed `ApiError` with `status`. `loadAuthState()` branches: 401 → `anonymous`, otherwise → new `error` state with the failure message; also logs to `console.error`. Two new auth-state tests cover the 401 vs 503 paths. |
+| S25-4 | Important | Preview-deploy smoke still owed. | Procedural | Listed in PR #13 test plan as `[reviewer]` items: sign-in, student creation, drill scoring, done page, `/guardian/diag` 403 behavior. |
+| S25-5 | Minor | React `act(...)` warnings in test stderr. | Acknowledged | Cosmetic; `vitest` + React 19 `act` interop quirk. Real test outcomes pass; deferred to a follow-up. |
+| S25-6 | Minor | Cloudflare runtime compat-date warning (installed runtime older than requested date). | Acknowledged | Falls back to `2024-12-30`; deferred to dependency bump in a follow-up. |
+
+### Why same-origin app `/auth/consume` rather than API redirect
+
+Both approaches were viable. App-side consume keeps the guardian on the app domain throughout sign-in (no flash of API origin), routes the call through the existing `apiFetch` plumbing (so cookies, credentials, error typing are uniform), and avoids adding an `API_ORIGIN` env to the email issuer. SameSite=Lax + same-site deployment (app/api on the same eTLD+1) supports `Set-Cookie` from the cross-origin fetch. If a future deployment splits across true cross-site domains, this should be revisited (likely by switching to the API-side redirect pattern or moving the cookie to `SameSite=None; Secure`).
+
+### Verification at end of Stage-2.5 review
+
+- `pnpm -r typecheck` — passes.
+- `pnpm -r test` — passes (10 api + 12 app tests; new app tests cover consume-success, consume-error, auth-state 401, auth-state 503).
+- `bash scripts/check-sentinel.sh` — fails as expected.
+
+## 11. Stage-2.6 smoke (Playwright)
+
+**Date:** 2026-05-21
+**Mechanism:** `scripts/smoke.mjs` (Playwright + Chromium). Drives the app via real browser against local `wrangler dev` (API) + `vite dev` (app), seeds D1 directly with deterministic auth tokens so the smoke doesn't depend on capturing the magic-link URL from buffered stdout. Also probes the deployed Worker (`https://plan-001a-literacy-app-v1-flashcards.troyjohnson.workers.dev`) at the HTTP level for parity.
+
+### Steps exercised
+
+1. App landing renders.
+2. `/auth/start` accepts an email and renders confirmation.
+3. App `/auth/consume?token=...` calls API `/auth/consume`, receives session cookie, navigates to `/guardian`.
+4. Add a student via `/guardian/add-student` form (real `POST /students` 201).
+5. Open student dashboard with the new student.
+6. Start practice → header renders, drill renders the phonics card.
+7. Tap "Correct" until the done page renders (one card in current seed; loop scales with seed size).
+8. `/guardian/diag` denies a non-DIAG guardian with the in-UI access-denied state.
+9. Sign out, sign in as the DIAG guardian (`local-guardian@example.com`), confirm `/guardian/diag` renders for them.
+10. Deployed Worker: `/auth/me` and `/guardian/diag` both return 401 unauthenticated (parity with local).
+
+All ten steps pass.
+
+### Bug surfaced and fixed during smoke
+
+| # | Severity | Finding | Disposition |
+|---|---|---|---|
+| S26-1 | Bug (would have shipped) | `AuthConsumeRoute`'s `useEffect` is double-invoked under React StrictMode. First mount's API call succeeds (cookie set), but its `.then` is suppressed because the cleanup runs before resolution. Second mount calls the API again, hits an already-consumed token (`auth_token.consumed_at` is now non-null), and renders the "invalid or expired" error. End-user impact: in development *and* on any genuine remount, the user lands on the error UI even though they're actually authenticated. | Fixed in this branch: `consumeInFlight: Map<token, Promise>` dedupes per-token promises. Both mounts share the same in-flight promise. Whichever mount survives (the second one) sees `active === true` when it resolves and navigates to `/guardian`. |
+
+### Why the unit tests didn't catch this
+
+`guardian.test.tsx` renders `<App />` outside `<StrictMode>` (per `main.tsx` only). Without StrictMode, `useEffect` fires once and the original code path works. Smoke driving the real `main.tsx` (which wraps in StrictMode) exposed the bug. Worth tightening unit tests to render under StrictMode in a follow-up.
+
+### Verification at end of Stage-2.6 smoke
+
+- `pnpm -r typecheck` — passes.
+- `pnpm -r test` — passes (10 api + 13 app tests; existing consume tests stay green because they run outside StrictMode).
+- `scripts/smoke.mjs` — `SMOKE: ALL PASS`.
+- Deployed Worker HTTP probes — both return 401 unauthenticated as expected.
+
+### Out of scope for this slice (carry-forward)
+
+- Render unit tests under `<StrictMode>` to catch the next double-effect regression — follow-up to 001a, can land in 001b.
+- "Today: 0 things" briefly renders during practice-loading because the header uses `practice?.session.plan.cards.length ?? 0`. Polish only; defer to 001b design pass.
+- React `act(...)` warnings in vitest output — cosmetic; deferred.
+- Cloudflare runtime compat-date warning — defer to dependency bump.

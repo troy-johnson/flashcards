@@ -1,0 +1,24 @@
+name = "literacy-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-17"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+APP_ORIGIN = "http://localhost:5173"
+DIAG_GUARDIAN_EMAIL = "local-guardian@example.com"
+AUTH_EMAIL_ISSUER = "dev-log"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "literacy_preview"
+database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"
+
+[env.preview.vars]
+APP_ORIGIN = "https://literacy-app-preview.pages.dev"
+DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
+AUTH_EMAIL_ISSUER = "dev-log"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "literacy_preview"
+database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"

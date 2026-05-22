@@ -1,0 +1,6 @@
+[
+  { "skill_id": "pa_k_u1_blend_two_sound", "grade": "K", "prerequisites": [] },
+  { "skill_id": "phonics_k_u1_short_a", "grade": "K", "prerequisites": [] },
+  { "skill_id": "heart_k_u1_batch_01", "grade": "K", "prerequisites": [] },
+  { "skill_id": "fluency_k_u1_cvc_sentences", "grade": "K", "prerequisites": ["phonics_k_u1_short_a"] }
+]
