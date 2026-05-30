@@ -100,6 +100,9 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@24.12.4)(@vitest/ui@2.1.9)(jsdom@25.0.1)(lightningcss@1.32.0)
+      wrangler:
+        specifier: ^4.92.0
+        version: 4.92.0(@cloudflare/workers-types@4.20260518.1)
 
 packages:
 
