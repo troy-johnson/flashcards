@@ -1,0 +1,35 @@
+{
+  "runId": "literacy-app-v1",
+  "fileKey": "pcqSV0wADxGZ1HaxB3iwKT",
+  "fileUrl": "https://www.figma.com/design/pcqSV0wADxGZ1HaxB3iwKT",
+  "scope": "B — Foundations + 8 atoms",
+  "phase": "phase1",
+  "step": "1a-blocked-on-quota",
+  "blocker": "Hit Figma MCP tool-call limit on Starter plan. Either wait for quota reset or upgrade.",
+  "entities": {
+    "collections": {
+      "Primitives": { "id": "VariableCollectionId:6:2", "modeId": "6:0", "modeName": "Value" }
+    },
+    "variables": {},
+    "pages": { "Page 1": "0:1" },
+    "components": {},
+    "styles": {}
+  },
+  "pendingValidations": [],
+  "completedSteps": [
+    "phase0-discovery",
+    "phase0-scope-locked",
+    "file-created",
+    "phase1a-collection-primitives-created"
+  ],
+  "nextActions": [
+    "Resume Phase 1a: create Color/Light, Spacing/Value, Radius/Value collections",
+    "Continue Phase 1b (primitive colors), 1c (spacing+radius), 1d (semantic colors), 1e (text styles)",
+    "Phase 1 checkpoint with user",
+    "Phase 2 (file structure), Phase 3 (8 atom components)"
+  ],
+  "notes": [
+    "setSharedPluginData is on SceneNode/Style, not VariableCollection — skipped for collections; state ledger is the canonical record",
+    "OKLCH→sRGB conversion needs to happen in-script for the 14 primitive colors when we resume"
+  ]
+}

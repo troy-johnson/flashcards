@@ -1,8 +1,16 @@
 import { apiFetch } from "./client";
 import type { AttemptInput, DiagnosticSummaryRow, Guardian, PracticeSession, Student } from "./types";
 
-export const signIn = (email: string): Promise<void> =>
-  apiFetch<void>("/auth/start", { method: "POST", body: JSON.stringify({ email }) });
+export interface SignInResponse {
+  /** Present only when the API runs with the dev-log email issuer — never set in production. */
+  devMagicLink?: string;
+}
+
+export const signIn = (email: string): Promise<SignInResponse> =>
+  apiFetch<SignInResponse | undefined>("/auth/start", {
+    method: "POST",
+    body: JSON.stringify({ email })
+  }).then((res) => res ?? {});
 
 export const consumeMagicLink = (token: string): Promise<void> =>
   apiFetch<void>(`/auth/consume?token=${encodeURIComponent(token)}`);

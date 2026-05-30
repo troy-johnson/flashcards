@@ -2,17 +2,17 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
-  background: #f7f3ea;
-  color: #253126;
+  padding: var(--space-lg);
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
 }
 
 .panel {
   width: min(760px, 100%);
   border-radius: 28px;
-  background: #fffdf8;
+  background: var(--color-bg-surface);
   box-shadow: 0 18px 48px rgb(63 47 20 / 14%);
-  padding: 32px;
+  padding: var(--space-xl);
 }
 
 .narrow-panel {
@@ -27,7 +27,7 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 700;
-  color: #5b6f4f;
+  color: var(--color-text-secondary);
 }
 
 .stack {
@@ -37,7 +37,7 @@
 
 label {
   display: grid;
-  gap: 8px;
+  gap: var(--space-sm);
   font-weight: 700;
 }
 
@@ -52,7 +52,7 @@ button,
 
 input,
 select {
-  border: 2px solid #d8cbb3;
+  border: 2px solid var(--color-border-default);
   padding: 0 14px;
 }
 
@@ -61,8 +61,8 @@ button,
   display: inline-grid;
   place-items: center;
   border: 0;
-  background: #315c3f;
-  color: white;
+  background: var(--color-text-primary);
+  color: var(--color-text-on-accent);
   padding: 0 18px;
   text-decoration: none;
   font-weight: 800;
@@ -78,22 +78,25 @@ button,
 .card-list li {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  border: 2px solid #eadfc9;
+  gap: var(--space-md);
+  border: 2px solid var(--color-border-default);
   border-radius: 18px;
-  padding: 16px;
+  padding: var(--space-md);
 }
 
+/* Student mode keeps the same warm bg as the rest of the app — the mode
+   distinction comes from full-screen chrome absence and bigger tap targets,
+   not a different background color. */
 .student-mode {
-  background: #f0f6ff;
+  background: var(--color-bg-app);
 }
 
 .phonics-card {
   width: min(720px, 100%);
   border-radius: 36px;
-  background: #fffdf8;
-  box-shadow: 0 18px 48px rgb(20 44 63 / 14%);
-  padding: 32px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 18px 48px rgb(63 47 20 / 14%);
+  padding: var(--space-xl);
   text-align: center;
 }
 
@@ -101,7 +104,7 @@ button,
   font-size: clamp(5rem, 28vw, 11rem);
   font-weight: 900;
   letter-spacing: 0.04em;
-  margin: 32px 0;
+  margin: var(--space-xl) 0;
 }
 
 .tap-controls {
@@ -121,13 +124,13 @@ button,
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  padding: 12px 24px;
-  background: #fffdf8;
-  border-bottom: 2px solid #eadfc9;
+  padding: 12px var(--space-lg);
+  background: var(--color-bg-surface);
+  border-bottom: 2px solid var(--color-border-default);
 }
 
 .guardian-nav a {
-  color: #315c3f;
+  color: var(--color-text-primary);
   text-decoration: none;
   font-weight: 700;
 }
@@ -140,12 +143,12 @@ button,
   min-height: 36px;
   padding: 0 14px;
   background: transparent;
-  color: #315c3f;
-  border: 2px solid #315c3f;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-text-primary);
 }
 
 .muted {
-  color: #5b6f4f;
+  color: var(--color-text-secondary);
 }
 
 .actions {
@@ -153,17 +156,91 @@ button,
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  margin: 16px 0;
+  margin: var(--space-md) 0;
 }
 
 .empty {
-  color: #5b6f4f;
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Landing page — hero + how-it-works + anti-game note + closing CTA */
+.landing-shell {
+  align-items: start;
+  padding-block: var(--space-2xl);
+}
+
+.landing {
+  display: grid;
+  gap: var(--space-lg);
+  width: min(760px, 100%);
+}
+
+.landing-lede {
+  font-size: var(--text-body-l-size);
+  line-height: var(--text-body-l-lh);
+  color: var(--color-text-secondary);
+  margin-block: var(--space-md) var(--space-lg);
+  max-width: 56ch;
+}
+
+.landing-steps ol {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.landing-steps li {
+  font-size: var(--text-body-l-size);
+  line-height: var(--text-body-l-lh);
+  color: var(--color-text-secondary);
+}
+
+.landing-steps li strong {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.landing-not {
+  background: var(--color-bg-mastered);
+  text-align: center;
+}
+
+.landing-not p {
+  font-size: var(--text-body-l-size);
+  line-height: var(--text-body-l-lh);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.landing-cta {
+  display: grid;
+  gap: var(--space-md);
+  place-items: center;
+  padding-block: var(--space-md);
+}
+
+.dev-magic-link {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-attention);
+}
+
+.dev-magic-link a {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: var(--text-label-size);
+  word-break: break-all;
+  color: var(--color-accent-attention);
 }
 
 .diag-table {
@@ -176,11 +253,11 @@ button:disabled {
 .diag-table td {
   text-align: left;
   padding: 8px 10px;
-  border-bottom: 1px solid #eadfc9;
+  border-bottom: 1px solid var(--color-border-default);
   font-size: 0.95rem;
 }
 
 .diag-table th {
-  background: #f7f3ea;
+  background: var(--color-bg-app);
   font-weight: 800;
 }

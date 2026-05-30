@@ -51,28 +51,65 @@ function GuardianNav({ guardian }: { guardian: Guardian | null }) {
 
 function LandingRoute() {
   return (
-    <main className="page-shell">
-      <section className="panel hero-panel">
-        <p className="eyebrow">Literacy practice</p>
-        <h1>Short, calm reading practice with your student.</h1>
-        <p>Sign in to set up a student and start today&apos;s guardian-tap drill.</p>
-        <a className="primary-link" href="/signin">Sign in</a>
-      </section>
+    <main className="page-shell landing-shell">
+      <div className="landing">
+        <section className="panel hero-panel">
+          <p className="eyebrow">Literacy practice</p>
+          <h1>Short, calm reading practice with your child.</h1>
+          <p className="landing-lede">
+            Daily 8&ndash;10 minute sessions for kindergarten and 1st-grade readers.
+            You sit with your child; the app handles what comes next.
+          </p>
+          <a className="primary-link" href="/signin">Sign in</a>
+        </section>
+
+        <section className="panel landing-steps">
+          <h2>How it works</h2>
+          <ol>
+            <li>
+              <strong>Set up your child.</strong> First name, grade, a few preferences. About a minute.
+            </li>
+            <li>
+              <strong>Sit together for 8&ndash;10 minutes a day.</strong> The app shows one card at a time
+              &mdash; a sound, a word, a short sentence. You tap to mark what they got.
+            </li>
+            <li>
+              <strong>Watch the skill map fill in.</strong> Mastery builds gradually across phonemic
+              awareness, phonics, heart words, and fluency.
+            </li>
+          </ol>
+        </section>
+
+        <section className="panel landing-not">
+          <p>
+            No streaks, no coins, no leaderboards. Practice is the point &mdash; there&apos;s nothing
+            else to chase.
+          </p>
+        </section>
+
+        <section className="landing-cta">
+          <p className="muted">Ready when you are.</p>
+          <a className="primary-link" href="/signin">Sign in</a>
+        </section>
+      </div>
     </main>
   );
 }
 
 function SignInRoute() {
   const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
+  const [devLink, setDevLink] = useState<string | null>(null);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
     const submittedEmail = String(new FormData(form).get("email") ?? "");
     try {
-      await signIn(submittedEmail);
+      const res = await signIn(submittedEmail);
+      setDevLink(res.devMagicLink ?? null);
       setStatus("sent");
     } catch {
+      setDevLink(null);
       setStatus("error");
     }
   };
@@ -89,7 +126,14 @@ function SignInRoute() {
           </label>
           <button type="submit">Send magic link</button>
         </form>
-        {status === "sent" && <p role="status">Check your email for the magic link.</p>}
+        {status === "sent" && !devLink && <p role="status">Check your email for the magic link.</p>}
+        {status === "sent" && devLink && (
+          <div role="status" className="dev-magic-link">
+            <p className="eyebrow">Dev mode</p>
+            <p>Email isn&apos;t wired in this environment. Open this link to sign in:</p>
+            <a href={devLink}>{devLink}</a>
+          </div>
+        )}
         {status === "error" && <p role="alert">We could not send that magic link. Try again.</p>}
       </section>
     </main>

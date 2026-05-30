@@ -37,7 +37,8 @@ authRoutes.post("/start", async (c) => {
   const hash = await sha256Hex(token);
   const expiresAt = new Date(Date.now() + tokenTtlMs).toISOString();
   await c.env.DB.prepare("INSERT INTO auth_token (token_hash, guardian_id, expires_at) VALUES (?, ?, ?)").bind(hash, guardian.id, expiresAt).run();
-  await issueMagicLink(c.env, email, token);
+  const issued = await issueMagicLink(c.env, email, token);
+  if (issued.echoable) return json({ devMagicLink: issued.url });
   return c.body(null, 204);
 });
 

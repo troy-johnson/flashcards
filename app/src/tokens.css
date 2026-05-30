@@ -1,0 +1,101 @@
+/*
+ * Design tokens — extracted from the Claude Design Pass 1 output
+ * (docs/design/claude-design-pass1/). Palette in OKLCH so values are
+ * perceptually uniform; semantic layer aliases primitives.
+ *
+ * v1 is light-mode only — the app is intentionally warm and bright; a
+ * dark mode is out of scope for the v1.0 ship.
+ */
+
+:root {
+  /* ---------- primitive colors (OKLCH) ---------- */
+  --p-bg:          oklch(96.5% 0.012 82);
+  --p-surface:     oklch(98.8% 0.006 78);
+  --p-ink:         oklch(22%   0.018 62);
+  --p-ink-2:       oklch(43%   0.018 65);
+  --p-ink-3:       oklch(57%   0.012 70);
+  --p-clay:        oklch(60%   0.09  42);
+  --p-clay-light:  oklch(93%   0.025 75);
+  --p-slate:       oklch(50%   0.10 248);
+  --p-slate-light: oklch(93%   0.02 240);
+  --p-sage:        oklch(52%   0.08 158);
+  --p-sage-light:  oklch(94%   0.02 155);
+  --p-rose:        oklch(57%   0.09  18);
+  --p-rose-light:  oklch(94%   0.02  20);
+  --p-border:      oklch(88%   0.012 75);
+
+  /* ---------- semantic colors ---------- */
+  --color-bg-app:        var(--p-bg);
+  --color-bg-surface:    var(--p-surface);
+  --color-bg-attention:  var(--p-clay-light);
+  --color-bg-active:     var(--p-slate-light);
+  --color-bg-mastered:   var(--p-sage-light);
+  --color-bg-heart:      var(--p-rose-light);
+
+  --color-text-primary:   var(--p-ink);
+  --color-text-secondary: var(--p-ink-2);
+  --color-text-tertiary:  var(--p-ink-3);
+  --color-text-on-accent: var(--p-surface);
+
+  --color-accent-attention: var(--p-clay);
+  --color-accent-active:    var(--p-slate);
+  --color-accent-mastered:  var(--p-sage);
+  --color-accent-heart:     var(--p-rose);
+
+  --color-border-default: var(--p-border);
+
+  /* ---------- spacing ---------- */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+
+  /* ---------- radius ---------- */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-pill: 999px;
+
+  /* ---------- typography (Lexend) ---------- */
+  --font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-display-size:   48px;
+  --text-display-weight: 600;
+  --text-display-lh:     1.10;
+
+  --text-heading-size:   32px;
+  --text-heading-weight: 500;
+  --text-heading-lh:     1.20;
+
+  --text-prompt-size:    22px;
+  --text-prompt-weight:  500;
+  --text-prompt-lh:      1.45;
+
+  /* Body-L is the student-facing minimum (≥ 18pt per the spec) */
+  --text-body-l-size:    18px;
+  --text-body-l-weight:  400;
+  --text-body-l-lh:      1.40;
+
+  --text-body-size:      16px;
+  --text-body-weight:    400;
+  --text-body-lh:        1.50;
+
+  --text-label-size:     13px;
+  --text-label-weight:   400;
+  --text-label-lh:       1.50;
+
+  --text-caption-size:   12px;
+  --text-caption-weight: 400;
+  --text-caption-lh:     1.40;
+}
+
+/* Composed text styles — use these as class hooks where convenient */
+.text-display { font: var(--text-display-weight) var(--text-display-size)/var(--text-display-lh) var(--font-family); }
+.text-heading { font: var(--text-heading-weight) var(--text-heading-size)/var(--text-heading-lh) var(--font-family); }
+.text-prompt  { font: var(--text-prompt-weight)  var(--text-prompt-size)/var(--text-prompt-lh)   var(--font-family); }
+.text-body-l  { font: var(--text-body-l-weight)  var(--text-body-l-size)/var(--text-body-l-lh)   var(--font-family); }
+.text-body    { font: var(--text-body-weight)    var(--text-body-size)/var(--text-body-lh)       var(--font-family); }
+.text-label   { font: var(--text-label-weight)   var(--text-label-size)/var(--text-label-lh)     var(--font-family); }
+.text-caption { font: var(--text-caption-weight) var(--text-caption-size)/var(--text-caption-lh) var(--font-family); }
