@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter app --filter api dev",
+    "dev": "pnpm --parallel --stream --filter app --filter api dev",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",
     "test": "pnpm --recursive test",
@@ -12,6 +12,7 @@
     "db:migrations:list": "wrangler d1 migrations list literacy_preview --config api/wrangler.toml"
   },
   "devDependencies": {
+    "playwright": "^1.60.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "wrangler": "^3.99.0"
