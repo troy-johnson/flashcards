@@ -1,8 +1,7 @@
 # Adversarial Review Packet: Spec 002 Reader's Way Phase A Micro-Pilot
 
 **Spec:** [002-readers-way-phase-a-micro-pilot.md](002-readers-way-phase-a-micro-pilot.md)
-**Review round:** 1
-**Date:** 2026-05-27
+**Review rounds:** 1 (2026-05-27), 2 (2026-05-30)
 **Verdict:** APPROVED WITH NITS
 
 ## Review Focus
@@ -47,6 +46,26 @@ Basic Privacy Policy and Terms are required, while DPA/procurement artifacts are
 
 **Disposition:** Accept.
 
+## Review Round 2
+
+**Date:** 2026-05-30
+**Focus:** cross-reference integrity and internal consistency (doc-level correctness pass).
+**Verdict:** APPROVED WITH NITS
+
+### Verified clean
+
+- Numbering is gap-free and contiguous: G1–G12, NG1–NG12, D1–D12, FR1–FR39, AC1–AC20, OQ1–OQ6.
+- Internal pointers resolve: AC14 → FR28, AC16 → FR34, and §11's "three nits" matches the three Round 1 planning follow-ups.
+- No contradictions across the goal/non-goal/decision/requirement/acceptance layers. Spot checks: NG2 (no self-serve deletion/recovery) is consistent with FR38 (deferred) and AC18 (manual contact route); the no-gamification rule is consistent across NG11, FR14, and AC10; magic-link email contents agree across D8, FR21, and AC4.
+
+Round 1 findings 2–4 remain planning follow-ups; findings 1, 5, and 6 remain accepted.
+
+### 7. Stale ADR cross-reference on the branch
+
+The spec links `../adrs/001-low-cost-transactional-email.md` (Related artifacts and FR22). That file was added to `main` after this branch diverged, so it does not exist on the branch tree. After merge into `main` the link resolves correctly, but on the checked-out branch (and any branch-head rendering) the link is dead.
+
+**Disposition:** Pre-landing nit. Rebase or merge `main` into the branch before landing so the ADR reference is valid in-branch as well as post-merge. No spec text change required.
+
 ## Required Follow-Up During Planning
 
 1. Define centralized copy/token file surface.
@@ -57,4 +76,4 @@ Basic Privacy Policy and Terms are required, while DPA/procurement artifacts are
 
 **APPROVED WITH NITS**
 
-The spec is ready for owner review and implementation planning. The nits are planning-level details, not blockers to accepting the product scope.
+The spec is ready for owner review and implementation planning. Findings 2–4 are planning-level details, and finding 7 is a pre-landing branch hygiene item; none block accepting the product scope.

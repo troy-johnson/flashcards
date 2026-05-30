@@ -400,10 +400,10 @@ OQ6. What formal accessibility audit/remediation evidence should be captured at 
 ## 11. Adversarial Review Record
 
 **Packet:** [002-readers-way-phase-a-micro-pilot.adversarial-review.md](002-readers-way-phase-a-micro-pilot.adversarial-review.md)
-**Review round:** 1
+**Review rounds:** 1 (scope stress test), 2 (doc consistency pass)
 **Verdict:** APPROVED WITH NITS
 
-Summary: The spec is coherent and implementable, but the review notes three nits to handle during planning: define the exact centralized-copy file surface, convert "advances quickly" into scheduler/content thresholds, and identify the specific telemetry storage/reporting mechanism.
+Summary: The spec is coherent and implementable. Round 1 identified three planning nits to carry forward: define the exact centralized-copy file surface, convert "advances quickly" into scheduler/content thresholds, and identify the specific telemetry storage/reporting mechanism. Round 2 verified numbering, cross-references, and internal consistency.
 
 ## 12. Scope Control Notes
 
