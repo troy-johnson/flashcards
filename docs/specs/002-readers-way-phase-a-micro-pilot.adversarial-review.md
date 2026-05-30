@@ -60,11 +60,11 @@ Basic Privacy Policy and Terms are required, while DPA/procurement artifacts are
 
 Round 1 findings 2–4 remain planning follow-ups; findings 1, 5, and 6 remain accepted.
 
-### 7. Stale ADR cross-reference on the branch
+### 7. ADR cross-reference resolved before landing
 
-The spec links `../adrs/001-low-cost-transactional-email.md` (Related artifacts and FR22). That file was added to `main` after this branch diverged, so it does not exist on the branch tree. After merge into `main` the link resolves correctly, but on the checked-out branch (and any branch-head rendering) the link is dead.
+The spec links `../adrs/001-low-cost-transactional-email.md` (Related artifacts and FR22). During review, that file was present on `main` but absent from the branch because the branch had diverged before the ADR landed. The branch has since been updated from `main`, and the ADR link target now exists in-branch.
 
-**Disposition:** Pre-landing nit. Rebase or merge `main` into the branch before landing so the ADR reference is valid in-branch as well as post-merge. No spec text change required.
+**Disposition:** Resolved. No spec text change required.
 
 ## Required Follow-Up During Planning
 
@@ -76,4 +76,4 @@ The spec links `../adrs/001-low-cost-transactional-email.md` (Related artifacts 
 
 **APPROVED WITH NITS**
 
-The spec is ready for owner review and implementation planning. Findings 2–4 are planning-level details, and finding 7 is a pre-landing branch hygiene item; none block accepting the product scope.
+The spec is ready for owner review and implementation planning. Findings 2–4 are planning-level details; finding 7 has been resolved by updating the branch from `main`. None block accepting the product scope.
