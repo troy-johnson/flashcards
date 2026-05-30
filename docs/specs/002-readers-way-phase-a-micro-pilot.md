@@ -1,8 +1,8 @@
 # Spec 002: Reader's Way Phase A Micro-Pilot
 
-**Status:** draft, ready for owner review  
-**Date:** 2026-05-27  
-**Owner:** Troy Johnson  
+**Status:** draft, ready for owner review
+**Date:** 2026-05-27
+**Owner:** Troy Johnson
 **Related artifacts:**
 - [001-literacy-app-v1-design](001-literacy-app-v1-design.md)
 - [ADR-001: Low-cost transactional email for magic-link auth](../adrs/001-low-cost-transactional-email.md)
@@ -399,8 +399,8 @@ OQ6. What formal accessibility audit/remediation evidence should be captured at 
 
 ## 11. Adversarial Review Record
 
-**Packet:** [002-readers-way-phase-a-micro-pilot.adversarial-review.md](002-readers-way-phase-a-micro-pilot.adversarial-review.md)  
-**Review round:** 1  
+**Packet:** [002-readers-way-phase-a-micro-pilot.adversarial-review.md](002-readers-way-phase-a-micro-pilot.adversarial-review.md)
+**Review round:** 1
 **Verdict:** APPROVED WITH NITS
 
 Summary: The spec is coherent and implementable, but the review notes three nits to handle during planning: define the exact centralized-copy file surface, convert "advances quickly" into scheduler/content thresholds, and identify the specific telemetry storage/reporting mechanism.

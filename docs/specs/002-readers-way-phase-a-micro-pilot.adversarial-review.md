@@ -1,8 +1,8 @@
 # Adversarial Review Packet: Spec 002 Reader's Way Phase A Micro-Pilot
 
-**Spec:** [002-readers-way-phase-a-micro-pilot.md](002-readers-way-phase-a-micro-pilot.md)  
-**Review round:** 1  
-**Date:** 2026-05-27  
+**Spec:** [002-readers-way-phase-a-micro-pilot.md](002-readers-way-phase-a-micro-pilot.md)
+**Review round:** 1
+**Date:** 2026-05-27
 **Verdict:** APPROVED WITH NITS
 
 ## Review Focus
