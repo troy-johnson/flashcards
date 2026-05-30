@@ -26,8 +26,11 @@ describe("auth routes", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: "Guardian@Example.com" })
       });
-      expect(start.status).toBe(204);
+      expect(start.status).toBe(200);
+      const startBody = await start.json<{ devMagicLink: string }>();
+      expect(startBody.devMagicLink).toMatch(/\/auth\/consume\?token=/);
       const token = extractToken(logs);
+      expect(new URL(startBody.devMagicLink).searchParams.get("token")).toBe(token);
 
       const consume = await SELF.fetch(`https://api.test/auth/consume?token=${token}`);
       expect(consume.status).toBe(204);

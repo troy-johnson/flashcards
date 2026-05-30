@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Literacy Practice App — Hi-fi Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f0eee9; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="drill-card.jsx"></script>
+<script type="text/babel" src="done-screen.jsx"></script>
+<script type="text/babel" src="guardian-dashboard.jsx"></script>
+
+<script type="text/babel">
+// ─── Design-system reference cards ───────────────────────────
+
+const P = {
+  bg:         'oklch(96.5% 0.012 82)',
+  surface:    'oklch(98.8% 0.006 78)',
+  ink:        'oklch(22% 0.018 62)',
+  ink2:       'oklch(43% 0.018 65)',
+  ink3:       'oklch(57% 0.012 70)',
+  clay:       'oklch(60% 0.09 42)',
+  slate:      'oklch(50% 0.10 248)',
+  sage:       'oklch(52% 0.08 158)',
+  rose:       'oklch(57% 0.09 18)',
+  border:     'oklch(88% 0.012 75)',
+};
+
+function PaletteCard() {
+  const rows = [
+    { name:'Background', val:'oklch(96.5% 0.012 82)', note:'App bg · warm off-white paper' },
+    { name:'Surface',    val:'oklch(98.8% 0.006 78)', note:'Cards, panels' },
+    { name:'Ink',        val:'oklch(22% 0.018 62)',   note:'Primary text' },
+    { name:'Ink 2',      val:'oklch(43% 0.018 65)',   note:'Secondary text (AA ✓)' },
+    { name:'Ink 3',      val:'oklch(57% 0.012 70)',   note:'Labels, captions' },
+    { name:'Clay',       val:'oklch(60% 0.09 42)',    note:'Accent · attention signal' },
+    { name:'Slate',      val:'oklch(50% 0.10 248)',   note:'Active · in progress' },
+    { name:'Sage',       val:'oklch(52% 0.08 158)',   note:'Mastered' },
+    { name:'Rose',       val:'oklch(57% 0.09 18)',    note:'Heart-word irregulars' },
+    { name:'Border',     val:'oklch(88% 0.012 75)',   note:'Dividers, outlines' },
+  ];
+  return (
+    <div style={{
+      width:520, padding:'28px 28px 24px',
+      background:P.bg, fontFamily:"'Lexend',sans-serif",
+    }}>
+      <div style={{
+        fontSize:10, fontWeight:600, color:P.clay,
+        textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:20,
+      }}>Palette · literary calm</div>
+      {rows.map(r=>(
+        <div key={r.name} style={{ display:'flex', alignItems:'center', gap:12, marginBottom:11 }}>
+          <div style={{
+            width:36, height:22, borderRadius:4, flexShrink:0,
+            background:r.val, border:`1px solid ${P.border}`,
+          }}/>
+          <div style={{ flex:1, minWidth:0 }}>
+            <span style={{ fontSize:13, fontWeight:500, color:P.ink }}>{r.name} </span>
+            <span style={{ fontSize:10.5, color:P.ink3 }}>{r.val}</span>
+          </div>
+          <span style={{
+            fontSize:10.5, color:P.ink3, textAlign:'right', maxWidth:160, flexShrink:0,
+          }}>{r.note}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TypeScaleCard() {
+  const scale = [
+    { name:'Display',    size:48, wt:600, lh:'1.10', sample:"You're done." },
+    { name:'Heading',    size:32, wt:500, lh:'1.20', sample:'Say the first sound.' },
+    { name:'Prompt',     size:22, wt:500, lh:'1.45', sample:'Read this word.' },
+    { name:'Body L · min',size:18,wt:400, lh:'1.40', sample:'Student minimum.' },
+    { name:'Body',       size:16, wt:400, lh:'1.50', sample:'Guardian interface.' },
+    { name:'Label',      size:13, wt:400, lh:'1.50', sample:'Unit labels, metadata.' },
+    { name:'Caption',    size:12, wt:400, lh:'1.40', sample:'Tags, fine print.' },
+  ];
+  return (
+    <div style={{
+      width:520, padding:'28px 28px 20px',
+      background:P.surface, fontFamily:"'Lexend',sans-serif",
+    }}>
+      <div style={{
+        fontSize:10, fontWeight:600, color:P.clay,
+        textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:22,
+      }}>Lexend · type scale</div>
+      {scale.map((s,i)=>(
+        <div key={s.name} style={{
+          display:'flex', alignItems:'baseline', gap:14,
+          paddingBottom:18, marginBottom:18,
+          borderBottom: i < scale.length-1 ? `1px solid ${P.border}` : 'none',
+        }}>
+          <div style={{ minWidth:88, flexShrink:0 }}>
+            <div style={{
+              fontSize:10, fontWeight:600, color:P.clay,
+              textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:2,
+            }}>{s.name}</div>
+            <div style={{ fontSize:10, color:P.ink3 }}>
+              {s.size}px · w{s.wt} · lh{s.lh}
+            </div>
+          </div>
+          <span style={{
+            fontFamily:"'Lexend',sans-serif",
+            fontSize:s.size, fontWeight:s.wt, lineHeight:s.lh,
+            color:P.ink, flex:1,
+          }}>{s.sample}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Tweaks ───────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "studentName": "Mia",
+  "grade": "K",
+  "accent": "clay"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const totalCards = t.grade === '1st' ? 22 : 16;
+  const name = t.studentName || 'Mia';
+
+  return (
+    <>
+    <DesignCanvas>
+
+      {/* ── Design System ── */}
+      <DCSection id="ds" title="Design System" subtitle="Lexend · literary-calm palette · 7-step type scale">
+        <DCArtboard id="palette"   label="Palette"     width={520} height={584}>
+          <PaletteCard/>
+        </DCArtboard>
+        <DCArtboard id="typescale" label="Type Scale"  width={520} height={620}>
+          <TypeScaleCard/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 1A — Phonemic Awareness ── */}
+      <DCSection id="phonemic" title="Screen 1A — Phonemic Awareness"
+        subtitle="Say the first sound in cat. · Elkonin boxes with attention signal on current target">
+        <DCArtboard id="pa-idle"       label="Idle"         width={390} height={844}>
+          <DrillCard mode="phonemic" cardState="idle"       totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="pa-tryagain"   label="Try again"    width={390} height={844}>
+          <DrillCard mode="phonemic" cardState="tryagain"   totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="pa-scaffolding" label="Scaffolding" width={390} height={844}>
+          <DrillCard mode="phonemic" cardState="scaffolding" totalCards={totalCards}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 1B — Phonics / Decoding ── */}
+      <DCSection id="phonics" title="Screen 1B — Phonics / Decoding"
+        subtitle="Read this word: mat · tap-to-split scaffold reveals phoneme tiles">
+        <DCArtboard id="ph-idle"        label="Idle"         width={390} height={844}>
+          <DrillCard mode="phonics" cardState="idle"         totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="ph-tryagain"    label="Try again"    width={390} height={844}>
+          <DrillCard mode="phonics" cardState="tryagain"     totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="ph-scaffolding" label="Scaffolding"  width={390} height={844}>
+          <DrillCard mode="phonics" cardState="scaffolding"  totalCards={totalCards}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 1C — Heart Words ── */}
+      <DCSection id="heartwords" title="Screen 1C — Heart Words"
+        subtitle="said · regular parts in ink, irregular ⟨ai⟩ in rose with ♥ glyph · first-exposure explainer">
+        <DCArtboard id="hw-idle"      label="Idle"                    width={390} height={844}>
+          <DrillCard mode="heartword" cardState="idle"                 totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="hw-tryagain"  label="Try again"               width={390} height={844}>
+          <DrillCard mode="heartword" cardState="tryagain"             totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="hw-explainer" label="First-exposure explainer" width={390} height={844}>
+          <DrillCard mode="heartword" cardState="explainer"            totalCards={totalCards}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 1D — Fluency ── */}
+      <DCSection id="fluency" title="Screen 1D — Fluency"
+        subtitle="Read this sentence: The cat sat on the mat.">
+        <DCArtboard id="fl-idle"     label="Idle"      width={390} height={844}>
+          <DrillCard mode="fluency" cardState="idle"    totalCards={totalCards}/>
+        </DCArtboard>
+        <DCArtboard id="fl-tryagain" label="Try again" width={390} height={844}>
+          <DrillCard mode="fluency" cardState="tryagain" totalCards={totalCards}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 2 — You're Done ── */}
+      <DCSection id="done" title="Screen 2 — You're Done"
+        subtitle="Daily plan complete · mastered-skill chips · one calm leaf illustration">
+        <DCArtboard id="done-main" label="End of session" width={390} height={844}>
+          <DoneScreen studentName={name}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Screen 3 — Guardian Dashboard ── */}
+      <DCSection id="guardian" title="Screen 3 — Guardian Dashboard"
+        subtitle="/guardian/:studentId · skill map · sessions · next up · mobile + tablet">
+        <DCArtboard id="gd-mobile" label="Mobile · 390"  width={390} height={844}>
+          <GuardianDashboard variant="mobile" studentName={name}/>
+        </DCArtboard>
+        <DCArtboard id="gd-tablet" label="Tablet · 768"  width={768} height={1024}>
+          <GuardianDashboard variant="tablet" studentName={name}/>
+        </DCArtboard>
+      </DCSection>
+
+    </DesignCanvas>
+
+    {/* ── Tweaks panel ── */}
+    <TweaksPanel>
+      <TweakSection label="Student"/>
+      <TweakText
+        label="Name"
+        value={t.studentName}
+        onChange={v => setTweak('studentName', v)}
+      />
+      <TweakRadio
+        label="Grade"
+        value={t.grade}
+        options={['K','1st']}
+        onChange={v => setTweak('grade', v)}
+      />
+      <TweakSection label="Cards"/>
+      <TweakToggle
+        label={`${totalCards} cards / session`}
+        value={t.grade === '1st'}
+        onChange={v => setTweak('grade', v ? '1st' : 'K')}
+      />
+    </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

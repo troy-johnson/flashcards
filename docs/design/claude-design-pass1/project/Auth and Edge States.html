@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Auth &amp; Edge States — Hi-fi Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>*, *::before, *::after { box-sizing: border-box; } body { margin:0; background:#f0eee9; }</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Load order matters: drill-card exports DC_PALETTE + DrillCard to window -->
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="drill-card.jsx"></script>
+<script type="text/babel" src="auth-screens.jsx"></script>
+<script type="text/babel" src="edge-states.jsx"></script>
+<script type="text/babel" src="email-template.jsx"></script>
+
+<script type="text/babel">
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "guardianEmail": "ava@example.com",
+  "countdownFrom": 28
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  return (
+    <>
+    <DesignCanvas>
+
+      {/* ── Sign-in form ── */}
+      <DCSection id="signin" title="Sign-in Form"
+        subtitle="Magic-link flow · 4 variants: default · session-expired · invalid email · rate-limited">
+        <DCArtboard id="si-default"  label="Default"           width={390} height={844}>
+          <SignInForm variant="default"/>
+        </DCArtboard>
+        <DCArtboard id="si-expired"  label="Session expired"   width={390} height={844}>
+          <SignInForm variant="session-expired"/>
+        </DCArtboard>
+        <DCArtboard id="si-invalid"  label="Invalid email"     width={390} height={844}>
+          <SignInForm variant="invalid-email"/>
+        </DCArtboard>
+        <DCArtboard id="si-ratelim"  label="Rate-limited ⏱"   width={390} height={844}>
+          <SignInForm variant="rate-limited"/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Magic-link verify ── */}
+      <DCSection id="verify" title="Magic-link Verify"
+        subtitle="/auth/verify?token=… · 5 states · auto-resolves A→B or A→C/D/E">
+        <DCArtboard id="vA" label="A · Verifying"         width={390} height={844}>
+          <VerifyScreen state="verifying"/>
+        </DCArtboard>
+        <DCArtboard id="vB" label="B · Success (flash)"   width={390} height={844}>
+          <VerifyScreen state="success"/>
+        </DCArtboard>
+        <DCArtboard id="vC" label="C · Expired"           width={390} height={844}>
+          <VerifyScreen state="expired"/>
+        </DCArtboard>
+        <DCArtboard id="vD" label="D · Already used"      width={390} height={844}>
+          <VerifyScreen state="used"/>
+        </DCArtboard>
+        <DCArtboard id="vE" label="E · Invalid link"      width={390} height={844}>
+          <VerifyScreen state="invalid"/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Check your email ── */}
+      <DCSection id="checkemail" title="Check Your Email"
+        subtitle="3 states: just-sent · resend-cooldown (live countdown) · resent confirmation">
+        <DCArtboard id="ce-sent"     label="A · Just sent"      width={390} height={844}>
+          <CheckEmailScreen state="sent"     email={t.guardianEmail}/>
+        </DCArtboard>
+        <DCArtboard id="ce-cooldown" label="B · Resend cooldown ⏱" width={390} height={844}>
+          <CheckEmailScreen state="cooldown" email={t.guardianEmail}/>
+        </DCArtboard>
+        <DCArtboard id="ce-resent"   label="C · Resent"         width={390} height={844}>
+          <CheckEmailScreen state="resent"   email={t.guardianEmail}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Offline ── */}
+      <DCSection id="offline" title="Offline"
+        subtitle="Variant 1: no cache · Variant 2: mid-drill persistent banner (drill continues)">
+        <DCArtboard id="off-launch" label="Launch — no cache"   width={390} height={844}>
+          <OfflineLaunchScreen/>
+        </DCArtboard>
+        <DCArtboard id="off-drill"  label="Mid-drill banner"    width={390} height={844}>
+          <DrillOfflineBanner/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Microphone in Settings ── */}
+      <DCSection id="mic" title="Settings — Microphone"
+        subtitle="Permission denied (browser-level) · Browser unsupported (iOS Safari / Firefox)">
+        <DCArtboard id="mic-denied"      label="Permission denied"       width={390} height={844}>
+          <MicDeniedSettings/>
+        </DCArtboard>
+        <DCArtboard id="mic-unsupported" label="Browser unsupported"     width={390} height={844}>
+          <MicUnsupportedSettings/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Audio failed ── */}
+      <DCSection id="audiofail" title="Drill Card — Audio Failed"
+        subtitle="Audio button shows muted/slash state on tap · card stays fully usable">
+        <DCArtboard id="af-card" label="Audio failed (post-tap)" width={390} height={844}>
+          <AudioFailedDrillCard/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ── Magic-link email ── */}
+      <DCSection id="email" title="Magic-link Email"
+        subtitle="600 px transactional · web-safe font fallbacks · inline-style ready · no marketing footer">
+        <DCArtboard id="em-main" label="Sign-in email · 600 px" width={600} height={580}>
+          <MagicLinkEmail/>
+        </DCArtboard>
+      </DCSection>
+
+    </DesignCanvas>
+
+    <TweaksPanel>
+      <TweakSection label="Check-your-email"/>
+      <TweakText
+        label="Guardian email"
+        value={t.guardianEmail}
+        onChange={v => setTweak('guardianEmail', v)}
+      />
+    </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
