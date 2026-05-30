@@ -37,43 +37,6 @@ const shot = async (page, dir, name) => {
 };
 
 /**
- * Sign in via /signin, capture the dev magic link, consume it.
- * Returns once the page is sitting on /guardian.
- */
-const authenticate = async (page, email) => {
-  await page.goto(`${APP}/signin`);
-  await page.waitForSelector('input[name="email"]');
-  await page.fill('input[name="email"]', email);
-  await page.click('button[type="submit"]');
-  await page.waitForSelector(".dev-magic-link a", { timeout: 5000 });
-  const link = await page.locator(".dev-magic-link a").getAttribute("href");
-  if (!link) throw new Error("no dev magic link rendered");
-  await page.goto(link);
-  await page.waitForURL("**/guardian", { timeout: 5000 });
-};
-
-const ensureStudent = async (page) => {
-  await page.goto(`${APP}/guardian`);
-  await page.waitForLoadState("networkidle");
-  const studentLink = await page.locator('a[href^="/guardian/"]').filter({ hasNotText: "Diag" }).first();
-  if ((await studentLink.count()) > 0) {
-    const href = await studentLink.getAttribute("href");
-    if (href && href.startsWith("/guardian/") && href !== "/guardian/add-student" && href !== "/guardian/diag") {
-      return href.replace("/guardian/", "");
-    }
-  }
-  // No student — create one.
-  await page.goto(`${APP}/guardian/add-student`);
-  await page.fill('input[name="display_name"]', "Ada");
-  await page.selectOption('select[name="grade"]', "K");
-  await page.click('button[type="submit"]');
-  await page.waitForSelector('a[href^="/guardian/"]', { timeout: 5000 });
-  const dashLink = await page.locator('a[href^="/guardian/"]').filter({ hasText: "Open dashboard" }).first();
-  const href = await dashLink.getAttribute("href");
-  return href.replace("/guardian/", "");
-};
-
-/**
  * Tour for a given viewport. Records video into <dir>/video/ if recordVideo set.
  */
 const tour = async (browser, label, dir, viewport, recordVideo) => {
@@ -101,6 +64,7 @@ const tour = async (browser, label, dir, viewport, recordVideo) => {
   await shot(page, dir, "03-signin-sent");
 
   const link = await page.locator(".dev-magic-link a").getAttribute("href");
+  if (!link) throw new Error("no dev magic link rendered on /signin");
   await page.goto(link);
   await page.waitForURL("**/guardian");
 
@@ -133,6 +97,7 @@ const tour = async (browser, label, dir, viewport, recordVideo) => {
     .locator('a[href^="/guardian/"]:not([href$="/diag"]):not([href$="/add-student"])')
     .first();
   const href = await firstStudent.getAttribute("href");
+  if (!href) throw new Error("no student link found on /guardian after add-student");
   const studentId = href.replace("/guardian/", "");
 
   await page.goto(`${APP}/guardian/${studentId}`);
