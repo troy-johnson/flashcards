@@ -117,6 +117,14 @@ Phase A is a **micro-pilot**, not a beta launch.
 - Not fixed to a 4-6 week window.
 - Readiness is measured by meaningful use and feedback cycles rather than strict calendar duration.
 
+### Soft Exit Markers
+
+Phase A exits by owner judgment, not a hard calendar gate. Before moving to a broader second-wave pilot, capture at least:
+
+- creator-family use across at least 10 completed sessions over at least two weeks,
+- at least two non-creator pilot households or educators completing at least four sessions each, or providing structured feedback after attempted use,
+- one operator review of the telemetry report and support notes identifying the top routine/usability friction points to fix next.
+
 ### Success Priorities
 
 1. **Routine viability**
@@ -179,7 +187,7 @@ FR7. When adding a student, the guardian must select the child's current/upcomin
 - Kindergarten,
 - 1st Grade.
 
-FR8. The app must start Kindergarten students at the beginning of the Kindergarten sequence.
+FR8. The app must start Kindergarten students at the beginning of the Kindergarten sequence. Phase A does not include a Kindergarten fast-advance path; advanced Kindergarten readers are handled through manual support/adjustment in the trusted pilot context.
 
 FR9. The app must start 1st Grade students on a brief review path covering Kindergarten/early decoding foundations.
 
@@ -208,6 +216,8 @@ FR16. Phase A content must target the v1.0 content bar:
 - approximately 30 fluency sentences,
 - audio for 44 phonemes and common digraphs including `sh`, `ch`, `th`, `wh`, `ck`, `ng`, `qu`, `ll`, `ss`, `ff`, `zz`, and `ph`,
 - TTS fallback for words and sentences.
+
+Phase A audio assumptions must target current iPadOS Safari and current desktop/mobile Chrome/Safari. Audio playback must be initiated by an explicit user gesture, and TTS voice availability/quality must be verified during planning or pilot-device QA rather than assumed uniform across platforms.
 
 FR17. Content authoring should use the approved hybrid approach:
 - UFLI scaffold,
@@ -341,7 +351,7 @@ AC9. A child can complete a practice session and reach a completion/progress sta
 
 AC10. No pilot-visible UI includes points, streaks, badges, avatars, coins, confetti-as-reward, leaderboards, or reward-economy language.
 
-AC11. The v1.0 content bar exists in validated content files or assets: K Units 1-2, 1st Grade Unit 1 phonics, approximately 12 phonics skills, approximately 50 tagged heart words, approximately 200 decodable words, approximately 30 fluency sentences, phoneme/digraph audio coverage, and TTS fallback.
+AC11. The v1.0 content bar exists in validated content files or assets matching the counts declared in the Phase A content manifest, including K Units 1-2, 1st Grade Unit 1 phonics, tagged heart words, decodable words, fluency sentences, phoneme/digraph audio coverage, and TTS fallback.
 
 AC12. Content validation passes for the Phase A content set.
 
@@ -353,7 +363,7 @@ AC15. Learning-routine telemetry records sessions started/completed, completion/
 
 AC16. Pilot-visible screens listed in FR34 have mobile and desktop sanity coverage.
 
-AC17. Pilot-visible interactive controls are keyboard reachable and have visible focus states.
+AC17. Pilot-visible interactive controls are keyboard reachable and have visible focus states; the UI polish pass verifies WCAG 2.1 AA contrast target, reduced-motion behavior where animation exists, and screen-reader-friendly practice status messaging where applicable.
 
 AC18. Privacy/Terms or app support copy gives pilot users a direct contact route for account deletion, student deletion, email/account changes, and data questions.
 
@@ -400,13 +410,14 @@ OQ6. What formal accessibility audit/remediation evidence should be captured at 
 ## 11. Adversarial Review Record
 
 **Packet:** [002-readers-way-phase-a-micro-pilot.adversarial-review.md](002-readers-way-phase-a-micro-pilot.adversarial-review.md)
-**Review rounds:** 1 (scope stress test), 2 (doc consistency pass)
+**Review rounds:** 1 (scope stress test), 2 (doc consistency pass), 3 (testability & coverage pass)
 **Verdict:** APPROVED WITH NITS
 
-Summary: The spec is coherent and implementable. Round 1 identified three planning nits to carry forward: define the exact centralized-copy file surface, convert "advances quickly" into scheduler/content thresholds, and identify the specific telemetry storage/reporting mechanism. Round 2 verified numbering, cross-references, and internal consistency.
+Summary: The spec is coherent and implementable. Round 1 identified three planning nits to carry forward: define the exact centralized-copy file surface, convert "advances quickly" into scheduler/content thresholds, and identify the specific telemetry storage/reporting mechanism (all resolved in the [planning-nits doc](002-readers-way-phase-a-micro-pilot.planning-nits.md)). Round 2 verified numbering, cross-references, and internal consistency. Round 3 added six polish-level nits (8–13): AC11 testability, FR36 accessibility coverage, missing pilot exit criteria, audio-playback assumptions, the advanced-Kindergarten asymmetry, and an explicit child-privacy risk acknowledgment. Those nits have been folded into this spec as pre-implementation documentation refinements and do not change the approved product scope.
 
 ## 12. Scope Control Notes
 
 - Phase A may look broad because it includes content, email, privacy, landing, UI polish, and telemetry. This is intentional: the pilot group is tiny, but they will use real child accounts in a real home routine.
 - Public-launch features remain explicitly deferred.
 - School-readiness is prepared for through tone, content seriousness, privacy basics, and educator feedback, not through classroom product scope.
+- Phase A relies on a trusted-pilot boundary for child-data risk, not a formal COPPA/FERPA consent or procurement regime. Broadening beyond the creator's family and a few known educator/family testers reopens NG7 and requires legal/compliance review.
