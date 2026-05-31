@@ -68,9 +68,15 @@ The spec links `../adrs/001-low-cost-transactional-email.md` (Related artifacts 
 
 ## Required Follow-Up During Planning
 
-1. Define centralized copy/token file surface.
-2. Define deterministic 1st Grade review advancement rule.
-3. Define telemetry storage/reporting mechanism.
+All three planning follow-ups are now resolved at the decision level in the
+[planning-nits doc](002-readers-way-phase-a-micro-pilot.planning-nits.md):
+
+1. Define centralized copy/token file surface. — **Resolved:** shared `packages/copy` TS
+   module (brand chrome only; not word lists; not DB).
+2. Define deterministic 1st Grade review advancement rule. — **Resolved:** per-skill
+   accuracy ≥ 90% over ≥ 4 attempts gates; UFLI automaticity signal recorded, not yet gated.
+3. Define telemetry storage/reporting mechanism. — **Resolved:** reuse existing tables +
+   complete-session endpoint; extend the gated `diag` route into a JSON report.
 
 ## Final Verdict
 
