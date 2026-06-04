@@ -19,6 +19,39 @@ const attemptSchema = z.object({
   shown_at: z.string().min(1)
 });
 
+// Spaced-repetition interval per mastery level (days). `ease` is reserved for a
+// later tuning pass and intentionally left untouched in Phase A.
+const INTERVAL_DAYS: Record<number, number> = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 7 };
+
+type MasteryDelta = { level: number; streak: number; dueAt: string };
+
+const nextMastery = (
+  prev: { level: number; streak: number } | null,
+  result: "correct" | "incorrect" | "skipped",
+  scoredAt: string
+): MasteryDelta => {
+  const prevLevel = prev?.level ?? 0;
+  const prevStreak = prev?.streak ?? 0;
+  let level: number;
+  let streak: number;
+  switch (result) {
+    case "correct":
+      level = Math.min(4, prevLevel + 1);
+      streak = prevStreak + 1;
+      break;
+    case "incorrect":
+      level = Math.max(0, prevLevel - 1);
+      streak = 0;
+      break;
+    case "skipped":
+      level = prevLevel;
+      streak = 0;
+      break;
+  }
+  const dueAt = new Date(Date.parse(scoredAt) + (INTERVAL_DAYS[level] ?? 0) * 86_400_000).toISOString();
+  return { level, streak, dueAt };
+};
+
 export const practiceRoutes = new Hono<{ Bindings: Env; Variables: { guardian: AuthenticatedGuardian } }>();
 
 practiceRoutes.use("*", async (c, next) => {
@@ -86,19 +119,48 @@ practiceRoutes.post("/:studentId/attempt", async (c) => {
   const planMatch = plan.cards.some((card) => card.skill_id === parsed.data.skill_id && card.item_id === parsed.data.item_id);
   if (!planMatch) return c.text("attempt does not match plan", 400);
   const id = ulid();
-  await c.env.DB.prepare(
-    `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'guardian_tap', ?, ?, ?)`
-  ).bind(
-    id,
-    parsed.data.practice_session_id,
-    studentId,
-    parsed.data.skill_id,
-    parsed.data.item_id,
-    parsed.data.result,
-    parsed.data.duration_ms,
-    parsed.data.shown_at,
-    new Date().toISOString()
-  ).run();
+  const scoredAt = new Date().toISOString();
+
+  // Read current mastery, compute new values in TS, then write the attempt and
+  // both upserts in a single D1 batch (one implicit transaction).
+  const skillPrev = await c.env.DB.prepare("SELECT level, streak FROM skill_mastery WHERE student_id = ? AND skill_id = ?")
+    .bind(studentId, parsed.data.skill_id).first<{ level: number; streak: number }>();
+  const itemPrev = await c.env.DB.prepare("SELECT level, streak FROM item_mastery WHERE student_id = ? AND item_id = ?")
+    .bind(studentId, parsed.data.item_id).first<{ level: number; streak: number }>();
+  const skillNext = nextMastery(skillPrev, parsed.data.result, scoredAt);
+  const itemNext = nextMastery(itemPrev, parsed.data.result, scoredAt);
+
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'guardian_tap', ?, ?, ?)`
+    ).bind(
+      id,
+      parsed.data.practice_session_id,
+      studentId,
+      parsed.data.skill_id,
+      parsed.data.item_id,
+      parsed.data.result,
+      parsed.data.duration_ms,
+      parsed.data.shown_at,
+      scoredAt
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO skill_mastery (student_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(student_id, skill_id) DO UPDATE SET level = ?, streak = ?, due_at = ?, last_seen_at = ?`
+    ).bind(
+      studentId, parsed.data.skill_id, skillNext.level, skillNext.streak, skillNext.dueAt, scoredAt,
+      skillNext.level, skillNext.streak, skillNext.dueAt, scoredAt
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO item_mastery (student_id, item_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(student_id, item_id) DO UPDATE SET level = ?, streak = ?, due_at = ?, last_seen_at = ?`
+    ).bind(
+      studentId, parsed.data.item_id, parsed.data.skill_id, itemNext.level, itemNext.streak, itemNext.dueAt, scoredAt,
+      itemNext.level, itemNext.streak, itemNext.dueAt, scoredAt
+    )
+  ]);
   return json({ attempt: { id, scoring_source: "guardian_tap" } }, { status: 201 });
 });
