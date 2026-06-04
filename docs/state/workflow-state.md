@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Telemetry plan (002b) implementation in progress (implement-tdd) on branch `plan/002b-telemetry` (off main). Sequenced before scheduler Wave 4, which depends on telemetry Task 3.
-**Active Branch:** plan/002b-telemetry
-**Active Artifacts:** docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/specs/002-readers-way-phase-a-micro-pilot.md
-**Current Gate:** Telemetry plan (002b) COMPLETE — all 5 tasks. Task 1: `POST /practice/:studentId/complete` (idempotent, ownership-gated). Task 2: `GET /guardian/diag` extended with additive `sessions` + `friction` aggregates. Task 3: app `completePractice` client + DrillRoute end-of-session call (best-effort, try/catch) — **unblocks scheduler Wave 4**. Task 4: session/friction tables rendered in GuardianDiagRoute. Task 5: full-workspace gate green. Full workspace: api 13 tests, app 13 tests, both typecheck + app build clean.
-**Blockers:** none. (Scheduler branch `plan/002c-scheduler-practice` is 20 commits ahead of main, unmerged; its Wave 4 awaits this telemetry landing on main, then a rebase/merge of main into 002c.)
-**Next Action:** push `plan/002b-telemetry`, open the 002b PR, and (per owner) merge to main — then rebase scheduler branch on main and run scheduler Wave 4.
-**Active Snapshot Pointer:** branch `plan/002b-telemetry`, all 5 telemetry tasks GREEN; tree clean
+**Active Phase:** Spec 002 scheduler/practice plan APPROVED WITH NITS (nits resolved) — ready for implementation (implement-tdd)  
+**Active Branch:** main
+**Active Artifacts:** docs/specs/002-readers-way-phase-a-micro-pilot.md; docs/specs/002-readers-way-phase-a-micro-pilot.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.planning-nits.md; docs/plans/002-phase-a-copy-package.md; docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/plans/002-phase-a-scheduler-practice.adversarial-review.md; docs/plans/INDEX.md; https://github.com/troy-johnson/flashcards/pull/18  
+**Current Gate:** PR #18 merged into main. Scheduler/practice plan cleared adversarial review: Rounds 1–2 BLOCK resolved; Round 3 focused re-review APPROVED WITH NITS with all nits cleaned up. Implementation gate open at Wave 1.  
+**Blockers:** none open. Wave 4 (app completion compatibility check) depends on `docs/plans/002-phase-a-telemetry.md` Task 3 merging first.  
+**Next Action:** open an implementation branch for `docs/plans/002-phase-a-scheduler-practice.md` and execute by owner-approved waves, starting Wave 1 (scheduler primitives). Sequence telemetry (002b) Task 3 before scheduler Wave 4.  
+**Active Snapshot Pointer:** main after merged PR #18 plus local scheduler/practice planning edits and the Round 1–3 adversarial review packet (002-phase-a-scheduler-practice.adversarial-review.md)
 
 ## Spec 002 review gate (all 3 rounds)
 
