@@ -39,6 +39,7 @@ const skillRow = (skillId = "phonics_k_u1_short_a") =>
 const itemRow = (itemId = "phonics_k_u1_short_a_cat") =>
   env.DB.prepare("SELECT level, streak, ease, due_at, last_seen_at FROM item_mastery WHERE student_id = ? AND item_id = ?")
     .bind("student1", itemId).first<MasteryRow>();
+const masteryRowsFor = async (card: { skill_id: string; item_id: string }) => [await skillRow(card.skill_id), await itemRow(card.item_id)];
 const attemptCount = async () =>
   (await env.DB.prepare("SELECT COUNT(*) AS n FROM attempt WHERE student_id = ?").bind("student1").first<{ n: number }>())!.n;
 
@@ -117,7 +118,7 @@ describe("practice and diagnostic routes", () => {
 
     // 1. first correct → streak 1, level 1, ease 2.5, due_at = scored_at + 1 day
     expect((await attempt("correct", 1200)).status).toBe(201);
-    for (const row of [await skillRow(card.skill_id), await itemRow(card.item_id)]) {
+    for (const row of await masteryRowsFor(card)) {
       expect(row).not.toBeNull();
       expect(row!.streak).toBe(1);
       expect(row!.level).toBe(1);
@@ -127,7 +128,7 @@ describe("practice and diagnostic routes", () => {
 
     // 2. second consecutive correct → streak 2, level 2, due_at = scored_at + 2 days
     expect((await attempt("correct", 1200)).status).toBe(201);
-    for (const row of [await skillRow(card.skill_id), await itemRow(card.item_id)]) {
+    for (const row of await masteryRowsFor(card)) {
       expect(row!.streak).toBe(2);
       expect(row!.level).toBe(2);
       expect(row!.due_at).toBe(addDaysIso(row!.last_seen_at, 2));
@@ -135,7 +136,7 @@ describe("practice and diagnostic routes", () => {
 
     // 3. incorrect → streak 0, level max(0, 2-1)=1, due_at = scored_at + 1 day
     expect((await attempt("incorrect", 1500)).status).toBe(201);
-    for (const row of [await skillRow(card.skill_id), await itemRow(card.item_id)]) {
+    for (const row of await masteryRowsFor(card)) {
       expect(row!.streak).toBe(0);
       expect(row!.level).toBe(1);
       expect(row!.due_at).toBe(addDaysIso(row!.last_seen_at, 1));
@@ -143,7 +144,7 @@ describe("practice and diagnostic routes", () => {
 
     // 4. skipped → streak 0, level unchanged (1), due_at = scored_at + interval(1) = 1 day
     expect((await attempt("skipped", 800)).status).toBe(201);
-    for (const row of [await skillRow(card.skill_id), await itemRow(card.item_id)]) {
+    for (const row of await masteryRowsFor(card)) {
       expect(row!.streak).toBe(0);
       expect(row!.level).toBe(1);
       expect(row!.due_at).toBe(addDaysIso(row!.last_seen_at, 1));
@@ -157,7 +158,7 @@ describe("practice and diagnostic routes", () => {
     const res = await postAttempt(session.id, { skill_id: card.skill_id, item_id: card.item_id, result: "correct", duration_ms: 1200 });
     const after = Date.now() + 60_000;
     expect(res.status).toBe(201);
-    for (const row of [await skillRow(card.skill_id), await itemRow(card.item_id)]) {
+    for (const row of await masteryRowsFor(card)) {
       const seen = Date.parse(row!.last_seen_at);
       // last_seen_at is the real server scored_at (within the request window), not epoch 0 / null / far future.
       expect(seen).toBeGreaterThanOrEqual(before);
