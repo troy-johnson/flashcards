@@ -1,12 +1,12 @@
 # Workflow State
 
 **Active Phase:** Spec 002 scheduler/practice plan APPROVED WITH NITS (nits resolved) — ready for implementation (implement-tdd)  
-**Active Branch:** main
+**Active Branch:** plan/002c-scheduler-practice
 **Active Artifacts:** docs/specs/002-readers-way-phase-a-micro-pilot.md; docs/specs/002-readers-way-phase-a-micro-pilot.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.planning-nits.md; docs/plans/002-phase-a-copy-package.md; docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/plans/002-phase-a-scheduler-practice.adversarial-review.md; docs/plans/INDEX.md; https://github.com/troy-johnson/flashcards/pull/18  
 **Current Gate:** PR #18 merged into main. Scheduler/practice plan cleared adversarial review: Rounds 1–2 BLOCK resolved; Round 3 focused re-review APPROVED WITH NITS with all nits cleaned up. Implementation gate open at Wave 1.  
 **Blockers:** none open. Wave 4 (app completion compatibility check) depends on `docs/plans/002-phase-a-telemetry.md` Task 3 merging first.  
 **Next Action:** open an implementation branch for `docs/plans/002-phase-a-scheduler-practice.md` and execute by owner-approved waves, starting Wave 1 (scheduler primitives). Sequence telemetry (002b) Task 3 before scheduler Wave 4.  
-**Active Snapshot Pointer:** main after merged PR #18 plus local scheduler/practice planning edits and the Round 1–3 adversarial review packet (002-phase-a-scheduler-practice.adversarial-review.md)
+**Active Snapshot Pointer:** branch `plan/002c-scheduler-practice` (off main after merged PR #18) holding the scheduler/practice plan commit 81f6840 and the Round 1–3 adversarial review packet (002-phase-a-scheduler-practice.adversarial-review.md); clean tree, Wave 1 not yet started
 
 ## Spec 002 review gate (all 3 rounds)
 
