@@ -136,6 +136,37 @@ describe("practice and diagnostic routes", () => {
     }
   });
 
+  it("bases last_seen_at and due_at on the server scored_at, not a stale or zero base", async () => {
+    const session = await startSession();
+    const card = session.plan.cards[0]!;
+    const before = Date.now() - 60_000;
+    const res = await postAttempt(session.id, { skill_id: card.skill_id, item_id: card.item_id, result: "correct", duration_ms: 1200 });
+    const after = Date.now() + 60_000;
+    expect(res.status).toBe(201);
+    for (const row of [await skillRow(), await itemRow()]) {
+      const seen = Date.parse(row!.last_seen_at);
+      // last_seen_at is the real server scored_at (within the request window), not epoch 0 / null / far future.
+      expect(seen).toBeGreaterThanOrEqual(before);
+      expect(seen).toBeLessThanOrEqual(after);
+      // due_at is exactly one interval (level 1 => +1 day) past that same base.
+      expect(Date.parse(row!.due_at)).toBe(seen + 86_400_000);
+    }
+  });
+
+  it("rolls back the entire D1 batch when a later statement violates a constraint", async () => {
+    // Proves the atomicity the attempt handler relies on: a batch is one transaction,
+    // so a later failure leaves no earlier row behind. Second insert violates
+    // CHECK (level BETWEEN 0 AND 4).
+    await expect(
+      env.DB.batch([
+        env.DB.prepare("INSERT INTO skill_mastery (student_id, skill_id, level, streak) VALUES (?, ?, ?, ?)").bind("student1", "skill_valid", 1, 1),
+        env.DB.prepare("INSERT INTO skill_mastery (student_id, skill_id, level, streak) VALUES (?, ?, ?, ?)").bind("student1", "skill_bad", 99, 0)
+      ])
+    ).rejects.toThrow();
+    const valid = await env.DB.prepare("SELECT skill_id FROM skill_mastery WHERE student_id = ? AND skill_id = ?").bind("student1", "skill_valid").first();
+    expect(valid).toBeNull();
+  });
+
   it("writes no attempt or mastery row when the attempt is not in the plan", async () => {
     const session = await startSession();
     const forged = await postAttempt(session.id, { skill_id: "phonics_k_u1_short_a", item_id: "not_in_plan", result: "correct", duration_ms: 100 });

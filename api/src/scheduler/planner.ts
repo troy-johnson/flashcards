@@ -1,4 +1,4 @@
-import { loadSchedulerContent } from "./content";
+import { loadSchedulerContent, type SchedulerContent } from "./content";
 import { evaluateReviewSkill, type ReviewAttempt } from "./review";
 
 /** Per-skill / per-item mastery state, defaulting to the schema baseline when absent. */
@@ -40,8 +40,10 @@ export type PracticePlan = {
  * mastery state and must never consult the review heuristic — so a K plan is
  * identical whether or not review-passing attempts are present.
  */
-export function buildPracticePlan(input: PlannerInput): PracticePlan {
-  const content = loadSchedulerContent();
+export function buildPracticePlan(
+  input: PlannerInput,
+  content: SchedulerContent = loadSchedulerContent()
+): PracticePlan {
   const planSize = content.dailyPlanSizeByGrade[input.grade] ?? 0;
 
   // Skills in scope-sequence order (units in file order, skill_ids in unit order).

@@ -122,7 +122,12 @@ practiceRoutes.post("/:studentId/attempt", async (c) => {
   const scoredAt = new Date().toISOString();
 
   // Read current mastery, compute new values in TS, then write the attempt and
-  // both upserts in a single D1 batch (one implicit transaction).
+  // both upserts in a single D1 batch (one implicit transaction — all statements
+  // commit together or none do). The read-then-batch is intentionally NOT row-locked:
+  // per the plan's atomicity decision, D1 is single-writer and one student's
+  // guardian-tap attempts are issued strictly serially, so no concurrent writer
+  // races the same (student_id, skill_id) row. Revisit if concurrent multi-device
+  // practice for one student becomes possible.
   const skillPrev = await c.env.DB.prepare("SELECT level, streak FROM skill_mastery WHERE student_id = ? AND skill_id = ?")
     .bind(studentId, parsed.data.skill_id).first<{ level: number; streak: number }>();
   const itemPrev = await c.env.DB.prepare("SELECT level, streak FROM item_mastery WHERE student_id = ? AND item_id = ?")

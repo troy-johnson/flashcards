@@ -1,8 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { buildPracticePlan } from "./planner";
+import type { SchedulerContent, SchedulerItem } from "./content";
 import type { ReviewAttempt } from "./review";
 
 const emptyState = { skillMastery: {}, itemMastery: {}, recentAttempts: {} };
+
+/** Builds synthetic content with `count` items under one K skill, to stress the daily-plan cap. */
+const overCapContent = (count: number): SchedulerContent => {
+  const items: SchedulerItem[] = Array.from({ length: count }, (_, i) => ({
+    item_id: `it_${String(i).padStart(3, "0")}`,
+    skill_id: "skill_a",
+    text: `item ${i}`
+  }));
+  return {
+    skills: [{ skill_id: "skill_a", grade: "K", prerequisites: [] }],
+    units: [{ unit_id: "u1", grade: "K", skill_ids: ["skill_a"] }],
+    itemsById: Object.fromEntries(items.map((it) => [it.item_id, it])),
+    itemsBySkill: { skill_a: items },
+    dailyPlanSizeByGrade: { K: 16, "1": 22 }
+  };
+};
 
 const fourCorrect: ReviewAttempt[] = [
   { result: "correct", duration_ms: 1000 },
@@ -59,5 +76,50 @@ describe("buildPracticePlan", () => {
     expect(withReviewPassingAttempts.cards.map((c) => c.skill_id)).toContain(
       "pa_k_u1_blend_two_sound"
     );
+  });
+
+  it("truncates a K plan to the daily_plan cap when eligible cards exceed it", () => {
+    const content = overCapContent(40);
+    const plan = buildPracticePlan({ grade: "K", ...emptyState }, content);
+    expect(plan.cards.length).toBe(16);
+    // Deterministic: the first 16 items in sequence order, in order.
+    expect(plan.cards.map((c) => c.item_id)).toEqual(
+      Array.from({ length: 16 }, (_, i) => `it_${String(i).padStart(3, "0")}`)
+    );
+  });
+
+  it("truncates a 1st-grade plan to its (larger) daily_plan cap", () => {
+    const plan = buildPracticePlan({ grade: "1", ...emptyState }, overCapContent(40));
+    expect(plan.cards.length).toBe(22);
+  });
+
+  it("keeps the K no-fast-advance invariant under truncation", () => {
+    const content = overCapContent(40);
+    const withPassing = buildPracticePlan(
+      { grade: "K", skillMastery: {}, itemMastery: {}, recentAttempts: { skill_a: fourCorrect } },
+      content
+    );
+    const without = buildPracticePlan({ grade: "K", ...emptyState }, content);
+    expect(withPassing).toEqual(without);
+    expect(withPassing.cards.length).toBe(16);
+  });
+
+  it("returns an empty plan for an unsupported grade", () => {
+    expect(buildPracticePlan({ grade: "Z", ...emptyState }).cards).toEqual([]);
+  });
+
+  it("returns an empty plan for a 1st grader who has review-passed every K skill (deferred to Wave 3 to surface a reason)", () => {
+    // Phase A has no authored 1st-grade active content, so once all K review
+    // skills pass, the review plan is empty. Wave 3 (route integration) will
+    // encode a terminal reason at the HTTP layer; the pure planner correctly
+    // returns no cards.
+    const allPassed = {
+      pa_k_u1_blend_two_sound: fourCorrect,
+      phonics_k_u1_short_a: fourCorrect,
+      heart_k_u1_batch_01: fourCorrect,
+      fluency_k_u1_cvc_sentences: fourCorrect
+    };
+    const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
+    expect(plan.cards).toEqual([]);
   });
 });
