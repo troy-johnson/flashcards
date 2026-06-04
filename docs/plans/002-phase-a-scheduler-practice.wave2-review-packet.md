@@ -6,6 +6,26 @@
 
 ---
 
+## 0. Round 1 disposition & resolution (BLOCK → resolved)
+
+Round 1 returned **BLOCK** (reviewer worked from the summary, not the full code). Resolution status:
+
+| # | Finding | Disposition | Resolution |
+| --- | --- | --- | --- |
+| BLOCK 1 | Interval-base test can't prove base | Fixed | New `practice.test.ts` case brackets `last_seen_at`/`due_at` to the server scored_at and asserts `due_at == last_seen_at + interval`. (Design note: this scheduler uses a single server `scored_at` = now; the reviewer's three-distinct-timestamps scenario is not reachable.) |
+| BLOCK 2 | Cap not stress-tested | Fixed | Added optional injected-content seam to `buildPracticePlan`; new tests feed 40 cards and assert cap=16 (K) / 22 (1st), deterministic order, and K no-fast-advance under truncation. |
+| BLOCK 3 | Batch atomicity unproven | Fixed | New `practice.test.ts` case runs a batch whose 2nd statement violates the level CHECK and asserts the 1st row never persists — empirically proves D1 batch rollback in the actual `cloudflare:test` runtime. Matches documented Cloudflare D1 behavior. |
+| IMPORTANT 4 | Read-then-batch concurrency | Documented (no code change) | Already an owner-approved decision (plan §Atomicity + packet §2); added an inline pointer comment at the call site. Single-writer D1 + strictly serial per-student guardian-taps; no lock added by design. |
+| IMPORTANT 5 | Silent empty plan for 1st grader | Deferred to Wave 3 (owner decision) | Planner correctly returns an empty card list; a documented test pins this. The terminal **reason** (e.g. `all_kindergarten_skills_mastered`) will be surfaced at the route layer in Wave 3 route integration, where the HTTP contract lives. |
+| IMPORTANT 6 | Accepted-but-unused mastery inputs | Pushed back (no change) | `buildPracticePlan` is an internal function, not an HTTP endpoint — no client is wired until Wave 3. Params are part of the approved plan signature and already JSDoc'd as reserved/ignored, satisfying the reviewer's own documentation option. |
+| NIT | Transition/edge exhaustiveness | Addressed | Added unsupported-grade and all-K-passed edge tests. |
+
+**Post-fix status:** full api suite green (39 tests), `tsc --noEmit` clean. Commit `4-fix` follows the four Wave 2 RED/GREEN commits.
+
+A Round 2 re-review (optional) need only confirm the five required-unblock items above; §5 questions 1, 7, 10, 13 are the ones the fixes target.
+
+---
+
 ## 1. Context
 
 - **Project:** "Reader's Way" Phase A micro-pilot — a literacy flashcard practice app. Backend is a Cloudflare Workers API (Hono + Zod) over Cloudflare D1 (SQLite). Content is **K-only** for Phase A (one K unit, 4 skills, 4 items).
