@@ -11,16 +11,20 @@ const resetDb = async () => {
   await env.DB.prepare("INSERT INTO session (id, guardian_id, expires_at, created_at) VALUES (?, ?, ?, ?)").bind("s_diag", "g_diag", future, now).run();
   await env.DB.prepare("INSERT INTO session (id, guardian_id, expires_at, created_at) VALUES (?, ?, ?, ?)").bind("s_other", "g_other", future, now).run();
   await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)").bind("student1", "g_diag", "Ada", "K", now).run();
+  await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)").bind("student2", "g_diag", "Grace", "1", now).run();
 };
 
 type PracticeSession = { id: string; plan: { cards: { item_id: string; skill_id: string }[] } };
 type MasteryRow = { level: number; streak: number; ease: number; due_at: string; last_seen_at: string };
 
-const startSession = async (): Promise<PracticeSession> => {
-  const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+const startSessionFor = async (studentId: string): Promise<PracticeSession> => {
+  const start = await SELF.fetch(`https://api.test/practice/${studentId}/start`, { method: "POST", headers: { cookie: "session=s_diag" } });
+  expect(start.status).toBe(201);
   const started = await start.json<{ practice_session: PracticeSession }>();
   return started.practice_session;
 };
+
+const startSession = () => startSessionFor("student1");
 
 const postAttempt = (sessionId: string, body: Record<string, unknown>) =>
   SELF.fetch("https://api.test/practice/student1/attempt", {
@@ -58,6 +62,16 @@ describe("practice and diagnostic routes", () => {
     expect(attempt.status).toBe(201);
     const row = await env.DB.prepare("SELECT scoring_source, result FROM attempt WHERE student_id = ?").bind("student1").first<{ scoring_source: string; result: string }>();
     expect(row).toEqual({ scoring_source: "guardian_tap", result: "correct" });
+  });
+
+  it("starts grade-aware plans from scheduler content", async () => {
+    const kSession = await startSessionFor("student1");
+    const firstGradeSession = await startSessionFor("student2");
+
+    expect(kSession.plan.cards[0]?.skill_id).toBe("pa_k_u1_blend_two_sound");
+    expect(firstGradeSession.plan.cards[0]?.skill_id).toBe("pa_k_u1_blend_two_sound");
+    expect(new Set(kSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
+    expect(new Set(firstGradeSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
   });
 
   it("rejects non-guardian-tap scoring sources and gates diagnostics", async () => {
