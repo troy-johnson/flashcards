@@ -53,3 +53,34 @@ describe("complete-session endpoint", () => {
     expect(forbidden.status).toBe(404);
   });
 });
+
+describe("diag telemetry aggregates", () => {
+  beforeEach(seed);
+
+  it("reports sessions started/completed and top friction items", async () => {
+    const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+    const completedAt = new Date(Date.now() - 4 * 60_000).toISOString();
+    // One completed session, one still open.
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at, completed_at) VALUES (?, ?, '{}', ?, ?)").bind("ps_done", "student1", startedAt, completedAt).run();
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, '{}', ?)").bind("ps_open", "student1", startedAt).run();
+    // Friction: two misses on the same item.
+    const ins = "INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at) VALUES (?, ?, ?, ?, ?, ?, 'guardian_tap', 1000, ?, ?)";
+    await env.DB.prepare(ins).bind("a1", "ps_done", "student1", "phonics_k_u1_short_a", "word_cat", "incorrect", startedAt, completedAt).run();
+    await env.DB.prepare(ins).bind("a2", "ps_done", "student1", "phonics_k_u1_short_a", "word_cat", "skipped", startedAt, completedAt).run();
+    await env.DB.prepare(ins).bind("a3", "ps_done", "student1", "phonics_k_u1_short_a", "word_map", "correct", startedAt, completedAt).run();
+
+    const res = await SELF.fetch("https://api.test/guardian/diag", { headers: { cookie: "session=s_diag" } });
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      sessions: { student_id: string; started: number; completed: number; avg_duration_ms: number | null }[];
+      friction: { student_id: string; skill_id: string; item_id: string; misses: number }[];
+    }>();
+
+    const student1Sessions = body.sessions.find((s) => s.student_id === "student1");
+    expect(student1Sessions).toMatchObject({ started: 2, completed: 1 });
+    expect(student1Sessions!.avg_duration_ms).toBeGreaterThan(0);
+
+    const topFriction = body.friction[0]!;
+    expect(topFriction).toMatchObject({ item_id: "word_cat", misses: 2 });
+  });
+});
