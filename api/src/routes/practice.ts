@@ -82,7 +82,7 @@ const loadStudentPlanState = async (env: Env, guardianId: string, studentId: str
   const { results: itemRows } = await env.DB.prepare("SELECT item_id, level, streak FROM item_mastery WHERE student_id = ?")
     .bind(studentId).all<{ item_id: string; level: number; streak: number }>();
   const { results: attemptRows } = await env.DB.prepare(
-    "SELECT skill_id, result, duration_ms FROM attempt WHERE student_id = ? ORDER BY scored_at DESC LIMIT 200"
+    "SELECT skill_id, result, duration_ms FROM attempt WHERE student_id = ? ORDER BY scored_at DESC"
   ).bind(studentId).all<{ skill_id: string; result: ReviewAttempt["result"]; duration_ms: number }>();
 
   const skillMastery = Object.fromEntries(skillRows.map((row) => [row.skill_id, { level: row.level, streak: row.streak }]));
