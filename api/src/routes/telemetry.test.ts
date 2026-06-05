@@ -71,10 +71,10 @@ describe("diag telemetry aggregates", () => {
 
     const res = await SELF.fetch("https://api.test/guardian/diag", { headers: { cookie: "session=s_diag" } });
     expect(res.status).toBe(200);
-    const body = await res.json<{
+    const body: {
       sessions: { student_id: string; started: number; completed: number; avg_duration_ms: number | null }[];
       friction: { student_id: string; skill_id: string; item_id: string; misses: number }[];
-    }>();
+    } = await res.json();
 
     const student1Sessions = body.sessions.find((s) => s.student_id === "student1");
     expect(student1Sessions).toMatchObject({ started: 2, completed: 1 });
