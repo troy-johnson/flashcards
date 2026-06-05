@@ -14,7 +14,7 @@ const resetDb = async () => {
   await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)").bind("student2", "g_diag", "Grace", "1", now).run();
 };
 
-type PracticeSession = { id: string; plan: { cards: { item_id: string; skill_id: string }[] } };
+type PracticeSession = { id: string; student_id: string; plan: { cards: { item_id: string; skill_id: string }[] } };
 type MasteryRow = { level: number; streak: number; ease: number; due_at: string; last_seen_at: string };
 
 const startSessionFor = async (studentId: string): Promise<PracticeSession> => {
@@ -73,6 +73,41 @@ describe("practice and diagnostic routes", () => {
     expect(firstGradeSession.plan.cards[0]?.skill_id).toBe("pa_k_u1_blend_two_sound");
     expect(new Set(kSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
     expect(new Set(firstGradeSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
+  });
+
+  it("uses 1st-grade review history when starting and persisting scheduler plans", async () => {
+    const startedAt = "2026-01-01T00:00:00.000Z";
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
+      .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
+
+    const statements = [];
+    for (let i = 0; i < 4; i++) {
+      const scoredAt = new Date(Date.parse(startedAt) + i * 1000).toISOString();
+      statements.push(
+        env.DB.prepare(
+          `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+           VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
+        ).bind(`review_pass_${i}`, "history_session", "student2", "pa_k_u1_blend_two_sound", "pa_k_u1_blend_at", 1000, scoredAt, scoredAt)
+      );
+    }
+    for (let i = 0; i < 200; i++) {
+      const scoredAt = new Date(Date.parse(startedAt) + 10_000 + i * 1000).toISOString();
+      statements.push(
+        env.DB.prepare(
+          `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+           VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
+        ).bind(`noise_${i}`, "history_session", "student2", "noise_skill", "noise_item", 1000, scoredAt, scoredAt)
+      );
+    }
+    await env.DB.batch(statements);
+
+    const session = await startSessionFor("student2");
+    expect(session.student_id).toBe("student2");
+    expect(session.plan.cards[0]?.skill_id).toBe("phonics_k_u1_short_a");
+    expect(session.plan.cards.some((card) => card.skill_id === "pa_k_u1_blend_two_sound")).toBe(false);
+
+    const stored = await env.DB.prepare("SELECT plan_json FROM practice_session WHERE id = ?").bind(session.id).first<{ plan_json: string }>();
+    expect(JSON.parse(stored!.plan_json)).toEqual(session.plan);
   });
 
   it("rejects non-guardian-tap scoring sources and gates diagnostics", async () => {
