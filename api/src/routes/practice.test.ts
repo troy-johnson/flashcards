@@ -44,6 +44,11 @@ const attemptCount = async () =>
   (await env.DB.prepare("SELECT COUNT(*) AS n FROM attempt WHERE student_id = ?").bind("student1").first<{ n: number }>())!.n;
 
 const addDaysIso = (iso: string, days: number) => new Date(Date.parse(iso) + days * 86_400_000).toISOString();
+const insertAttemptStatement = (id: string, studentId: string, skillId: string, itemId: string, scoredAt: string) =>
+  env.DB.prepare(
+    `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+     VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
+  ).bind(id, "history_session", studentId, skillId, itemId, 1000, scoredAt, scoredAt);
 
 describe("practice and diagnostic routes", () => {
   beforeEach(resetDb);
@@ -83,21 +88,11 @@ describe("practice and diagnostic routes", () => {
     const statements = [];
     for (let i = 0; i < 4; i++) {
       const scoredAt = new Date(Date.parse(startedAt) + i * 1000).toISOString();
-      statements.push(
-        env.DB.prepare(
-          `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
-           VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
-        ).bind(`review_pass_${i}`, "history_session", "student2", "pa_k_u1_blend_two_sound", "pa_k_u1_blend_at", 1000, scoredAt, scoredAt)
-      );
+      statements.push(insertAttemptStatement(`review_pass_${i}`, "student2", "pa_k_u1_blend_two_sound", "pa_k_u1_blend_at", scoredAt));
     }
     for (let i = 0; i < 200; i++) {
       const scoredAt = new Date(Date.parse(startedAt) + 10_000 + i * 1000).toISOString();
-      statements.push(
-        env.DB.prepare(
-          `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
-           VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
-        ).bind(`noise_${i}`, "history_session", "student2", "noise_skill", "noise_item", 1000, scoredAt, scoredAt)
-      );
+      statements.push(insertAttemptStatement(`noise_${i}`, "student2", "noise_skill", "noise_item", scoredAt));
     }
     await env.DB.batch(statements);
 
