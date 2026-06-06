@@ -39,5 +39,11 @@ export const scoreAttempt = (studentId: string, input: AttemptInput): Promise<{ 
     body: JSON.stringify(input)
   });
 
+export const completePractice = (studentId: string, practiceSessionId: string): Promise<{ practice_session: { id: string; completed_at: string } }> =>
+  apiFetch<{ practice_session: { id: string; completed_at: string } }>(`/practice/${studentId}/complete`, {
+    method: "POST",
+    body: JSON.stringify({ practice_session_id: practiceSessionId })
+  });
+
 export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[] }> =>
   apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[] }>("/guardian/diag");

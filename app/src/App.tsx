@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  completePractice,
   consumeMagicLink,
   createStudent,
   getCurrentGuardian,
@@ -504,6 +505,11 @@ function DrillRoute({ studentId }: { studentId: string }) {
     }
     const next = advancePractice(studentId, practice);
     if (!next) {
+      try {
+        await completePractice(studentId, practice.session.id);
+      } catch {
+        /* completion is best-effort telemetry; never block the child's finish screen */
+      }
       navigate(`/play/${studentId}/done`);
       return;
     }
