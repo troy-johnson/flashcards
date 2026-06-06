@@ -13,6 +13,7 @@ import {
   startPractice
 } from "./api/literacy";
 import type { AttemptResult, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
+import { landing } from "copy";
 import { PhonicsCard } from "./components/cards/PhonicsCard";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
 import "./App.css";
@@ -55,12 +56,9 @@ function LandingRoute() {
     <main className="page-shell landing-shell">
       <div className="landing">
         <section className="panel hero-panel">
-          <p className="eyebrow">Literacy practice</p>
-          <h1>Short, calm reading practice with your child.</h1>
-          <p className="landing-lede">
-            Daily 8&ndash;10 minute sessions for kindergarten and 1st-grade readers.
-            You sit with your child; the app handles what comes next.
-          </p>
+          <p className="eyebrow">{landing.eyebrow}</p>
+          <h1>{landing.headline}</h1>
+          <p className="landing-lede">{landing.subtitle}</p>
           <a className="primary-link" href="/signin">Sign in</a>
         </section>
 

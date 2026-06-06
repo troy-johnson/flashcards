@@ -51,6 +51,9 @@ importers:
 
   app:
     dependencies:
+      copy:
+        specifier: workspace:*
+        version: link:../packages/copy
       react:
         specifier: ^19.2.6
         version: 19.2.6
