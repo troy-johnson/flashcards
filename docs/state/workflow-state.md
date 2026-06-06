@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 — remaining-scope PLANNING on branch `plan/002-remaining-planning`. Shipped to main: copy (002a/#22), telemetry (002b/#19), scheduler+terminal-reason (002c/#21,#23), completion-failure test (#24). Remaining 002 broken into Beads epics A–E; email-provider plan (002d) drafted.  
-**Active Branch:** plan/002-remaining-planning (off main)
-**Active Artifacts:** docs/plans/002d-phase-a-email-provider.md; docs/plans/INDEX.md; docs/specs/002-readers-way-phase-a-micro-pilot.md; Beads: rw-1gz (Phase A epic) and children rw-1gz.7–.11  
-**Current Gate:** Remaining Spec 002 scope mapped (delivered vs remaining) and tracked in Beads: rw-1gz.7 email provider (FR19/22/23, AC3) — plan 002d drafted with task beads rw-1gz.7.1–.3; rw-1gz.8 v1.0 content bar (FR16–18, AC11–12); rw-1gz.9 landing page (FR24–26, AC13); rw-1gz.10 privacy/terms + contact (FR27–29/37–39, AC14/18–19); rw-1gz.11 UI polish & a11y (FR33–36, AC16–17, blocked-on .9+.10). Recommended sequence: A+B → C/D → E. Also filed niceties rw-1gz.5 (all-caught-up UI) and rw-1gz.6 (onboarding copy wiring).  
-**Blockers:** none. Open P3/nicety beads: rw-1gz.4 (completion-failure test — DONE/merged via #24), rw-1gz.5, rw-1gz.6.  
-**Next Action:** merge this planning branch, then implement email provider (002d) starting with `rw-1gz.7.1` (widen issuer env typings) → `rw-1gz.7.2` (resend issuer, TDD) → `rw-1gz.7.3` (deploy config).  
-**Active Snapshot Pointer:** branch `plan/002-remaining-planning`; remaining-002 epics created and email plan (002d) drafted; awaiting PR.
+**Active Phase:** Spec 002 — content-bar PLANNING on branch `plan/002e-content-bar-planning`. Shipped to main: copy (002a/#22), telemetry (002b/#19), scheduler+terminal-reason (002c/#21,#23), completion-failure test (#24), remaining-scope planning (#25). Plans drafted: email (002d), content bar (002e). Spec-002 open items triaged + filed as beads.  
+**Active Branch:** plan/002e-content-bar-planning (off main)
+**Active Artifacts:** docs/plans/002e-phase-a-content-bar.md; docs/adrs/002-phase-a-audio-strategy.md; docs/plans/002d-phase-a-email-provider.md; docs/plans/INDEX.md; docs/adrs/INDEX.md; Beads: rw-1gz + children .7–.13  
+**Current Gate:** Spec 002 open items triaged (register) and filed as beads under their workstreams: content bar `rw-1gz.8` → .8.1 manifest/validator, .8.2 audio, .8.3 authoring, .8.4 1st-grade U1 (Phase 2); polish `rw-1gz.11` → .11.1 a11y verification method, .11.2 sanity breakpoints; email `rw-1gz.7.4` rate-limit; `rw-1gz.12` multi-child verify; `rw-1gz.13` exit-marker diag reads. Content-bar plan (002e) drafted: **phased K U1–2 first, 1st-grade U1 second**; content manifest + validator count gate makes AC11 binary; audio per **ADR-002** (real phoneme/digraph assets + TTS fallback + gesture playback); LLM-assisted authoring for pilot (hand-author long-term). Deferred (later phases): OQ1–6.  
+**Blockers:** none.  
+**Next Action:** merge this planning branch, then implement — recommended order email provider (002d, `rw-1gz.7.1`→.7.3) and/or content bar Phase 1 (002e, `rw-1gz.8.1` manifest+validator first).  
+**Active Snapshot Pointer:** branch `plan/002e-content-bar-planning`; ADR-002 + 002e plan + open-item beads created; awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 
