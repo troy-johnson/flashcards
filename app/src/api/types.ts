@@ -45,3 +45,17 @@ export type DiagnosticSummaryRow = {
   result: AttemptResult;
   attempts: number;
 };
+
+export interface SessionSummaryRow {
+  student_id: string;
+  started: number;
+  completed: number;
+  avg_duration_ms: number | null;
+}
+
+export interface FrictionRow {
+  student_id: string;
+  skill_id: string;
+  item_id: string;
+  misses: number;
+}

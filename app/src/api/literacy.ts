@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptInput, DiagnosticSummaryRow, Guardian, PracticeSession, Student } from "./types";
+import type { AttemptInput, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
 
 export interface SignInResponse {
   /** Present only when the API runs with the dev-log email issuer — never set in production. */
@@ -45,5 +45,5 @@ export const completePractice = (studentId: string, practiceSessionId: string): 
     body: JSON.stringify({ practice_session_id: practiceSessionId })
   });
 
-export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[] }> =>
-  apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[] }>("/guardian/diag");
+export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }> =>
+  apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }>("/guardian/diag");
