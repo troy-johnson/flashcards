@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
+    "copy": "workspace:*",
     "hono": "^4.6.16",
     "ulid": "^2.3.0",
     "zod": "^3.24.1"

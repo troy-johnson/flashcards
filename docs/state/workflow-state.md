@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 scheduler/practice (Plan 002c) — Waves 1–5 COMPLETE; adversarial PR/QA gate is READY. Operational tracking now lives in **Beads** (`bd`, prefix `rw`); epic `rw-1gz.1` (Scheduler & practice).  
-**Active Branch:** plan/002c-scheduler-practice (rebased onto main — includes Beads tracker + telemetry `completePractice` contract)
-**Active Artifacts:** docs/plans/002-phase-a-scheduler-practice.md; docs/plans/002-phase-a-scheduler-practice.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.md (+ .planning-nits.md); Beads: rw-1gz (Phase A epic), rw-1gz.1 (scheduler epic)  
-**Current Gate:** Waves 1–5 COMPLETE on branch `plan/002c-scheduler-practice`. Wave 1: content loader + review-rule helper. Wave 2: `api/src/scheduler/planner.ts` (buildPracticePlan, injected-content seam) + mastery upsert in `api/src/routes/practice.ts` (single D1 batch); Wave 2 adversarial Round 1 BLOCK resolved (BLOCK 1–3 fixed, IMPORTANT 4 documented, IMPORTANT 5 deferred, IMPORTANT 6 pushed back). Wave 3: route integration (grade-aware start plans, full review history retained). Wave 4 (verify-only, `rw-1gz.1.1` CLOSED): play.test.tsx uses telemetry's `completePractice` mock + contract, asserts call + navigation to `/play/student1/done`. Wave 5: adversarial review recorded in `.agents/snapshots/scheduler-adversarial-review-2026-06-06.md` with verdict **APPROVED WITH NITS**. Full reviewer gate green: tsc clean, **api 46 tests**, **app 13 tests**, content validation clean, app build clean.  
-**Blockers:** none. Open Beads follow-ups: `rw-1gz.1.3` (deferred — surface 1st-grade empty-plan terminal reason at route/HTTP layer, IMPORTANT 5), `rw-1gz.4` (P3 — assert completion-failure best-effort in play.test.tsx, discovered in Wave 4).  
-**Next Action:** return to Claude Code for normal branch/PR hygiene and merge readiness handling; merge is allowed on the recorded `APPROVED WITH NITS` verdict.  
-**Active Snapshot Pointer:** `.agents/snapshots/scheduler-adversarial-review-2026-06-06.md`; branch `plan/002c-scheduler-practice` rebased onto main; Wave 5 adversarial gate complete.
+**Active Phase:** Spec 002 copy package (Plan 002 copy-package) — implementation COMPLETE on branch `plan/002d-copy-package`; PR/merge pending. Scheduler/practice (002c) shipped to main (PR #21). Beads epic `rw-1gz.2` (Copy package), in_progress.  
+**Active Branch:** plan/002d-copy-package (off main)
+**Active Artifacts:** docs/plans/002-phase-a-copy-package.md; docs/specs/002-readers-way-phase-a-micro-pilot.md (+ .planning-nits.md); packages/copy/index.ts; Beads: rw-1gz (Phase A epic), rw-1gz.2 (copy package)  
+**Current Gate:** Copy package Tasks 1–4 COMPLETE on branch `plan/002d-copy-package`. Task 1: `packages/copy` workspace package (typed brand/UI chrome constants, single source of truth). Task 2: app LandingRoute hero reads from `copy` (+ cross-package resolution test). Task 3: `buildMagicLinkEmail` composes subject/body from `copy`; dev-log issuer logs it (RED→GREEN; auth test URL extractor updated for multi-line body). Task 4: full gate green — tsc app+api, **app 15 tests**, **api 48 tests**, content:validate ok, grep guard clean (no stray "Literacy practice"). FR1–FR3/AC1/AC2 covered. Low-risk (brand strings); no mandatory adversarial gate per plan.  
+**Blockers:** none. Open Beads follow-ups: `rw-1gz.1.3` (deferred — 1st-grade empty-plan terminal reason at route layer), `rw-1gz.4` (P3 — completion-failure best-effort test). Onboarding copy constants exported but not yet wired (optional, not AC-required).  
+**Next Action:** push `plan/002d-copy-package`, open the copy-package PR to main, confirm CI green, then merge and close `rw-1gz.2`.  
+**Active Snapshot Pointer:** branch `plan/002d-copy-package` (3 feature commits off main); tree clean except this checkpoint; copy package implemented and gate-green, awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 

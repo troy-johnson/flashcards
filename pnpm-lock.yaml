@@ -26,6 +26,9 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.4.2
         version: 0.4.3(hono@4.12.19)(zod@3.25.76)
+      copy:
+        specifier: workspace:*
+        version: link:../packages/copy
       hono:
         specifier: ^4.6.16
         version: 4.12.19
@@ -51,6 +54,9 @@ importers:
 
   app:
     dependencies:
+      copy:
+        specifier: workspace:*
+        version: link:../packages/copy
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -106,6 +112,8 @@ importers:
       wrangler:
         specifier: ^4.92.0
         version: 4.92.0(@cloudflare/workers-types@4.20260518.1)
+
+  packages/copy: {}
 
 packages:
 

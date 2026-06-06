@@ -1,4 +1,5 @@
 import type { Env } from "../types";
+import { buildMagicLinkEmail } from "./content";
 
 export interface IssuedMagicLink {
   url: string;
@@ -9,7 +10,8 @@ export interface IssuedMagicLink {
 export const issueMagicLink = async (env: Env, email: string, token: string): Promise<IssuedMagicLink> => {
   const url = `${env.APP_ORIGIN}/auth/consume?token=${encodeURIComponent(token)}`;
   if (env.AUTH_EMAIL_ISSUER === "dev-log") {
-    console.log(`[magic-link] ${url}`);
+    const email = buildMagicLinkEmail(url);
+    console.log(`[magic-link] ${email.subject}\n${email.text}`);
     return { url, echoable: true };
   }
   throw new Error(`email issuer ${env.AUTH_EMAIL_ISSUER} is deferred from 001a for ${email}`);

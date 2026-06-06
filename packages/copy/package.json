@@ -1,0 +1,10 @@
+{
+  "name": "copy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "types": "./index.ts"
+}
