@@ -42,6 +42,28 @@ describe("complete-session endpoint", () => {
     expect(secondBody.practice_session.completed_at).toBe(firstBody.practice_session.completed_at);
   });
 
+  it("converges to a single completed_at under concurrent completion", async () => {
+    const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    const started = await start.json<{ practice_session: { id: string } }>();
+    const sessionId = started.practice_session.id;
+
+    const complete = () => SELF.fetch("https://api.test/practice/student1/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: "session=s_diag" },
+      body: JSON.stringify({ practice_session_id: sessionId })
+    });
+    const [r1, r2] = await Promise.all([complete(), complete()]);
+    const [b1, b2] = await Promise.all([
+      r1.json<{ practice_session: { completed_at: string } }>(),
+      r2.json<{ practice_session: { completed_at: string } }>()
+    ]);
+
+    // Both responses must agree, and both must equal the persisted value.
+    expect(b1.practice_session.completed_at).toBe(b2.practice_session.completed_at);
+    const row = await env.DB.prepare("SELECT completed_at FROM practice_session WHERE id = ?").bind(sessionId).first<{ completed_at: string | null }>();
+    expect(row?.completed_at).toBe(b1.practice_session.completed_at);
+  });
+
   it("rejects completion of a session the caller does not own", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
     const started = await start.json<{ practice_session: { id: string } }>();
