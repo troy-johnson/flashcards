@@ -58,6 +58,20 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 - If a required sync or push is blocked, stop and report the exact command and error.
 <!-- END BEADS INTEGRATION -->
 
+## Beads — repo policy (overrides the generated block above)
+
+This repo runs Beads **local-first, single-writer**. Where this conflicts with the
+generated integration block above, this section wins.
+
+- **Do NOT run `bd dolt push`** in any profile — including the team-maintainer session-close
+  recipe above. The binary Dolt db is gitignored and local-only; `.beads/issues.jsonl` +
+  `.beads/config.yaml` are the committed source of truth (`export.auto=true` keeps the JSONL
+  current). Do NOT `bd init` a second workspace.
+- Beads (`bd`) is the operational source of truth for active work; canonical technical docs
+  (`docs/specs`, `docs/plans`, `docs/adrs`, `docs/research`) remain the source of truth for
+  behavior and decisions.
+- Going multi-machine requires an explicit, deliberate switch to Dolt remote sync — not a default.
+
 
 ## Build & Test
 
