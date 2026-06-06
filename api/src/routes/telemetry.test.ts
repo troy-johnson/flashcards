@@ -83,4 +83,25 @@ describe("diag telemetry aggregates", () => {
     const topFriction = body.friction[0]!;
     expect(topFriction).toMatchObject({ item_id: "word_cat", misses: 2 });
   });
+
+  it("scopes session and friction aggregates to the requesting guardian", async () => {
+    const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+    const completedAt = new Date(Date.now() - 4 * 60_000).toISOString();
+    // Another guardian's student with their own session and friction.
+    await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)").bind("student_other", "g_other", "Bo", "K", startedAt).run();
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at, completed_at) VALUES (?, ?, '{}', ?, ?)").bind("ps_other", "student_other", startedAt, completedAt).run();
+    await env.DB.prepare(
+      "INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at) VALUES (?, ?, ?, ?, ?, 'incorrect', 'guardian_tap', 1000, ?, ?)"
+    ).bind("a_other", "ps_other", "student_other", "phonics_k_u1_short_a", "word_other", startedAt, completedAt).run();
+
+    const res = await SELF.fetch("https://api.test/guardian/diag", { headers: { cookie: "session=s_diag" } });
+    expect(res.status).toBe(200);
+    const body: {
+      sessions: { student_id: string }[];
+      friction: { student_id: string; item_id: string }[];
+    } = await res.json();
+
+    expect(body.sessions.some((s) => s.student_id === "student_other")).toBe(false);
+    expect(body.friction.some((f) => f.student_id === "student_other" || f.item_id === "word_other")).toBe(false);
+  });
 });
