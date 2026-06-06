@@ -7,9 +7,11 @@ const resetDb = async () => {
 };
 
 const extractToken = (logs: string[]): string => {
-  const line = logs.find((entry) => entry.startsWith("[magic-link] "));
-  if (!line) throw new Error("no magic link logged");
-  return new URL(line.slice("[magic-link] ".length)).searchParams.get("token")!;
+  const entry = logs.find((line) => line.startsWith("[magic-link] "));
+  if (!entry) throw new Error("no magic link logged");
+  const match = entry.match(/https?:\/\/\S*\/auth\/consume\?token=\S+/);
+  if (!match) throw new Error("no magic link url logged");
+  return new URL(match[0]).searchParams.get("token")!;
 };
 
 describe("auth routes", () => {
