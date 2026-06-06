@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { scoreAttempt, startPractice } from "../api/literacy";
+import { completePractice, scoreAttempt, startPractice } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(),
@@ -25,7 +25,8 @@ vi.mock("../api/literacy", () => ({
       }
     }
   })),
-  scoreAttempt: vi.fn(async () => ({ attempt: { id: "attempt1", scoring_source: "guardian_tap" } }))
+  scoreAttempt: vi.fn(async () => ({ attempt: { id: "attempt1", scoring_source: "guardian_tap" } })),
+  completePractice: vi.fn(async () => ({ practice_session: { id: "practice1", completed_at: "now" } }))
 }));
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -78,6 +79,7 @@ describe("play and drill routes", () => {
     expect(scoreAttempt).toHaveBeenCalledWith("student1", expect.objectContaining({ item_id: "mat", result: "skipped" }));
     expect(window.location.pathname).toBe("/play/student1/done");
     expect(container.textContent).toContain("You’re done");
+    expect(completePractice).toHaveBeenCalledWith("student1", "practice1");
   });
 
   it("lets guardians retry the current card after a failed score save", async () => {
