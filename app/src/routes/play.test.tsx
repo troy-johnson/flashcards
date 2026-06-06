@@ -114,4 +114,35 @@ describe("play and drill routes", () => {
     expect(scoreAttempt).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("mat");
   });
+
+  it("still reaches the finish screen when completion telemetry fails (best-effort)", async () => {
+    (completePractice as unknown as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error("completion endpoint down"));
+
+    window.history.pushState({}, "", "/play/student1");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    await act(async () => {
+      container.querySelector("button")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+
+    // Score both cards; the second tap ends the session and triggers completion.
+    await act(async () => {
+      container.querySelector('button[data-result="correct"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+    await act(async () => {
+      container.querySelector('button[data-result="correct"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flush();
+    });
+
+    // Completion was attempted but rejected — the child still finishes.
+    expect(completePractice).toHaveBeenCalledWith("student1", "practice1");
+    expect(window.location.pathname).toBe("/play/student1/done");
+    expect(container.textContent).toContain("You’re done");
+  });
 });
