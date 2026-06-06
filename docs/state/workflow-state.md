@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 copy package (Plan 002 copy-package) — implementation COMPLETE on branch `plan/002d-copy-package`; PR/merge pending. Scheduler/practice (002c) shipped to main (PR #21). Beads epic `rw-1gz.2` (Copy package), in_progress.  
-**Active Branch:** plan/002d-copy-package (off main)
-**Active Artifacts:** docs/plans/002-phase-a-copy-package.md; docs/specs/002-readers-way-phase-a-micro-pilot.md (+ .planning-nits.md); packages/copy/index.ts; Beads: rw-1gz (Phase A epic), rw-1gz.2 (copy package)  
-**Current Gate:** Copy package Tasks 1–4 COMPLETE on branch `plan/002d-copy-package`. Task 1: `packages/copy` workspace package (typed brand/UI chrome constants, single source of truth). Task 2: app LandingRoute hero reads from `copy` (+ cross-package resolution test). Task 3: `buildMagicLinkEmail` composes subject/body from `copy`; dev-log issuer logs it (RED→GREEN; auth test URL extractor updated for multi-line body). Task 4: full gate green — tsc app+api, **app 15 tests**, **api 48 tests**, content:validate ok, grep guard clean (no stray "Literacy practice"). FR1–FR3/AC1/AC2 covered. Low-risk (brand strings); no mandatory adversarial gate per plan.  
-**Blockers:** none. Open Beads follow-ups: `rw-1gz.1.3` (deferred — 1st-grade empty-plan terminal reason at route layer), `rw-1gz.4` (P3 — completion-failure best-effort test). Onboarding copy constants exported but not yet wired (optional, not AC-required).  
-**Next Action:** push `plan/002d-copy-package`, open the copy-package PR to main, confirm CI green, then merge and close `rw-1gz.2`.  
-**Active Snapshot Pointer:** branch `plan/002d-copy-package` (3 feature commits off main); tree clean except this checkpoint; copy package implemented and gate-green, awaiting PR.
+**Active Phase:** Spec 002 — 1st-grade terminal-reason follow-up (`rw-1gz.1.3`) IMPLEMENTED on branch `plan/002e-terminal-reason`; PR/merge pending. Telemetry (002b), scheduler/practice (002c), copy package (002) all shipped to main.  
+**Active Branch:** plan/002e-terminal-reason (off main)
+**Active Artifacts:** api/src/scheduler/planner.ts (planTerminalReason); api/src/routes/practice.ts; docs/specs/002-readers-way-phase-a-micro-pilot.md; Beads: rw-1gz (Phase A epic)  
+**Current Gate:** `rw-1gz.1.3` complete on `plan/002e-terminal-reason`. Added `planTerminalReason()` to the scheduler; `POST /practice/:studentId/start` now returns `terminal_reason: "review_complete_no_active_content"` when a 1st grader has review-passed every K skill (empty plan; no authored 1st-grade active content). Absent for normal/K starts. Covered by route tests (positive + negative) and planner unit tests. Gate green: tsc app+api, **app 15 tests**, **api 53 tests**, content:validate ok. Resolves Wave 2 review IMPORTANT 5.  
+**Blockers:** none. Open Beads follow-up: `rw-1gz.4` (P3 — completion-failure best-effort test in play.test.tsx). Optional: wire app to show "all caught up" on `terminal_reason` (not yet done).  
+**Next Action:** push `plan/002e-terminal-reason`, open the PR to main, confirm CI green, then merge and (epic `rw-1gz.1` then has no open children) consider closing the scheduler epic.  
+**Active Snapshot Pointer:** branch `plan/002e-terminal-reason` (1 feature commit off main); terminal-reason implemented and gate-green, awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 
