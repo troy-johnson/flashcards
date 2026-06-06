@@ -150,3 +150,6 @@ vite.config.ts.timestamp-*
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.beads/*.db
+.beads/*.db-*
+.beads/.dolt/
