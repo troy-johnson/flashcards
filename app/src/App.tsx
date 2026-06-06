@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  completePractice,
   consumeMagicLink,
   createStudent,
   getCurrentGuardian,
@@ -11,7 +12,7 @@ import {
   signIn,
   startPractice
 } from "./api/literacy";
-import type { AttemptResult, DiagnosticSummaryRow, Guardian, Student } from "./api/types";
+import type { AttemptResult, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
 import { PhonicsCard } from "./components/cards/PhonicsCard";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
 import "./App.css";
@@ -311,7 +312,7 @@ function StudentDashboardRoute({ studentId }: { studentId: string }) {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getStudent(studentId), getGuardianDiag().catch(() => ({ summary: [] as DiagnosticSummaryRow[] }))])
+    Promise.all([getStudent(studentId), getGuardianDiag().catch(() => ({ summary: [] as DiagnosticSummaryRow[], sessions: [], friction: [] }))])
       .then(([{ student }, diag]) => {
         if (!active) return;
         setStudent(student);
@@ -382,7 +383,7 @@ function StudentSettingsRoute({ studentId }: { studentId: string }) {
 }
 
 function GuardianDiagRoute() {
-  const [data, setData] = useState<{ guardian: Guardian; summary: DiagnosticSummaryRow[] } | null>(null);
+  const [data, setData] = useState<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] } | null>(null);
   const [status, setStatus] = useState<FetchStatus>("loading");
 
   useEffect(() => {
@@ -407,26 +408,69 @@ function GuardianDiagRoute() {
         {status === "loading" && <p>Loading diagnostics…</p>}
         {status === "error" && <p role="alert">Could not load diagnostics. You may not have access on this account.</p>}
         {status === "ready" && data && (
-          data.summary.length === 0 ? (
-            <p className="empty">No attempts recorded yet.</p>
-          ) : (
-            <table className="diag-table">
-              <thead>
-                <tr><th>Student</th><th>Skill</th><th>Item</th><th>Result</th><th>Attempts</th></tr>
-              </thead>
-              <tbody>
-                {data.summary.map((row, i) => (
-                  <tr key={`${row.student_id}:${row.skill_id}:${row.item_id}:${row.result}:${i}`}>
-                    <td>{row.student_id}</td>
-                    <td>{row.skill_id}</td>
-                    <td>{row.item_id}</td>
-                    <td>{row.result}</td>
-                    <td>{row.attempts}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )
+          <>
+            <h2>Sessions</h2>
+            {data.sessions.length === 0 ? (
+              <p className="empty">No practice sessions yet.</p>
+            ) : (
+              <table className="diag-table">
+                <thead>
+                  <tr><th>Student</th><th>Started</th><th>Completed</th><th>Avg duration</th></tr>
+                </thead>
+                <tbody>
+                  {data.sessions.map((s) => (
+                    <tr key={s.student_id}>
+                      <td>{s.student_id}</td>
+                      <td>{s.started}</td>
+                      <td>{s.completed}</td>
+                      <td>{s.avg_duration_ms === null ? "—" : `${Math.round(s.avg_duration_ms / 1000)}s`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {data.friction.length > 0 && (
+              <>
+                <h2>Top friction</h2>
+                <table className="diag-table">
+                  <thead>
+                    <tr><th>Student</th><th>Skill</th><th>Item</th><th>Misses</th></tr>
+                  </thead>
+                  <tbody>
+                    {data.friction.map((f, i) => (
+                      <tr key={`${f.student_id}:${f.skill_id}:${f.item_id}:${i}`}>
+                        <td>{f.student_id}</td>
+                        <td>{f.skill_id}</td>
+                        <td>{f.item_id}</td>
+                        <td>{f.misses}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+            <h2>Attempts</h2>
+            {data.summary.length === 0 ? (
+              <p className="empty">No attempts recorded yet.</p>
+            ) : (
+              <table className="diag-table">
+                <thead>
+                  <tr><th>Student</th><th>Skill</th><th>Item</th><th>Result</th><th>Attempts</th></tr>
+                </thead>
+                <tbody>
+                  {data.summary.map((row, i) => (
+                    <tr key={`${row.student_id}:${row.skill_id}:${row.item_id}:${row.result}:${i}`}>
+                      <td>{row.student_id}</td>
+                      <td>{row.skill_id}</td>
+                      <td>{row.item_id}</td>
+                      <td>{row.result}</td>
+                      <td>{row.attempts}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
         )}
         <p><a href="/guardian">Back to dashboard</a></p>
       </section>
@@ -504,6 +548,11 @@ function DrillRoute({ studentId }: { studentId: string }) {
     }
     const next = advancePractice(studentId, practice);
     if (!next) {
+      try {
+        await completePractice(studentId, practice.session.id);
+      } catch {
+        /* completion is best-effort telemetry; never block the child's finish screen */
+      }
       navigate(`/play/${studentId}/done`);
       return;
     }

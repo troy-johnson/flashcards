@@ -47,6 +47,29 @@ practiceRoutes.post("/:studentId/start", async (c) => {
   return json({ practice_session: { id, student_id: studentId, plan } }, { status: 201 });
 });
 
+practiceRoutes.post("/:studentId/complete", async (c) => {
+  const guardian = c.get("guardian");
+  const studentId = c.req.param("studentId");
+  if (!(await ownsStudent(c.env, guardian.id, studentId))) return c.text("not found", 404);
+  const body = await c.req.json().catch(() => null);
+  const sessionId = body?.practice_session_id;
+  if (typeof sessionId !== "string" || sessionId.length === 0) return c.text("invalid", 400);
+  const row = await c.env.DB.prepare("SELECT id, completed_at FROM practice_session WHERE id = ? AND student_id = ?")
+    .bind(sessionId, studentId).first<{ id: string; completed_at: string | null }>();
+  if (!row) return c.text("practice session not found", 404);
+  if (!row.completed_at) {
+    // Conditional write so a concurrent completion cannot overwrite the first
+    // timestamp; only the call that finds completed_at still NULL lands.
+    await c.env.DB.prepare("UPDATE practice_session SET completed_at = ? WHERE id = ? AND completed_at IS NULL")
+      .bind(new Date().toISOString(), sessionId).run();
+  }
+  // Re-read so every caller returns the persisted (authoritative) value, even
+  // if another request won the race.
+  const persisted = await c.env.DB.prepare("SELECT completed_at FROM practice_session WHERE id = ?")
+    .bind(sessionId).first<{ completed_at: string | null }>();
+  return json({ practice_session: { id: sessionId, completed_at: persisted?.completed_at ?? null } });
+});
+
 practiceRoutes.post("/:studentId/attempt", async (c) => {
   const guardian = c.get("guardian");
   const studentId = c.req.param("studentId");

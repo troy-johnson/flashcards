@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 Round 3 review resolved — spec ready for owner review/merge
-**Active Branch:** docs/phase-a-planning-nits
-**Active Artifacts:** docs/specs/002-readers-way-phase-a-micro-pilot.md; docs/specs/002-readers-way-phase-a-micro-pilot.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.planning-nits.md; docs/specs/INDEX.md; https://github.com/troy-johnson/flashcards/pull/18
-**Current Gate:** PR #18 is open and mergeable. Spec 002 verdict `APPROVED WITH NITS` across 3 review rounds. Round 1 planning nits (1–3) resolved in planning-nits doc; Round 3 nits (8–13) resolved in spec body at commit a0a51f7.
-**Blockers:** none
-**Next Action:** owner review/merge PR #18, then turn the planning-nits decisions + Round 3 outcomes into the implementation plan alongside the scheduler/practice build. Implementation plans already drafted: docs/plans/002-phase-a-copy-package.md, docs/plans/002-phase-a-telemetry.md.
-**Active Snapshot Pointer:** PR #18 (`docs/phase-a-planning-nits`)
+**Active Phase:** Telemetry plan (002b) implementation in progress (implement-tdd) on branch `plan/002b-telemetry` (off main). Sequenced before scheduler Wave 4, which depends on telemetry Task 3.
+**Active Branch:** plan/002b-telemetry
+**Active Artifacts:** docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/specs/002-readers-way-phase-a-micro-pilot.md
+**Current Gate:** Telemetry plan (002b) COMPLETE — all 5 tasks. Task 1: `POST /practice/:studentId/complete` (idempotent, ownership-gated). Task 2: `GET /guardian/diag` extended with additive `sessions` + `friction` aggregates. Task 3: app `completePractice` client + DrillRoute end-of-session call (best-effort, try/catch) — **unblocks scheduler Wave 4**. Task 4: session/friction tables rendered in GuardianDiagRoute. Task 5: full-workspace gate green. Full workspace: api 13 tests, app 13 tests, both typecheck + app build clean.
+**Blockers:** none. (Scheduler branch `plan/002c-scheduler-practice` is 20 commits ahead of main, unmerged; its Wave 4 awaits this telemetry landing on main, then a rebase/merge of main into 002c.)
+**Next Action:** push `plan/002b-telemetry`, open the 002b PR, and (per owner) merge to main — then rebase scheduler branch on main and run scheduler Wave 4.
+**Active Snapshot Pointer:** branch `plan/002b-telemetry`, all 5 telemetry tasks GREEN; tree clean
 
 ## Spec 002 review gate (all 3 rounds)
 

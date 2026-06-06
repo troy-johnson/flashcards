@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { scoreAttempt, startPractice } from "../api/literacy";
+import { completePractice, scoreAttempt, startPractice } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock("../api/literacy", () => ({
   createStudent: vi.fn(),
   getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
   getCurrentGuardian: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null } })),
-  getGuardianDiag: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null }, summary: [] })),
+  getGuardianDiag: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null }, summary: [], sessions: [], friction: [] })),
   logout: vi.fn(async () => undefined),
   startPractice: vi.fn(async () => ({
     practice_session: {
@@ -25,7 +25,8 @@ vi.mock("../api/literacy", () => ({
       }
     }
   })),
-  scoreAttempt: vi.fn(async () => ({ attempt: { id: "attempt1", scoring_source: "guardian_tap" } }))
+  scoreAttempt: vi.fn(async () => ({ attempt: { id: "attempt1", scoring_source: "guardian_tap" } })),
+  completePractice: vi.fn(async () => ({ practice_session: { id: "practice1", completed_at: "now" } }))
 }));
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -78,6 +79,7 @@ describe("play and drill routes", () => {
     expect(scoreAttempt).toHaveBeenCalledWith("student1", expect.objectContaining({ item_id: "mat", result: "skipped" }));
     expect(window.location.pathname).toBe("/play/student1/done");
     expect(container.textContent).toContain("You’re done");
+    expect(completePractice).toHaveBeenCalledWith("student1", "practice1");
   });
 
   it("lets guardians retry the current card after a failed score save", async () => {
