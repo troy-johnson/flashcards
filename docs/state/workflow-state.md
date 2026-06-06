@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 Round 3 review resolved — spec ready for owner review/merge
-**Active Branch:** docs/phase-a-planning-nits
-**Active Artifacts:** docs/specs/002-readers-way-phase-a-micro-pilot.md; docs/specs/002-readers-way-phase-a-micro-pilot.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.planning-nits.md; docs/specs/INDEX.md; https://github.com/troy-johnson/flashcards/pull/18
-**Current Gate:** PR #18 is open and mergeable. Spec 002 verdict `APPROVED WITH NITS` across 3 review rounds. Round 1 planning nits (1–3) resolved in planning-nits doc; Round 3 nits (8–13) resolved in spec body at commit a0a51f7.
-**Blockers:** none
-**Next Action:** owner review/merge PR #18, then turn the planning-nits decisions + Round 3 outcomes into the implementation plan alongside the scheduler/practice build. Implementation plans already drafted: docs/plans/002-phase-a-copy-package.md, docs/plans/002-phase-a-telemetry.md.
-**Active Snapshot Pointer:** PR #18 (`docs/phase-a-planning-nits`)
+**Active Phase:** Telemetry plan (002b) implementation in progress (implement-tdd) on branch `plan/002b-telemetry` (off main). Sequenced before scheduler Wave 4, which depends on telemetry Task 3.
+**Active Branch:** plan/002b-telemetry
+**Active Artifacts:** docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/specs/002-readers-way-phase-a-micro-pilot.md
+**Current Gate:** Telemetry Tasks 1–3 of 5 COMPLETE (RED/GREEN per task). Task 1: `POST /practice/:studentId/complete` (idempotent, ownership-gated). Task 2: `GET /guardian/diag` extended with `sessions` + `friction` aggregates (additive). Task 3: app `completePractice` client + DrillRoute end-of-session call (best-effort, try/catch) — **this unblocks scheduler Wave 4**. api suite 13 green, app suite 13 green, both typecheck clean.
+**Blockers:** none. (Scheduler branch `plan/002c-scheduler-practice` still 20 commits ahead of main, unmerged; its Wave 4 awaits this telemetry landing on main, then a rebase.)
+**Next Action:** implement telemetry Task 4 (surface session/friction aggregates in GuardianDiagRoute) then Task 5 (full-workspace verification), then open the 002b PR.
+**Active Snapshot Pointer:** branch `plan/002b-telemetry` at telemetry Task 3 GREEN; tree clean
 
 ## Spec 002 review gate (all 3 rounds)
 
