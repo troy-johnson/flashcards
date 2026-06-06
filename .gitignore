@@ -144,3 +144,12 @@ vite.config.ts.timestamp-*
 # Local Cloudflare/Wrangler state
 .wrangler/
 **/.wrangler/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+.beads/*.db
+.beads/*.db-*
+.beads/.dolt/
