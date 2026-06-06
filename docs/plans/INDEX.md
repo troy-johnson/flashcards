@@ -4,6 +4,7 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 
 | # | Slug | Status | Date | Summary |
 |---|------|--------|------|---------|
+| 002e | [phase-a-content-bar](002e-phase-a-content-bar.md) | drafted — ready to implement | 2026-06-06 | Phased v1.0 content bar (FR16–18, AC11–12): K Units 1–2 first, 1st-grade Unit 1 follow-on. Adds a content manifest + validator count gate (binary AC11). Audio per ADR-002; LLM-assisted authoring for the pilot. Beads epic `rw-1gz.8`. |
 | 002d | [phase-a-email-provider](002d-phase-a-email-provider.md) | drafted — ready to implement | 2026-06-06 | Add a `resend` transactional magic-link issuer behind the ADR-001 abstraction (FR19/22/23, AC3). Beads epic `rw-1gz.7`. |
 | 002c | phase-a-scheduler-practice | **shipped** (PR #21, #23) | 2026-06-03 | Scheduler/practice replacing the hardcoded stub: grade-aware K start, 1st-grade review advancement, mastery updates, and the 1st-grade review-exhausted terminal reason at the start route. |
 | 002b | phase-a-telemetry | **shipped** (PR #19) | 2026-05-30 | Complete-session endpoint and gated diagnostic telemetry report for sessions, completion, duration, and friction items. |
@@ -15,7 +16,7 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 | Beads | Workstream | Spec coverage | Status |
 |---|---|---|---|
 | rw-1gz.7 | Transactional email provider (Resend) | FR19/22/23, AC3 | plan drafted (002d) |
-| rw-1gz.8 | v1.0 content bar | FR16–18, AC11–12 | epic only — plan pending |
+| rw-1gz.8 | v1.0 content bar | FR16–18, AC11–12 | plan drafted (002e); ADR-002 audio |
 | rw-1gz.9 | Public landing page | FR24–26, AC13 | epic only — plan pending |
 | rw-1gz.10 | Privacy Policy & Terms + contact route | FR27–29/37–39, AC14/18–19 | epic only — plan pending |
 | rw-1gz.11 | Pilot UI polish & accessibility | FR33–36, AC16–17 | epic only — plan pending (after .9 + .10) |
