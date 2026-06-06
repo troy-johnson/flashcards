@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPracticePlan } from "./planner";
+import { buildPracticePlan, planTerminalReason } from "./planner";
 import type { SchedulerContent, SchedulerItem } from "./content";
 import type { ReviewAttempt } from "./review";
 
@@ -108,11 +108,10 @@ describe("buildPracticePlan", () => {
     expect(buildPracticePlan({ grade: "Z", ...emptyState }).cards).toEqual([]);
   });
 
-  it("returns an empty plan for a 1st grader who has review-passed every K skill (deferred to Wave 3 to surface a reason)", () => {
+  it("returns an empty plan for a 1st grader who has review-passed every K skill", () => {
     // Phase A has no authored 1st-grade active content, so once all K review
-    // skills pass, the review plan is empty. Wave 3 (route integration) will
-    // encode a terminal reason at the HTTP layer; the pure planner correctly
-    // returns no cards.
+    // skills pass, the review plan is empty. The pure planner returns no cards;
+    // `planTerminalReason` (below) names why, and the start route surfaces it.
     const allPassed = {
       pa_k_u1_blend_two_sound: fourCorrect,
       phonics_k_u1_short_a: fourCorrect,
@@ -121,5 +120,31 @@ describe("buildPracticePlan", () => {
     };
     const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
     expect(plan.cards).toEqual([]);
+  });
+});
+
+describe("planTerminalReason", () => {
+  const allPassed = {
+    pa_k_u1_blend_two_sound: fourCorrect,
+    phonics_k_u1_short_a: fourCorrect,
+    heart_k_u1_batch_01: fourCorrect,
+    fluency_k_u1_cvc_sentences: fourCorrect
+  };
+
+  it("reports review-complete when a 1st grader has review-passed every K skill", () => {
+    expect(planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed }))
+      .toBe("review_complete_no_active_content");
+  });
+
+  it("returns null for a 1st grader with skills still to review", () => {
+    expect(planTerminalReason({ grade: "1", ...emptyState })).toBeNull();
+    const { fluency_k_u1_cvc_sentences, ...someStillOpen } = allPassed;
+    void fluency_k_u1_cvc_sentences;
+    expect(planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: someStillOpen }))
+      .toBeNull();
+  });
+
+  it("never reports terminal for K, even when review-pass criteria are met", () => {
+    expect(planTerminalReason({ grade: "K", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed })).toBeNull();
   });
 });

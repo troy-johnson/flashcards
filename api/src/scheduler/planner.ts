@@ -65,3 +65,27 @@ export function buildPracticePlan(
 
   return { cards: cards.slice(0, planSize) };
 }
+
+/** A distinguishable end-state for a start plan that has no cards by design. */
+export type PlanTerminalReason = "review_complete_no_active_content";
+
+/**
+ * Reports why a start plan is terminal (legitimately empty), or null when there
+ * is still work to schedule.
+ *
+ * Phase A has exactly one terminal state: a 1st-grade student runs the K-review
+ * path, and once every K review skill is review-passed there is no authored
+ * 1st-grade active content to schedule (content is K-only — see the plan's
+ * content-state note). K never terminates; it advances through normal mastery.
+ */
+export function planTerminalReason(
+  input: PlannerInput,
+  content: SchedulerContent = loadSchedulerContent()
+): PlanTerminalReason | null {
+  if (input.grade !== "1") return null;
+  const orderedSkillIds = content.units.flatMap((unit) => unit.skill_ids);
+  const allReviewPassed =
+    orderedSkillIds.length > 0 &&
+    orderedSkillIds.every((skillId) => evaluateReviewSkill(input.recentAttempts[skillId] ?? []).reviewPassed);
+  return allReviewPassed ? "review_complete_no_active_content" : null;
+}
