@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 — 1st-grade terminal-reason follow-up (`rw-1gz.1.3`) IMPLEMENTED on branch `plan/002e-terminal-reason`; PR/merge pending. Telemetry (002b), scheduler/practice (002c), copy package (002) all shipped to main.  
-**Active Branch:** plan/002e-terminal-reason (off main)
-**Active Artifacts:** api/src/scheduler/planner.ts (planTerminalReason); api/src/routes/practice.ts; docs/specs/002-readers-way-phase-a-micro-pilot.md; Beads: rw-1gz (Phase A epic)  
-**Current Gate:** `rw-1gz.1.3` complete on `plan/002e-terminal-reason`. Added `planTerminalReason()` to the scheduler; `POST /practice/:studentId/start` now returns `terminal_reason: "review_complete_no_active_content"` when a 1st grader has review-passed every K skill (empty plan; no authored 1st-grade active content). Absent for normal/K starts. Covered by route tests (positive + negative) and planner unit tests. Gate green: tsc app+api, **app 15 tests**, **api 53 tests**, content:validate ok. Resolves Wave 2 review IMPORTANT 5.  
-**Blockers:** none. Open Beads follow-up: `rw-1gz.4` (P3 — completion-failure best-effort test in play.test.tsx). Optional: wire app to show "all caught up" on `terminal_reason` (not yet done).  
-**Next Action:** push `plan/002e-terminal-reason`, open the PR to main, confirm CI green, then merge and (epic `rw-1gz.1` then has no open children) consider closing the scheduler epic.  
-**Active Snapshot Pointer:** branch `plan/002e-terminal-reason` (1 feature commit off main); terminal-reason implemented and gate-green, awaiting PR.
+**Active Phase:** Spec 002 — remaining-scope PLANNING on branch `plan/002-remaining-planning`. Shipped to main: copy (002a/#22), telemetry (002b/#19), scheduler+terminal-reason (002c/#21,#23), completion-failure test (#24). Remaining 002 broken into Beads epics A–E; email-provider plan (002d) drafted.  
+**Active Branch:** plan/002-remaining-planning (off main)
+**Active Artifacts:** docs/plans/002d-phase-a-email-provider.md; docs/plans/INDEX.md; docs/specs/002-readers-way-phase-a-micro-pilot.md; Beads: rw-1gz (Phase A epic) and children rw-1gz.7–.11  
+**Current Gate:** Remaining Spec 002 scope mapped (delivered vs remaining) and tracked in Beads: rw-1gz.7 email provider (FR19/22/23, AC3) — plan 002d drafted with task beads rw-1gz.7.1–.3; rw-1gz.8 v1.0 content bar (FR16–18, AC11–12); rw-1gz.9 landing page (FR24–26, AC13); rw-1gz.10 privacy/terms + contact (FR27–29/37–39, AC14/18–19); rw-1gz.11 UI polish & a11y (FR33–36, AC16–17, blocked-on .9+.10). Recommended sequence: A+B → C/D → E. Also filed niceties rw-1gz.5 (all-caught-up UI) and rw-1gz.6 (onboarding copy wiring).  
+**Blockers:** none. Open P3/nicety beads: rw-1gz.4 (completion-failure test — DONE/merged via #24), rw-1gz.5, rw-1gz.6.  
+**Next Action:** merge this planning branch, then implement email provider (002d) starting with `rw-1gz.7.1` (widen issuer env typings) → `rw-1gz.7.2` (resend issuer, TDD) → `rw-1gz.7.3` (deploy config).  
+**Active Snapshot Pointer:** branch `plan/002-remaining-planning`; remaining-002 epics created and email plan (002d) drafted; awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 
