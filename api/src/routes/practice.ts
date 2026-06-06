@@ -1,13 +1,18 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { ulid } from "ulid";
-import seedItems from "../../../content/items/seed.json";
 import { json } from "../db/client";
+import { buildPracticePlan, type MasteryState } from "../scheduler/planner";
+import type { ReviewAttempt } from "../scheduler/review";
 import { getAuthenticatedGuardian } from "../db/session";
 import type { AuthenticatedGuardian, Env } from "../types";
 
-type SeedItem = { item_id: string; skill_id: string; text?: string; prompt?: string; answer?: string };
-const seedCards = (seedItems as SeedItem[]).filter((item) => item.skill_id === "phonics_k_u1_short_a");
+type StudentPlanState = {
+  grade: string;
+  skillMastery: Record<string, MasteryState>;
+  itemMastery: Record<string, MasteryState>;
+  recentAttempts: Record<string, ReviewAttempt[]>;
+};
 
 const attemptSchema = z.object({
   practice_session_id: z.string().min(1),
@@ -18,6 +23,39 @@ const attemptSchema = z.object({
   duration_ms: z.number().int().nonnegative(),
   shown_at: z.string().min(1)
 });
+
+// Spaced-repetition interval per mastery level (days). `ease` is reserved for a
+// later tuning pass and intentionally left untouched in Phase A.
+const INTERVAL_DAYS: Record<number, number> = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 7 };
+
+type MasteryDelta = { level: number; streak: number; dueAt: string };
+
+const nextMastery = (
+  prev: { level: number; streak: number } | null,
+  result: "correct" | "incorrect" | "skipped",
+  scoredAt: string
+): MasteryDelta => {
+  const prevLevel = prev?.level ?? 0;
+  const prevStreak = prev?.streak ?? 0;
+  let level: number;
+  let streak: number;
+  switch (result) {
+    case "correct":
+      level = Math.min(4, prevLevel + 1);
+      streak = prevStreak + 1;
+      break;
+    case "incorrect":
+      level = Math.max(0, prevLevel - 1);
+      streak = 0;
+      break;
+    case "skipped":
+      level = prevLevel;
+      streak = 0;
+      break;
+  }
+  const dueAt = new Date(Date.parse(scoredAt) + (INTERVAL_DAYS[level] ?? 0) * 86_400_000).toISOString();
+  return { level, streak, dueAt };
+};
 
 export const practiceRoutes = new Hono<{ Bindings: Env; Variables: { guardian: AuthenticatedGuardian } }>();
 
@@ -34,14 +72,37 @@ const ownsStudent = async (env: Env, guardianId: string, studentId: string): Pro
   return !!row;
 };
 
+const loadStudentPlanState = async (env: Env, guardianId: string, studentId: string): Promise<StudentPlanState | null> => {
+  const student = await env.DB.prepare("SELECT grade FROM student WHERE id = ? AND guardian_id = ? AND archived_at IS NULL")
+    .bind(studentId, guardianId).first<{ grade: string }>();
+  if (!student) return null;
+
+  const { results: skillRows } = await env.DB.prepare("SELECT skill_id, level, streak FROM skill_mastery WHERE student_id = ?")
+    .bind(studentId).all<{ skill_id: string; level: number; streak: number }>();
+  const { results: itemRows } = await env.DB.prepare("SELECT item_id, level, streak FROM item_mastery WHERE student_id = ?")
+    .bind(studentId).all<{ item_id: string; level: number; streak: number }>();
+  const { results: attemptRows } = await env.DB.prepare(
+    "SELECT skill_id, result, duration_ms FROM attempt WHERE student_id = ? ORDER BY scored_at DESC"
+  ).bind(studentId).all<{ skill_id: string; result: ReviewAttempt["result"]; duration_ms: number }>();
+
+  const skillMastery = Object.fromEntries(skillRows.map((row) => [row.skill_id, { level: row.level, streak: row.streak }]));
+  const itemMastery = Object.fromEntries(itemRows.map((row) => [row.item_id, { level: row.level, streak: row.streak }]));
+  const recentAttempts: Record<string, ReviewAttempt[]> = {};
+  for (const row of attemptRows) {
+    recentAttempts[row.skill_id] ??= [];
+    recentAttempts[row.skill_id]!.push({ result: row.result, duration_ms: row.duration_ms });
+  }
+
+  return { grade: student.grade, skillMastery, itemMastery, recentAttempts };
+};
+
 practiceRoutes.post("/:studentId/start", async (c) => {
   const guardian = c.get("guardian");
   const studentId = c.req.param("studentId");
-  if (!(await ownsStudent(c.env, guardian.id, studentId))) return c.text("not found", 404);
+  const state = await loadStudentPlanState(c.env, guardian.id, studentId);
+  if (!state) return c.text("not found", 404);
   const id = ulid();
-  const plan = {
-    cards: seedCards.map((item) => ({ item_id: item.item_id, skill_id: item.skill_id, text: item.text ?? item.prompt ?? item.item_id }))
-  };
+  const plan = buildPracticePlan(state);
   await c.env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
     .bind(id, studentId, JSON.stringify(plan), new Date().toISOString()).run();
   return json({ practice_session: { id, student_id: studentId, plan } }, { status: 201 });
@@ -86,19 +147,53 @@ practiceRoutes.post("/:studentId/attempt", async (c) => {
   const planMatch = plan.cards.some((card) => card.skill_id === parsed.data.skill_id && card.item_id === parsed.data.item_id);
   if (!planMatch) return c.text("attempt does not match plan", 400);
   const id = ulid();
-  await c.env.DB.prepare(
-    `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'guardian_tap', ?, ?, ?)`
-  ).bind(
-    id,
-    parsed.data.practice_session_id,
-    studentId,
-    parsed.data.skill_id,
-    parsed.data.item_id,
-    parsed.data.result,
-    parsed.data.duration_ms,
-    parsed.data.shown_at,
-    new Date().toISOString()
-  ).run();
+  const scoredAt = new Date().toISOString();
+
+  // Read current mastery, compute new values in TS, then write the attempt and
+  // both upserts in a single D1 batch (one implicit transaction — all statements
+  // commit together or none do). The read-then-batch is intentionally NOT row-locked:
+  // per the plan's atomicity decision, D1 is single-writer and one student's
+  // guardian-tap attempts are issued strictly serially, so no concurrent writer
+  // races the same (student_id, skill_id) row. Revisit if concurrent multi-device
+  // practice for one student becomes possible.
+  const skillPrev = await c.env.DB.prepare("SELECT level, streak FROM skill_mastery WHERE student_id = ? AND skill_id = ?")
+    .bind(studentId, parsed.data.skill_id).first<{ level: number; streak: number }>();
+  const itemPrev = await c.env.DB.prepare("SELECT level, streak FROM item_mastery WHERE student_id = ? AND item_id = ?")
+    .bind(studentId, parsed.data.item_id).first<{ level: number; streak: number }>();
+  const skillNext = nextMastery(skillPrev, parsed.data.result, scoredAt);
+  const itemNext = nextMastery(itemPrev, parsed.data.result, scoredAt);
+
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'guardian_tap', ?, ?, ?)`
+    ).bind(
+      id,
+      parsed.data.practice_session_id,
+      studentId,
+      parsed.data.skill_id,
+      parsed.data.item_id,
+      parsed.data.result,
+      parsed.data.duration_ms,
+      parsed.data.shown_at,
+      scoredAt
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO skill_mastery (student_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(student_id, skill_id) DO UPDATE SET level = ?, streak = ?, due_at = ?, last_seen_at = ?`
+    ).bind(
+      studentId, parsed.data.skill_id, skillNext.level, skillNext.streak, skillNext.dueAt, scoredAt,
+      skillNext.level, skillNext.streak, skillNext.dueAt, scoredAt
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO item_mastery (student_id, item_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(student_id, item_id) DO UPDATE SET level = ?, streak = ?, due_at = ?, last_seen_at = ?`
+    ).bind(
+      studentId, parsed.data.item_id, parsed.data.skill_id, itemNext.level, itemNext.streak, itemNext.dueAt, scoredAt,
+      itemNext.level, itemNext.streak, itemNext.dueAt, scoredAt
+    )
+  ]);
   return json({ attempt: { id, scoring_source: "guardian_tap" } }, { status: 201 });
 });

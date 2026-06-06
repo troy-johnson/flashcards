@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Telemetry plan (002b) implementation in progress (implement-tdd) on branch `plan/002b-telemetry` (off main). Sequenced before scheduler Wave 4, which depends on telemetry Task 3.
-**Active Branch:** plan/002b-telemetry
-**Active Artifacts:** docs/plans/002-phase-a-telemetry.md; docs/plans/002-phase-a-scheduler-practice.md; docs/specs/002-readers-way-phase-a-micro-pilot.md
-**Current Gate:** Telemetry plan (002b) COMPLETE — all 5 tasks. Task 1: `POST /practice/:studentId/complete` (idempotent, ownership-gated). Task 2: `GET /guardian/diag` extended with additive `sessions` + `friction` aggregates. Task 3: app `completePractice` client + DrillRoute end-of-session call (best-effort, try/catch) — **unblocks scheduler Wave 4**. Task 4: session/friction tables rendered in GuardianDiagRoute. Task 5: full-workspace gate green. Full workspace: api 13 tests, app 13 tests, both typecheck + app build clean.
-**Blockers:** none. (Scheduler branch `plan/002c-scheduler-practice` is 20 commits ahead of main, unmerged; its Wave 4 awaits this telemetry landing on main, then a rebase/merge of main into 002c.)
-**Next Action:** push `plan/002b-telemetry`, open the 002b PR, and (per owner) merge to main — then rebase scheduler branch on main and run scheduler Wave 4.
-**Active Snapshot Pointer:** branch `plan/002b-telemetry`, all 5 telemetry tasks GREEN; tree clean
+**Active Phase:** Spec 002 scheduler/practice (Plan 002c) — Waves 1–5 COMPLETE; adversarial PR/QA gate is READY. Operational tracking now lives in **Beads** (`bd`, prefix `rw`); epic `rw-1gz.1` (Scheduler & practice).  
+**Active Branch:** plan/002c-scheduler-practice (rebased onto main — includes Beads tracker + telemetry `completePractice` contract)
+**Active Artifacts:** docs/plans/002-phase-a-scheduler-practice.md; docs/plans/002-phase-a-scheduler-practice.adversarial-review.md; docs/specs/002-readers-way-phase-a-micro-pilot.md (+ .planning-nits.md); Beads: rw-1gz (Phase A epic), rw-1gz.1 (scheduler epic)  
+**Current Gate:** Waves 1–5 COMPLETE on branch `plan/002c-scheduler-practice`. Wave 1: content loader + review-rule helper. Wave 2: `api/src/scheduler/planner.ts` (buildPracticePlan, injected-content seam) + mastery upsert in `api/src/routes/practice.ts` (single D1 batch); Wave 2 adversarial Round 1 BLOCK resolved (BLOCK 1–3 fixed, IMPORTANT 4 documented, IMPORTANT 5 deferred, IMPORTANT 6 pushed back). Wave 3: route integration (grade-aware start plans, full review history retained). Wave 4 (verify-only, `rw-1gz.1.1` CLOSED): play.test.tsx uses telemetry's `completePractice` mock + contract, asserts call + navigation to `/play/student1/done`. Wave 5: adversarial review recorded in `.agents/snapshots/scheduler-adversarial-review-2026-06-06.md` with verdict **APPROVED WITH NITS**. Full reviewer gate green: tsc clean, **api 46 tests**, **app 13 tests**, content validation clean, app build clean.  
+**Blockers:** none. Open Beads follow-ups: `rw-1gz.1.3` (deferred — surface 1st-grade empty-plan terminal reason at route/HTTP layer, IMPORTANT 5), `rw-1gz.4` (P3 — assert completion-failure best-effort in play.test.tsx, discovered in Wave 4).  
+**Next Action:** return to Claude Code for normal branch/PR hygiene and merge readiness handling; merge is allowed on the recorded `APPROVED WITH NITS` verdict.  
+**Active Snapshot Pointer:** `.agents/snapshots/scheduler-adversarial-review-2026-06-06.md`; branch `plan/002c-scheduler-practice` rebased onto main; Wave 5 adversarial gate complete.
 
 ## Spec 002 review gate (all 3 rounds)
 
