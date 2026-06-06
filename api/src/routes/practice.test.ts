@@ -105,6 +105,43 @@ describe("practice and diagnostic routes", () => {
     expect(JSON.parse(stored!.plan_json)).toEqual(session.plan);
   });
 
+  it("surfaces a terminal reason when a 1st grader has exhausted the K-review path", async () => {
+    // Make every K review skill review-passed (>=4 correct attempts each) for the
+    // grade-"1" student, so the planner has no remaining review skills and — with
+    // K-only content — nothing left to schedule.
+    const startedAt = "2026-01-01T00:00:00.000Z";
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
+      .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
+    const skills = ["pa_k_u1_blend_two_sound", "phonics_k_u1_short_a", "heart_k_u1_batch_01", "fluency_k_u1_cvc_sentences"];
+    const statements = [];
+    let n = 0;
+    for (const skillId of skills) {
+      for (let i = 0; i < 4; i++) {
+        const scoredAt = new Date(Date.parse(startedAt) + n * 1000).toISOString();
+        statements.push(insertAttemptStatement(`rp_${n}`, "student2", skillId, `${skillId}_item`, scoredAt));
+        n++;
+      }
+    }
+    await env.DB.batch(statements);
+
+    const start = await SELF.fetch("https://api.test/practice/student2/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    expect(start.status).toBe(201);
+    const body = await start.json<{ practice_session: { plan: { cards: unknown[] } }; terminal_reason?: string }>();
+    expect(body.practice_session.plan.cards).toHaveLength(0);
+    expect(body.terminal_reason).toBe("review_complete_no_active_content");
+  });
+
+  it("omits the terminal reason for a normal (non-exhausted) start", async () => {
+    const kStart = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    const firstGradeStart = await SELF.fetch("https://api.test/practice/student2/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    const kBody = await kStart.json<{ practice_session: { plan: { cards: unknown[] } }; terminal_reason?: string }>();
+    const firstGradeBody = await firstGradeStart.json<{ practice_session: { plan: { cards: unknown[] } }; terminal_reason?: string }>();
+    expect(kBody.practice_session.plan.cards.length).toBeGreaterThan(0);
+    expect(kBody.terminal_reason).toBeUndefined();
+    expect(firstGradeBody.practice_session.plan.cards.length).toBeGreaterThan(0);
+    expect(firstGradeBody.terminal_reason).toBeUndefined();
+  });
+
   it("rejects non-guardian-tap scoring sources and gates diagnostics", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
     const started = await start.json<{ practice_session: { id: string; plan: { cards: { item_id: string; skill_id: string }[] } } }>();

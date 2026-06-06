@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { ulid } from "ulid";
 import { json } from "../db/client";
-import { buildPracticePlan, type MasteryState } from "../scheduler/planner";
+import { buildPracticePlan, planTerminalReason, type MasteryState } from "../scheduler/planner";
 import type { ReviewAttempt } from "../scheduler/review";
 import { getAuthenticatedGuardian } from "../db/session";
 import type { AuthenticatedGuardian, Env } from "../types";
@@ -103,9 +103,18 @@ practiceRoutes.post("/:studentId/start", async (c) => {
   if (!state) return c.text("not found", 404);
   const id = ulid();
   const plan = buildPracticePlan(state);
+  const terminalReason = planTerminalReason(state);
   await c.env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
     .bind(id, studentId, JSON.stringify(plan), new Date().toISOString()).run();
-  return json({ practice_session: { id, student_id: studentId, plan } }, { status: 201 });
+  return json(
+    {
+      practice_session: { id, student_id: studentId, plan },
+      // Only present when the plan is legitimately empty (e.g. a 1st grader who
+      // has finished the K-review path with no authored active content to follow).
+      ...(terminalReason ? { terminal_reason: terminalReason } : {})
+    },
+    { status: 201 }
+  );
 });
 
 practiceRoutes.post("/:studentId/complete", async (c) => {
