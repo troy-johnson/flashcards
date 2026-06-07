@@ -4,6 +4,9 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 
 | # | Slug | Status | Date | Summary |
 |---|------|--------|------|---------|
+| 002h | [phase-a-ui-polish-a11y](002h-phase-a-ui-polish-a11y.md) | drafted — implement last | 2026-06-06 | Cross-cutting pilot polish + accessibility over all FR34 surfaces (FR33–36, AC16–17). a11y = jest-axe automated + manual contrast/reduced-motion/SR checklist; breakpoints 375/768/1280. Beads epic `rw-1gz.11` (blocked-on .9 + .10). |
+| 002g | [phase-a-privacy-terms](002g-phase-a-privacy-terms.md) | drafted — ready to implement | 2026-06-06 | Basic plain-language Privacy + Terms pages + manual support contact route (FR27–29/37–39, AC14/18–19). LLM-drafted for owner review; contact via `mailto:` support email. Beads epic `rw-1gz.10`. |
+| 002f | [phase-a-landing-page](002f-phase-a-landing-page.md) | drafted — ready to implement | 2026-06-06 | Public landing page (FR24–26, AC13): positioning, audience, privacy stance, pilot status, invite-only contact path (`mailto:`). Copy from the copy package. Beads epic `rw-1gz.9`. |
 | 002e | [phase-a-content-bar](002e-phase-a-content-bar.md) | drafted — ready to implement | 2026-06-06 | Phased v1.0 content bar (FR16–18, AC11–12): K Units 1–2 first, 1st-grade Unit 1 follow-on. Adds a content manifest + validator count gate (binary AC11). Audio per ADR-002; LLM-assisted authoring for the pilot. Beads epic `rw-1gz.8`. |
 | 002d | [phase-a-email-provider](002d-phase-a-email-provider.md) | drafted — ready to implement | 2026-06-06 | Add a `resend` transactional magic-link issuer behind the ADR-001 abstraction (FR19/22/23, AC3). Beads epic `rw-1gz.7`. |
 | 002c | phase-a-scheduler-practice | **shipped** (PR #21, #23) | 2026-06-03 | Scheduler/practice replacing the hardcoded stub: grade-aware K start, 1st-grade review advancement, mastery updates, and the 1st-grade review-exhausted terminal reason at the start route. |
@@ -11,12 +14,16 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 | 002a | phase-a-copy-package | **shipped** (PR #22) | 2026-05-30 | Shared `packages/copy` workspace module for Reader's Way brand/UI chrome used by app and magic-link email. |
 | 001a | literacy-app-v1 | shipped | 2026-05-17 | First previewable foundation slice with per-task payloads for workspace scripts, Wrangler/D1, content validation, magic-link auth, guardian-tap API/app loop, mandatory PR gates, telemetry, and replay scaffold. |
 
-## Remaining Spec 002 workstreams (tracked in Beads; plan docs to follow)
+## Spec 002 roadmap — every workstream now has a plan
 
-| Beads | Workstream | Spec coverage | Status |
-|---|---|---|---|
-| rw-1gz.7 | Transactional email provider (Resend) | FR19/22/23, AC3 | plan drafted (002d) |
-| rw-1gz.8 | v1.0 content bar | FR16–18, AC11–12 | plan drafted (002e); ADR-002 audio |
-| rw-1gz.9 | Public landing page | FR24–26, AC13 | epic only — plan pending |
-| rw-1gz.10 | Privacy Policy & Terms + contact route | FR27–29/37–39, AC14/18–19 | epic only — plan pending |
-| rw-1gz.11 | Pilot UI polish & accessibility | FR33–36, AC16–17 | epic only — plan pending (after .9 + .10) |
+All Phase A workstreams are planned. Shipped: 002a/b/c. Drafted, ready to implement: 002d–002h.
+
+| Beads | Workstream | Plan | Spec coverage | Status |
+|---|---|---|---|---|
+| rw-1gz.7 | Transactional email provider (Resend) | 002d | FR19/22/23, AC3 | drafted |
+| rw-1gz.8 | v1.0 content bar | 002e (+ADR-002) | FR16–18, AC11–12 | drafted |
+| rw-1gz.9 | Public landing page | 002f | FR24–26, AC13 | drafted |
+| rw-1gz.10 | Privacy Policy & Terms + contact | 002g | FR27–29/37–39, AC14/18–19 | drafted |
+| rw-1gz.11 | Pilot UI polish & accessibility | 002h | FR33–36, AC16–17 | drafted (do last, after .9+.10) |
+
+**Recommended implementation order:** 002d (email) + 002e (content) in parallel → 002f (landing) + 002g (privacy/terms) → 002h (polish, last). Later-phase items (spec OQ1–6) remain intentionally unplanned.

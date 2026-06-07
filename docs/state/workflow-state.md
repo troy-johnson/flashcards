@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 — content-bar PLANNING on branch `plan/002e-content-bar-planning`. Shipped to main: copy (002a/#22), telemetry (002b/#19), scheduler+terminal-reason (002c/#21,#23), completion-failure test (#24), remaining-scope planning (#25). Plans drafted: email (002d), content bar (002e). Spec-002 open items triaged + filed as beads.  
-**Active Branch:** plan/002e-content-bar-planning (off main)
-**Active Artifacts:** docs/plans/002e-phase-a-content-bar.md; docs/adrs/002-phase-a-audio-strategy.md; docs/plans/002d-phase-a-email-provider.md; docs/plans/INDEX.md; docs/adrs/INDEX.md; Beads: rw-1gz + children .7–.13  
-**Current Gate:** Spec 002 open items triaged (register) and filed as beads under their workstreams: content bar `rw-1gz.8` → .8.1 manifest/validator, .8.2 audio, .8.3 authoring, .8.4 1st-grade U1 (Phase 2); polish `rw-1gz.11` → .11.1 a11y verification method, .11.2 sanity breakpoints; email `rw-1gz.7.4` rate-limit; `rw-1gz.12` multi-child verify; `rw-1gz.13` exit-marker diag reads. Content-bar plan (002e) drafted: **phased K U1–2 first, 1st-grade U1 second**; content manifest + validator count gate makes AC11 binary; audio per **ADR-002** (real phoneme/digraph assets + TTS fallback + gesture playback); LLM-assisted authoring for pilot (hand-author long-term). Deferred (later phases): OQ1–6.  
+**Active Phase:** Spec 002 — ROADMAP COMPLETE (planning) on branch `plan/002-roadmap-remaining-plans`. Every Phase A workstream now has a plan. Shipped to main: 002a/b/c (+#24/#25/#26 planning). Drafted, ready to implement: 002d email, 002e content bar (+ADR-002), 002f landing, 002g privacy/terms, 002h polish.  
+**Active Branch:** plan/002-roadmap-remaining-plans (off main)
+**Active Artifacts:** docs/plans/002f-phase-a-landing-page.md; docs/plans/002g-phase-a-privacy-terms.md; docs/plans/002h-phase-a-ui-polish-a11y.md; docs/plans/INDEX.md; Beads: rw-1gz + children .7–.13  
+**Current Gate:** Phase A roadmap fully planned. Plans: 002d (email, rw-1gz.7), 002e (content bar, rw-1gz.8, +ADR-002), 002f (landing, rw-1gz.9), 002g (privacy/terms+contact, rw-1gz.10), 002h (polish & a11y, rw-1gz.11). Decisions locked: content phased K-first; audio=real phoneme assets+TTS fallback+gesture (ADR-002); LLM authoring for pilot; contact=support email mailto (copy constant); landing invite-only (no waitlist); privacy/terms LLM-drafted for owner review. Open items all triaged into beads; later-phase OQ1–6 deferred.  
 **Blockers:** none.  
-**Next Action:** merge this planning branch, then implement — recommended order email provider (002d, `rw-1gz.7.1`→.7.3) and/or content bar Phase 1 (002e, `rw-1gz.8.1` manifest+validator first).  
-**Active Snapshot Pointer:** branch `plan/002e-content-bar-planning`; ADR-002 + 002e plan + open-item beads created; awaiting PR.
+**Next Action:** merge this planning branch, then begin implementation — recommended order: 002d (email, `rw-1gz.7.1`) + 002e Phase 1 (`rw-1gz.8.1` manifest+validator) → 002f/002g → 002h last.  
+**Active Snapshot Pointer:** branch `plan/002-roadmap-remaining-plans`; 002f/g/h plans + landing/legal task beads created; INDEX shows full roadmap; awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 
