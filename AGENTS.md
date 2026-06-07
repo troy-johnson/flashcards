@@ -20,6 +20,9 @@ This is the single source of truth for agent instructions; `CLAUDE.md` imports i
 
 ## Issue tracking — bd (beads)
 
+> Handoff between harnesses (Claude Code ↔ OpenCode)? See `docs/workflow-multi-harness-handoff.md`.
+
+
 Use **bd** for all task tracking (not markdown TODOs). Run **`bd prime`** at the start of operational work — it injects the full command reference and project memories each session, so they aren't duplicated here. Common loop: `bd ready` → `bd show <id>` → `bd update <id> --claim` → `bd close <id> --reason="…"`.
 
 **Local-first, single-writer (repo policy):**
