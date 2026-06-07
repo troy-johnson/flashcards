@@ -46,3 +46,9 @@
 ## Self-review
 
 - Copy from `packages/copy` (FR2). No pricing/procurement (FR26). Footer links wire to 002g pages; if 002g not yet merged, links can ship pointing at the soon-to-exist routes (or gate this task behind 002g) — sequence 002g before/with 002f.
+
+## Review revisions (2026-06-07 — independent Sonnet review; see `.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`)
+
+- **`support.email` does not exist yet (BLOCKER):** `packages/copy/index.ts` exports `support = { displayName }` only. Task 1 must **extend** the existing `support` object with `email` (don't replace it / don't add a separate top-level constant), and this must land before 002g consumes it.
+- **Existing landing prose:** `LandingRoute` already has hard-coded "How it works" and "No streaks…" sections. Task 2 must say whether to replace them with copy-package constants or keep them, to avoid duplicate/overlapping content.
+- **Footer dead-link ordering:** the `/privacy` `/terms` footer links require 002g's routes; the dispatcher's `else` silently redirects unknown paths to `/`. Ship **002g before/with 002f** (hard order, not advisory).
