@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 — roadmap planned + ADVERSARIALLY REVIEWED; revisions applied on branch `plan/002-plan-review-revisions`. All Phase A workstreams planned (002d–002h shipped-ready); 002a/b/c shipped.  
-**Active Branch:** plan/002-plan-review-revisions (off main)
-**Active Artifacts:** docs/plans/002d-phase-a-email-provider.md; docs/plans/002e-phase-a-content-bar.md; docs/adrs/002-phase-a-audio-strategy.md; docs/plans/INDEX.md; Beads: rw-1gz + children .7–.13  
-**Current Gate:** Adversarial review of drafted plans (002d–002h + ADR-002) run in-thread (subagents were quota-blocked). Verdict: roadmap COMPLETE & consistent; 002f/g/h SOUND; 002d + 002e needed revision — now applied: (1) 002d test mocks outbound via `vi.stubGlobal("fetch")` not `cloudflare:test` fetchMock (hand-written d.ts only exports env/SELF); (2) 002e Task 4 reframed — **app audio playback is net-new** (build asset loader + Web Speech TTS + gesture gating; manifest needs a `src` field), consider its own sub-plan; (3) 002e Task 3 — if items split, update validator (hard-reads seed.json); (4) 002e Task 5 — planner.test.ts/practice.test.ts assertions WILL break, update them; (5) manifest carries `v1_target` (fixed AC11 anchor) + `required_now` so AC11 can't be gamed; (6) ADR-002 notes audio layer is net-new + asset-path schema. Review notes added to rw-1gz.8.1/.8.2.  
+**Active Phase:** Spec 002 — plans INDEPENDENTLY reviewed (Sonnet subagents) + revisions applied on branch `plan/002-sonnet-review-revisions`. All Phase A workstreams planned (002d–002h); 002a/b/c shipped.  
+**Active Branch:** plan/002-sonnet-review-revisions (off main)
+**Active Artifacts:** docs/plans/002d–002h; docs/adrs/002-phase-a-audio-strategy.md; docs/plans/INDEX.md; .agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md; Beads: rw-1gz + children  
+**Current Gate:** Independent adversarial review of 002d–002h + ADR-002 by 3 read-only **Sonnet** subagents (verified vs code). Verdict APPROVED WITH NITS — all five plans revised (no scope change). Key corrections: (1) **002d test was wrong** — `vi.stubGlobal("fetch")` doesn't patch fetch in the workers pool → switched to **`fetch` dependency-injection**; (2) **FR13 + FR15 were unhomed** → assigned to 002h (drill/completion copy audit); (3) **AC20 untracked** → 002h verification; (4) **`support.email` missing** in packages/copy → 002f Task 1 extends `support`, 002g depends on it; (5) 002e: fix `allPassed` fixtures in planner.test.ts+practice.test.ts, audio count = real-`src` only (schema before count), validator must glob if items split, `v1_target` immutable; (6) 002h: add missing surfaces (diag/settings/dashboard) + axe `setupFiles` + own ADR-002 device QA; (7) order **002g before/with 002f**; pilot for 1st-grade gated on 002e Phase 2. Full detail per plan's "Review revisions" section + the snapshot packet. rw-1gz.14 closed.  
 **Blockers:** none.  
-**Next Action:** merge this revisions branch, then begin implementation — recommended order: 002d (email, `rw-1gz.7.1`) + 002e Phase 1 (`rw-1gz.8.1` manifest+validator) → 002f/002g → 002h last.  
-**Active Snapshot Pointer:** branch `plan/002-plan-review-revisions`; 002d/002e/ADR-002 revised per adversarial review; awaiting PR.
+**Next Action:** merge this revisions branch, then begin implementation — recommended order: 002d (email, `rw-1gz.7.1`) + 002e Phase 1 (`rw-1gz.8.1`) → 002g then 002f → 002h last.  
+**Active Snapshot Pointer:** branch `plan/002-sonnet-review-revisions`; Sonnet review packet + per-plan revisions applied; awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 

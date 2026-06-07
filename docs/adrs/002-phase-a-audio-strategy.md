@@ -80,3 +80,9 @@ Guardrails:
   phased content build (K Units 1–2 first).
 - Sourcing decision (record vs license) is made during 002e execution; this ADR fixes the
   *strategy* (real phoneme assets + TTS fallback + gesture playback), not the vendor.
+
+## Review note (2026-06-07 — independent Sonnet review)
+
+Two implementation details to carry into plan 002e Task 4 (do not invalidate the decision):
+- **Web Speech voice-load race:** `speechSynthesis.getVoices()` is async (`onvoiceschanged`), and iPadOS Safari does not guarantee an English voice without configuration — the TTS path must handle the empty-voices race and pick a voice deliberately.
+- **Asset licensing is a blocking checklist item:** "record or license a verified set" must be a named gate before the content bar is "done" (child/school use — unlicensed audio is a compliance risk).

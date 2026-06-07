@@ -97,3 +97,14 @@
 - **Scope boundary:** instructional content stays in `content/`; no brand strings move here (planning-nit 1).
 - **Scheduler:** no K scheduler change needed; Phase 2 verifies 1st-grade integration + the terminal_reason transition (C10).
 - **Authoring provenance:** LLM-for-pilot with validator + human QA gates; long-term hand-authoring noted (C9).
+
+## Review revisions (2026-06-07 — independent Sonnet review; see `.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`)
+
+Apply these during implementation (accepted findings):
+
+- **Test fixtures (IMPORTANT):** expanding K content breaks more than the card-list assertion — the `allPassed` fixtures in **both** `api/src/scheduler/planner.test.ts` and `api/src/routes/practice.test.ts` hardcode the 4 K skills and drive the terminal-reason tests. Task 5 must enumerate **all** K skills in both fixtures, or those tests silently stop verifying the "all K review-passed" condition.
+- **Audio count gate (IMPORTANT):** a numeric `audio` count is satisfied by TTS-fallback entries, which would violate ADR-002's real-asset requirement. The audio `required_now` must count **only entries with a real `src`**, and Task 4's `src` schema must land **before** the audio count is raised in Task 1.
+- **Validator split = precondition (was buried in Task 3):** `scripts/content-validate.ts` hard-reads `content/items/seed.json` (and again in the immutability check). Treat "if items are split, update the validator to glob all item files" as a Task 1 precondition guarded before authoring at volume.
+- **`v1_target` immutability:** enforce it via the existing `checkImmutability` origin/main pattern (fail if `v1_target` on HEAD < on `origin/main`), so it can't be lowered to meet `required_now`.
+- **Audio phasing:** state explicitly how many of the 56 phoneme/digraph assets are required in Phase 1 (K-relevant subset) vs Phase 2 — set the audio `required_now` accordingly.
+- **From ADR-002 (carry into Task 4):** handle the Web Speech **voice-load race** (`speechSynthesis.onvoiceschanged`, async enumeration, no guaranteed iPadOS English voice) and make **audio-asset licensing** a blocking checklist item before the bar is "done."

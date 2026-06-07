@@ -56,3 +56,11 @@ landing · sign-in · magic-link requested/check-email · auth error/expired-lin
 ## Self-review
 
 - Pilot-level a11y, not a formal audit (OQ6). Automated where jsdom allows; manual where it doesn't. Sequenced after 002f/002g so all FR34 surfaces exist to polish. No behavior change — pure polish/states/a11y.
+
+## Review revisions (2026-06-07 — independent Sonnet review; see `.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`)
+
+- **Own FR13 + FR15 (coverage gap):** add a task to audit the **drill flow and completion/progress copy** for adult-supported framing (FR13) and non-reward/no-exaggerated-praise language (FR15). Add FR13/FR15 to this plan's Resolves.
+- **Verify AC20:** add a verification step confirming **no payment wall** exists on any pilot-visible route.
+- **Missing surfaces:** the FR34 inventory must also include `/guardian/diag` (`GuardianDiagRoute`), `/guardian/:id/settings` (`StudentSettingsRoute`), and the guardian dashboard; "add/select child" spans two routes (`/guardian` and `/guardian/add-student`) and "grade selection" lives inside `AddStudentRoute`.
+- **Own the ADR-002 device-QA matrix:** make the audio device-QA (iPadOS Safari + desktop/mobile Chrome/Safari) an explicit Task here (single owner) so it doesn't fall between 002e and 002h.
+- **axe wiring:** the app `vite.config.ts` has no `test` block — wire `expect.extend(toHaveNoViolations())` via a `setupFiles` entry (or per-test) or the matcher errors at runtime.

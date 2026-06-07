@@ -52,35 +52,31 @@ Run: `pnpm --filter api typecheck` — expected PASS (the existing `dev-log` bra
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `api/src/email/magic-link.test.ts`. **Mock the outbound call with `vi.stubGlobal("fetch", …)`** — do NOT use `cloudflare:test`'s `fetchMock`: this repo's `api/src/cloudflare-test.d.ts` is a hand-written `declare module "cloudflare:test"` exporting only `env`/`SELF`, so `import { fetchMock }` would not typecheck. `vi.stubGlobal` needs no type changes and keeps this a pure unit test of `issueMagicLink`. Cover the four cases:
+Create `api/src/email/magic-link.test.ts`. **Inject `fetch` as a parameter** and pass a mock — do NOT use `vi.stubGlobal("fetch")` (it does not patch the runtime `fetch` inside the `@cloudflare/vitest-pool-workers` workerd isolate, so the real network would be hit), and do NOT use `cloudflare:test`'s `fetchMock` (this repo's hand-written `cloudflare-test.d.ts` exports only `env`/`SELF`). Dependency injection keeps this a pure, runtime-agnostic unit test. Cover the four cases:
 
 ```ts
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { issueMagicLink } from "./magic-link";
 import type { Env } from "../types";
 
 const baseEnv = { APP_ORIGIN: "https://app.test" } as unknown as Env;
 
-afterEach(() => vi.unstubAllGlobals());
-
 describe("issueMagicLink", () => {
   it("dev-log: returns an echoable url and sends no email", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-    const issued = await issueMagicLink({ ...baseEnv, AUTH_EMAIL_ISSUER: "dev-log" } as Env, "g@example.com", "tok123");
+    const fetchMock = vi.fn();
+    const issued = await issueMagicLink({ ...baseEnv, AUTH_EMAIL_ISSUER: "dev-log" } as Env, "g@example.com", "tok123", fetchMock);
     expect(issued.echoable).toBe(true);
     expect(issued.url).toContain("/auth/consume?token=tok123");
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("resend: POSTs a branded email and returns a non-echoable url on 2xx", async () => {
-    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ id: "re_123" }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchSpy);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: "re_123" }), { status: 200 }));
     const env = { ...baseEnv, AUTH_EMAIL_ISSUER: "resend", RESEND_API_KEY: "rk_test", EMAIL_FROM: "Reader's Way <signin@mail.test>" } as Env;
-    const issued = await issueMagicLink(env, "g@example.com", "tok123");
+    const issued = await issueMagicLink(env, "g@example.com", "tok123", fetchMock);
 
     expect(issued.echoable).toBe(false);
-    const [url, init] = fetchSpy.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://api.resend.com/emails");
     const body = JSON.parse((init as RequestInit).body as string);
     expect(body.from).toBe("Reader's Way <signin@mail.test>");
@@ -90,14 +86,14 @@ describe("issueMagicLink", () => {
   });
 
   it("resend: throws (sign-in failure) on a non-2xx provider response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("boom", { status: 500 })));
+    const fetchMock = vi.fn(async () => new Response("boom", { status: 500 }));
     const env = { ...baseEnv, AUTH_EMAIL_ISSUER: "resend", RESEND_API_KEY: "rk_test", EMAIL_FROM: "x <x@mail.test>" } as Env;
-    await expect(issueMagicLink(env, "g@example.com", "tok123")).rejects.toThrow();
+    await expect(issueMagicLink(env, "g@example.com", "tok123", fetchMock)).rejects.toThrow();
   });
 
   it("resend: throws when configuration is missing", async () => {
     const env = { ...baseEnv, AUTH_EMAIL_ISSUER: "resend" } as Env; // no key / from
-    await expect(issueMagicLink(env, "g@example.com", "tok123")).rejects.toThrow();
+    await expect(issueMagicLink(env, "g@example.com", "tok123", vi.fn())).rejects.toThrow();
   });
 });
 ```
@@ -108,26 +104,35 @@ Run: `pnpm --filter api exec vitest run src/email/magic-link.test.ts` — expect
 
 - [ ] **Step 3: Implement the `resend` branch (GREEN)**
 
-In `api/src/email/magic-link.ts`, reuse `buildMagicLinkEmail` for branded copy and add the provider branch before the final throw:
+In `api/src/email/magic-link.ts`, add an injectable `fetch` parameter (defaulting to the runtime global) and reuse `buildMagicLinkEmail`. Rename the recipient parameter to avoid shadowing the composed-email object:
 
 ```ts
 import { buildMagicLinkEmail } from "./content";
-// ...
+
+export const issueMagicLink = async (
+  env: Env,
+  recipient: string,           // was `email` — renamed so it doesn't shadow the composed email below
+  token: string,
+  fetchImpl: typeof fetch = (...args) => fetch(...args)   // DI seam for tests; default binds the runtime fetch
+): Promise<IssuedMagicLink> => {
+  const url = `${env.APP_ORIGIN}/auth/consume?token=${encodeURIComponent(token)}`;
+  // ... dev-log branch unchanged (it logs, returns echoable: true) ...
   if (env.AUTH_EMAIL_ISSUER === "resend") {
     if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
       throw new Error("resend issuer requires RESEND_API_KEY and EMAIL_FROM");
     }
     const email = buildMagicLinkEmail(url);
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetchImpl("https://api.resend.com/emails", {
       method: "POST",
-      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: env.EMAIL_FROM, to: [email_to], subject: email.subject, text: email.text })
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.EMAIL_FROM, to: [recipient], subject: email.subject, text: email.text })
     });
     if (!res.ok) throw new Error(`resend send failed: ${res.status}`);
     return { url, echoable: false };
   }
 ```
-(Bind the recipient address — the function's `email` parameter — to a local like `email_to` to avoid shadowing the composed-content `email`.)
+
+`auth.ts` keeps calling `issueMagicLink(c.env, email, token)` (the default `fetchImpl` is used in production). Optionally add an `auth.test.ts` assertion that a `resend`-configured env returns **204** end-to-end.
 
 - [ ] **Step 4: Run the tests — confirm GREEN**, then `pnpm --filter api test` (full suite, no regressions).
 
@@ -173,3 +178,9 @@ import { buildMagicLinkEmail } from "./content";
 - **FR23** — no retries/observability/UI; explicitly out of scope.
 - **ADR-001 guardrails** — non-2xx => sign-in failure (Task 2 test); short TTL unchanged (15 min in `auth.ts`); rate-limiting deferred and noted, not silently dropped.
 - **Brand copy** — reuses `buildMagicLinkEmail` so subject/body stay sourced from the copy package (FR20–21 already shipped).
+
+## Review revisions (2026-06-07 — independent Sonnet review; see `.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`)
+
+- **Test mocking fixed (BLOCKER):** `fetch` is dependency-injected into `issueMagicLink` (not `vi.stubGlobal`, which doesn't patch fetch in the workers pool; not `cloudflare:test` fetchMock, which isn't typed here). Applied above.
+- `Authorization` header capitalized; recipient param renamed to avoid shadowing the composed email. Applied above.
+- **FR20/FR21 are owned by shipped 002a** (`buildMagicLinkEmail`); 002d only consumes the builder — it does not re-claim them.

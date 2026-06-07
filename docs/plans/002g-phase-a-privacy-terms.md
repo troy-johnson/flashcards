@@ -47,3 +47,10 @@
 ## Self-review
 
 - Owner review is a hard gate before pilot publish (child-data posture, §12). Copy is plain-language and lightweight (FR29). Contact reuses `support.email` (single source). Sequence: land before/with 002f so footer links resolve.
+
+## Review revisions (2026-06-07 — independent Sonnet review; see `.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`)
+
+- **Owner-review = hard STOP:** insert an explicit "STOP — owner sign-off required before Task 2" checkpoint (child-data posture, §12); not just an advisory.
+- **`support.email` dependency:** 002g consumes `support.email` but 002f Task 1 adds it. Make this a stated prerequisite (or add `support.email` in whichever of 002f/002g runs first). Strict order: 002g before/with 002f.
+- **`isPublicRoute` (App.tsx line 615):** must include `/privacy` and `/terms`, or `showNav` renders the guardian nav on public legal pages.
+- **Authenticated contact (FR37/AC18):** add a `mailto:` support link in the **guardian area** (nav/dashboard), not only on public pages, so signed-in users can reach support without leaving the app.

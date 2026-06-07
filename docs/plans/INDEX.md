@@ -21,9 +21,11 @@ All Phase A workstreams are planned. Shipped: 002a/b/c. Drafted, ready to implem
 | Beads | Workstream | Plan | Spec coverage | Status |
 |---|---|---|---|---|
 | rw-1gz.7 | Transactional email provider (Resend) | 002d | FR19/22/23, AC3 | drafted |
-| rw-1gz.8 | v1.0 content bar | 002e (+ADR-002) | FR16–18, AC11–12 | drafted |
+| rw-1gz.8 | v1.0 content bar | 002e (+ADR-002) | FR16–18, AC11–12 | drafted (phased; full AC11/AC7 only after Phase 2 = 1st-grade U1) |
 | rw-1gz.9 | Public landing page | 002f | FR24–26, AC13 | drafted |
 | rw-1gz.10 | Privacy Policy & Terms + contact | 002g | FR27–29/37–39, AC14/18–19 | drafted |
 | rw-1gz.11 | Pilot UI polish & accessibility | 002h | FR33–36, AC16–17 | drafted (do last, after .9+.10) |
 
-**Recommended implementation order:** 002d (email) + 002e (content) in parallel → 002f (landing) + 002g (privacy/terms) → 002h (polish, last). Later-phase items (spec OQ1–6) remain intentionally unplanned.
+**Recommended implementation order:** 002d (email) + 002e (content) in parallel → **002g (privacy/terms) before/with 002f (landing)** (so the landing footer's `/privacy` `/terms` links resolve, and `support.email` exists) → 002h (polish, last). Pilot for 1st-grade students is gated on 002e Phase 2. Later-phase items (spec OQ1–6) remain intentionally unplanned.
+
+> All five drafted plans (002d–002h) + ADR-002 passed an independent Sonnet adversarial review on 2026-06-07 (`.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`); revisions are folded into each plan's "Review revisions" section.
