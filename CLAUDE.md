@@ -2,6 +2,16 @@
 
 This file provides instructions and context for AI coding agents working on this project.
 
+## 🚦 Merge & PR Policy (hard gate)
+
+**Do NOT merge a pull request without explicit user confirmation for that specific PR.**
+
+- Opening a PR, pushing a branch, and watching CI are fine without asking.
+- **Merging is a separate, explicit step.** After CI is green, **stop and report** — list the PR, its checks, and what changed — then wait for the user to say "merge" (or equivalent) for that PR. Approval to open or work on a PR is **not** approval to merge it.
+- The user often wants a window for **manual review or an independent/adversarial review** before merge. Never collapse that window by auto-merging.
+- This applies to every merge path: `gh pr merge`, the GitHub UI, fast-forward, squash, or direct pushes to a protected branch. `main` is protected; merges land via reviewed PRs.
+- A general "ship it" or standing instruction earlier in a session does **not** authorize merging later PRs — confirm per PR.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
 
