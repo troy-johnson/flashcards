@@ -57,6 +57,12 @@ Negative:
 
 - Requires producing/sourcing and licensing a verified phoneme audio set before the
   content bar is "done."
+- **The app has no audio code today** (no `Audio`/`speechSynthesis`/`audio_id` use in
+  `app/src`) — both playback paths are net-new, so this is a real subsystem to build, not a
+  wiring task. Sized accordingly in plan 002e Task 4.
+- The current `content/audio/manifest.json` entry shape (`{ audio_id, tts_fallback? }`) has
+  **no asset-path field**; real assets require a schema addition (`src`) plus validator and
+  app-resolution support.
 - Two playback paths (asset vs TTS) to implement and QA.
 - Cross-platform gesture/autoplay handling must be tested on real devices, not assumed.
 

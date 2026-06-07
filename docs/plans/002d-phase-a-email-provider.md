@@ -52,43 +52,45 @@ Run: `pnpm --filter api typecheck` — expected PASS (the existing `dev-log` bra
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `api/src/email/magic-link.test.ts`. Use `cloudflare:test`'s `fetchMock` to intercept the Resend endpoint (no real network). Cover the three ADR-001 cases:
+Create `api/src/email/magic-link.test.ts`. **Mock the outbound call with `vi.stubGlobal("fetch", …)`** — do NOT use `cloudflare:test`'s `fetchMock`: this repo's `api/src/cloudflare-test.d.ts` is a hand-written `declare module "cloudflare:test"` exporting only `env`/`SELF`, so `import { fetchMock }` would not typecheck. `vi.stubGlobal` needs no type changes and keeps this a pure unit test of `issueMagicLink`. Cover the four cases:
 
 ```ts
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchMock } from "cloudflare:test";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { issueMagicLink } from "./magic-link";
 import type { Env } from "../types";
 
 const baseEnv = { APP_ORIGIN: "https://app.test" } as unknown as Env;
 
-beforeEach(() => fetchMock.activate());
-afterEach(() => fetchMock.assertNoPendingInterceptors());
+afterEach(() => vi.unstubAllGlobals());
 
 describe("issueMagicLink", () => {
   it("dev-log: returns an echoable url and sends no email", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
     const issued = await issueMagicLink({ ...baseEnv, AUTH_EMAIL_ISSUER: "dev-log" } as Env, "g@example.com", "tok123");
     expect(issued.echoable).toBe(true);
     expect(issued.url).toContain("/auth/consume?token=tok123");
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("resend: POSTs a branded email and returns a non-echoable url on 2xx", async () => {
-    let captured: any;
-    fetchMock.get("https://api.resend.com").intercept({ path: "/emails", method: "POST" })
-      .reply(200, (opts) => { captured = JSON.parse(opts.body as string); return { id: "re_123" }; });
-
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ id: "re_123" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
     const env = { ...baseEnv, AUTH_EMAIL_ISSUER: "resend", RESEND_API_KEY: "rk_test", EMAIL_FROM: "Reader's Way <signin@mail.test>" } as Env;
     const issued = await issueMagicLink(env, "g@example.com", "tok123");
 
     expect(issued.echoable).toBe(false);
-    expect(captured.from).toBe("Reader's Way <signin@mail.test>");
-    expect(captured.to).toEqual(["g@example.com"]);
-    expect(captured.subject).toBe("Sign in to Reader's Way");
-    expect(captured.text).toContain("/auth/consume?token=tok123");
+    const [url, init] = fetchSpy.mock.calls[0]!;
+    expect(url).toBe("https://api.resend.com/emails");
+    const body = JSON.parse((init as RequestInit).body as string);
+    expect(body.from).toBe("Reader's Way <signin@mail.test>");
+    expect(body.to).toEqual(["g@example.com"]);
+    expect(body.subject).toBe("Sign in to Reader's Way");
+    expect(body.text).toContain("/auth/consume?token=tok123");
   });
 
   it("resend: throws (sign-in failure) on a non-2xx provider response", async () => {
-    fetchMock.get("https://api.resend.com").intercept({ path: "/emails", method: "POST" }).reply(500, "boom");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("boom", { status: 500 })));
     const env = { ...baseEnv, AUTH_EMAIL_ISSUER: "resend", RESEND_API_KEY: "rk_test", EMAIL_FROM: "x <x@mail.test>" } as Env;
     await expect(issueMagicLink(env, "g@example.com", "tok123")).rejects.toThrow();
   });
