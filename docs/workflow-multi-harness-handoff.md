@@ -1,84 +1,121 @@
-# Multi-Harness Beads Handoff Workflow
+# Multi-Harness Handoff Workflow
 
-This project uses `bd` (Beads) to coordinate work across two AI harnesses — **Claude Code** and **OpenCode** — sharing a single local workspace. This document describes how to hand off between them without losing context.
+Reader's Way work happens across many surfaces: Claude Code, Claude desktop, Claude mobile, OpenCode, Codex (CLI, desktop, mobile). Regardless of where you pick up, `bd` (Beads) is the source of current working status — for planning, implementation, reviews, and brainstorming equally.
 
-## Why this works
+## Harness capabilities
 
-All agents share:
-- **The same Dolt db** at `.beads/` — issue state is live for whichever harness is active.
-- **The same `AGENTS.md`** — Claude Code loads it via `CLAUDE.md → @AGENTS.md`; OpenCode reads `AGENTS.md` directly.
-- **`bd prime`** — auto-called by hooks in Claude Code and Codex on session start; must be run manually in OpenCode. Injects the full command reference and current project memories into context.
+| Harness | Runs `bd` | `bd prime` | Reads `AGENTS.md` |
+|---|---|---|---|
+| Claude Code (CLI) | ✅ | Auto (SessionStart hook) | Via `CLAUDE.md → @AGENTS.md` |
+| Codex (CLI) | ✅ | Auto (SessionStart hook) | Via `.codex/` config |
+| OpenCode | ✅ | Manual — run `bd prime` first | Direct |
+| Claude desktop | ❌ | — | Share file or paste |
+| Claude mobile | ❌ | — | Share file or paste |
+| Codex desktop/mobile | ❌ | — | Share file or paste |
 
-State that lives in the db (issue status, dependencies, notes, memories) is immediately visible to the next harness. There is no sync step between local sessions.
+**For tool-capable harnesses:** `bd prime` is the single entry point — it injects the full command reference, current memories, and open-work state into context. On CLI harnesses it runs automatically; on OpenCode run it manually before starting work.
 
-## Handoff checklist (outgoing agent)
+**For conversational harnesses (desktop/mobile):** you can't run `bd` directly. Use one of these to share current status with the model:
 
-Run these before saying "done" or switching harnesses:
+1. **Paste `bd prime` output** — run it in your terminal and paste the result into the chat.
+2. **Paste `bd ready`** — shorter; just the unblocked work queue with context.
+3. **Share the JSONL** — `.beads/issues.jsonl` is committed and pushed; you can share the raw GitHub URL or paste the file. It's the same data the db serves.
+
+## Getting current status (any harness)
+
+The question to answer before starting any session: *what is in flight, what's blocked, what's ready?*
 
 ```bash
-# 1. Close or update beads
-bd close <id> --reason="what was done"   # if complete
-bd update <id> --notes="where you left off, what's next"  # if mid-flight
+bd prime          # full context: memories + command ref + open work
+bd ready          # just the unblocked work queue
+bd list --status=in_progress   # anything mid-flight
+bd memories       # all stored cross-session context
+```
 
-# 2. Save anything non-obvious to a memory
-bd remember --key <slug> "key decisions, caveats, or next-action context"
-# Use bd memories <keyword> to check existing keys first; update in place.
+On a conversational harness, run these in your terminal and share the output.
+
+## Tracking all work types
+
+Beads tracks more than implementation tasks. Use it for every kind of work so status is queryable regardless of harness:
+
+| Work type | What to track in bd | Where the content lives |
+|---|---|---|
+| Implementation task | Feature/task bead with acceptance criteria | Code + plan doc |
+| Planning / spec work | Task bead ("Draft 002e plan") | `docs/plans/` |
+| Review (adversarial/independent) | Task bead ("Review 002d–002h") | `.agents/snapshots/` |
+| Brainstorm / research | Task bead or note on parent epic | `docs/research/` or bead `--notes` |
+| Decision / ADR | Task bead ("Write ADR-002") | `docs/adrs/` |
+| Deployment / ops | Task bead ("Flip resend issuer") | `docs/state/deployment-setup.md` |
+
+The bead is the *pointer* — status, dependencies, owner, notes. The doc file is the *content*. Never put planning content only in a bead description; never let a plan doc float without a tracking bead.
+
+## Outgoing checklist (before switching harness or ending session)
+
+```bash
+# 1. Update bead status
+bd close <id> --reason="what was done"            # if complete
+bd update <id> --notes="where you left off, what's next, any blockers"  # if mid-flight
+
+# 2. Save non-obvious context to a memory
+bd memories handoff   # check existing keys first; update in place
+bd remember --key <slug> "key decisions, caveats, gotchas, next action"
 
 # 3. Quality gates (if code changed)
 pnpm -r typecheck && pnpm -r test
 
-# 4. Commit changed files (if authorised to commit)
-git status   # check working tree
-# Stage only relevant files — not .beads/*.jsonl (gitignored db) unless bd export happened
+# 4. Commit relevant files
+git status   # confirm what changed
+# Stage only relevant files — .beads/issues.jsonl is auto-exported; commit it if you
+# want the JSONL on GitHub to reflect current state for conversational harnesses
 
-# 5. Export beads state to the committed JSONL
-# export.auto=true keeps .beads/issues.jsonl current on every write;
-# if in doubt: bd doctor to confirm no drift
+# 5. Push (if authorised — see merge gate in AGENTS.md)
+git push
 
-# 6. Report to the user: changed files, open PR or branch, beads status
+# 6. Report to the user: branch, PR if open, bead status, what's next
 ```
 
-## Handoff checklist (incoming agent)
-
-When picking up work from another harness or after a context gap:
+## Incoming checklist (picking up work)
 
 ```bash
-# 1. Pull latest code (if the other harness committed and pushed)
+# 1. Get latest code
 git pull --ff-only
 
-# 2. Load project context
-bd prime        # full command reference + memories injected into session
-bd ready        # see available work
-bd list --status=in_progress   # see anything mid-flight
+# 2. Load session context (tool-capable harnesses)
+bd prime
+bd ready
+bd list --status=in_progress
 
-# 3. Read the active bead
-bd show <id>    # description, notes, dependencies, who left what
+# 3. Read the active bead in detail
+bd show <id>
 
-# 4. Check memories for any handoff notes
-bd memories handoff   # or search by topic
+# 4. Check memories
+bd memories handoff   # any notes left by the outgoing session
+bd memories <topic>   # search by area of work
 ```
+
+On a conversational harness: run steps 1–4 in your terminal, paste or summarise the output into the session.
 
 ## Memory discipline
 
-`bd remember` is the persistence layer across both harnesses. Treat it like structured commit messages for intent:
+`bd remember` / `bd memories` is the cross-session, cross-harness knowledge layer. Think of it as structured commit messages for *intent and context*, not content.
 
-- **Save:** non-obvious decisions, key caveats, gotchas, "next step is X", review findings that shaped the plan.
-- **Don't save:** file paths / function names (read the code), git history (use `git log`), things already in plan docs.
-- **Update in place:** `bd remember --key <existing-key> "revised content"` — one key per topic, not growing append logs.
-- **Discard:** `bd forget <key>` when the work is shipped and the memory is stale.
+- **Save:** non-obvious decisions, test gotchas, review findings that shaped a plan, "next step is X and why", anything you'd have to re-derive from scratch.
+- **Don't save:** file paths / function names (read the code), git history (use `git log`), things already written in plan docs or ADRs.
+- **One key per topic, updated in place:** `bd remember --key <existing-key> "revised content"` — not a growing append log.
+- **Retire stale memories:** `bd forget <key>` once the work ships and the context no longer applies.
 
-## Adversarial / independent review handoff
+## Review / adversarial work handoff
 
-When one harness writes a plan or implementation and another (or a subagent) does the review:
+Reviews cross harnesses often (one agent writes, another reviews):
 
-1. Outgoing agent: write the review packet to `.agents/snapshots/<name>-<date>.md` and note the path in the handoff memory.
-2. Incoming agent: read the snapshot, triage findings, apply revisions, record disposition in the same file.
-3. Both: update the relevant plan's "Review revisions" section so the accepted findings are visible inline.
+1. **Outgoing reviewer:** write the packet to `.agents/snapshots/<name>-<date>.md`; note the path in a memory.
+2. **Incoming implementer:** read the snapshot, triage findings (accepted / rejected with rationale / deferred), apply revisions, append disposition to the packet.
+3. **Both:** update the plan's "Review revisions" section so accepted findings are visible inline without reading the snapshot.
 
 See `.agents/snapshots/` for worked examples.
 
-## Repo policy reminders
+## Repo policy (applies across all harnesses)
 
-- **Never `bd dolt push`** — this repo is local-first, single-writer. The JSONL is interchange; multi-machine sync is a deliberate, explicit opt-in.
-- **Never `bd init` a second workspace** — there is one workspace at `.beads/`.
-- Merge gates and commit authority follow the `AGENTS.md` rules, regardless of which harness is active.
+- **Merge gate:** never merge a PR without explicit per-PR user confirmation. Stop after CI green and report. See `AGENTS.md`.
+- **No `bd dolt push`:** this repo is local-first, single-writer. `.beads/issues.jsonl` + `.beads/config.yaml` are the committed source of truth; the binary Dolt db is local and gitignored.
+- **No second `bd init`:** one workspace at `.beads/`. Multi-machine sync is a deliberate opt-in, not a default.
