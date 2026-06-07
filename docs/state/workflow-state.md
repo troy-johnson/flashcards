@@ -1,12 +1,12 @@
 # Workflow State
 
-**Active Phase:** Spec 002 — ROADMAP COMPLETE (planning) on branch `plan/002-roadmap-remaining-plans`. Every Phase A workstream now has a plan. Shipped to main: 002a/b/c (+#24/#25/#26 planning). Drafted, ready to implement: 002d email, 002e content bar (+ADR-002), 002f landing, 002g privacy/terms, 002h polish.  
-**Active Branch:** plan/002-roadmap-remaining-plans (off main)
-**Active Artifacts:** docs/plans/002f-phase-a-landing-page.md; docs/plans/002g-phase-a-privacy-terms.md; docs/plans/002h-phase-a-ui-polish-a11y.md; docs/plans/INDEX.md; Beads: rw-1gz + children .7–.13  
-**Current Gate:** Phase A roadmap fully planned. Plans: 002d (email, rw-1gz.7), 002e (content bar, rw-1gz.8, +ADR-002), 002f (landing, rw-1gz.9), 002g (privacy/terms+contact, rw-1gz.10), 002h (polish & a11y, rw-1gz.11). Decisions locked: content phased K-first; audio=real phoneme assets+TTS fallback+gesture (ADR-002); LLM authoring for pilot; contact=support email mailto (copy constant); landing invite-only (no waitlist); privacy/terms LLM-drafted for owner review. Open items all triaged into beads; later-phase OQ1–6 deferred.  
+**Active Phase:** Spec 002 — roadmap planned + ADVERSARIALLY REVIEWED; revisions applied on branch `plan/002-plan-review-revisions`. All Phase A workstreams planned (002d–002h shipped-ready); 002a/b/c shipped.  
+**Active Branch:** plan/002-plan-review-revisions (off main)
+**Active Artifacts:** docs/plans/002d-phase-a-email-provider.md; docs/plans/002e-phase-a-content-bar.md; docs/adrs/002-phase-a-audio-strategy.md; docs/plans/INDEX.md; Beads: rw-1gz + children .7–.13  
+**Current Gate:** Adversarial review of drafted plans (002d–002h + ADR-002) run in-thread (subagents were quota-blocked). Verdict: roadmap COMPLETE & consistent; 002f/g/h SOUND; 002d + 002e needed revision — now applied: (1) 002d test mocks outbound via `vi.stubGlobal("fetch")` not `cloudflare:test` fetchMock (hand-written d.ts only exports env/SELF); (2) 002e Task 4 reframed — **app audio playback is net-new** (build asset loader + Web Speech TTS + gesture gating; manifest needs a `src` field), consider its own sub-plan; (3) 002e Task 3 — if items split, update validator (hard-reads seed.json); (4) 002e Task 5 — planner.test.ts/practice.test.ts assertions WILL break, update them; (5) manifest carries `v1_target` (fixed AC11 anchor) + `required_now` so AC11 can't be gamed; (6) ADR-002 notes audio layer is net-new + asset-path schema. Review notes added to rw-1gz.8.1/.8.2.  
 **Blockers:** none.  
-**Next Action:** merge this planning branch, then begin implementation — recommended order: 002d (email, `rw-1gz.7.1`) + 002e Phase 1 (`rw-1gz.8.1` manifest+validator) → 002f/002g → 002h last.  
-**Active Snapshot Pointer:** branch `plan/002-roadmap-remaining-plans`; 002f/g/h plans + landing/legal task beads created; INDEX shows full roadmap; awaiting PR.
+**Next Action:** merge this revisions branch, then begin implementation — recommended order: 002d (email, `rw-1gz.7.1`) + 002e Phase 1 (`rw-1gz.8.1` manifest+validator) → 002f/002g → 002h last.  
+**Active Snapshot Pointer:** branch `plan/002-plan-review-revisions`; 002d/002e/ADR-002 revised per adversarial review; awaiting PR.
 
 ## Spec 002 review gate (all 3 rounds)
 

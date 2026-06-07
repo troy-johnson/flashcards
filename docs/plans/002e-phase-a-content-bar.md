@@ -35,10 +35,10 @@
 **Files:** Create `content/manifest.json`; Modify `scripts/content-validate.ts`; Test: `scripts/content-validate.test.ts` (new, or extend existing validator tests).
 
 - [ ] **Step 1 (RED):** Write a validator test asserting that when actual content counts fall **below** the manifest's declared minimums, `content-validate` fails with a clear message; and passes when counts meet/exceed them. Run — confirm RED (no manifest read yet).
-- [ ] **Step 2 (GREEN):** Add `content/manifest.json` (per-category target counts + audio coverage expectations). Extend `content-validate.ts` to read it and `fail(...)` when `actual < manifest` for any category. Reuse the existing `readJson`/`fail` helpers and counting over `skills`/`items`/`audio`.
+- [ ] **Step 2 (GREEN):** Add `content/manifest.json` with **two values per category** so the AC11 anchor cannot be quietly lowered (review finding): a fixed `v1_target` (the full v1.0 numbers — the immutable AC11 end-state) and a `required_now` (the count the validator currently enforces, raised per phase). Extend `content-validate.ts` to `fail(...)` when `actual < required_now`, **and** to fail if any `required_now > v1_target` (so the target can't be edited downward to cheat) and warn how far `required_now` is below `v1_target`. Reuse the existing `readJson`/`fail` helpers and counting over `skills`/`items`/`audio`.
 - [ ] **Step 3:** Run `pnpm content:validate` and the validator test — GREEN. Commit `feat(content): add content manifest + validator count gate`.
 
-> Sets the Phase 1 manifest to the **current** seed counts first (so the gate passes), then each authoring task below raises the manifest as content lands — keeping the gate hard at every step.
+> `v1_target` is set once to the full v1.0 bar and never lowered; `required_now` starts at the **current** seed counts (so the gate passes) and each authoring task raises it toward `v1_target`. AC11 is fully met when `required_now == v1_target` (end of Phase 2). This keeps the gate hard at every step *and* fixes the AC11 end-state.
 
 ### Task 2: Author K Units 1–2 phonics skills + scope/sequence
 
@@ -53,19 +53,23 @@
 
 - [ ] Generate the K U1–2 heart words (regular/irregular tagged), decodable words, and fluency sentences via the LLM-assisted pipeline against the UFLI scaffold.
 - [ ] Validate every batch (`content:validate`: unique IDs, skill references, audio references) + **human QA** for decodability and tagging accuracy. Raise the manifest counts. Commit per category.
+- [ ] **If items are split into multiple files** (`content/items/*.json` instead of only `seed.json`): `scripts/content-validate.ts` currently hard-reads `content/items/seed.json`, so split files would silently bypass all count/immutability/reference checks. Update the validator to glob and concatenate every item file **as part of this task** — do not split without it.
 
-### Task 4: Phoneme/digraph audio assets + gesture playback (ADR-002)
+### Task 4: Audio playback subsystem + phoneme/digraph assets (ADR-002)
 
-**Files:** `content/audio/manifest.json`, audio assets, app drill audio wiring.
+> **Scope note (review finding):** the app has **no audio code today** — `grep` of `app/src` finds no `Audio`, `speechSynthesis`, or `audio_id` usage. The content references `audio_id`s and the validator checks them, but nothing ever plays. So this task **builds the playback layer from scratch**, it is not "wiring." Given the size, consider splitting it into its own sub-plan/epic; it is the single biggest piece of 002e and the highest implementation risk (ADR-002).
 
-- [ ] Produce/source the K-relevant phoneme + digraph audio assets; add manifest entries (non-TTS); keep TTS fallback for words/sentences.
-- [ ] Ensure app audio playback is **gesture-initiated** (tap) and falls back to TTS where no asset exists. Add/extend a test for the asset-vs-TTS selection.
-- [ ] Pilot-device QA on the ADR-002 matrix (iPadOS Safari primary). Raise manifest audio coverage. Commit.
+**Files:** `content/audio/manifest.json` (+ schema), audio assets under `content/audio/`, new app audio module (e.g. `app/src/audio/`), drill/card components, `scripts/content-validate.ts` (audio schema).
+
+- [ ] **Manifest schema:** the current entry shape is `{ audio_id, tts_fallback? }` with **no asset path**. Add a source field (e.g. `src` / file path) for real assets; keep `tts_fallback: true` entries for word/sentence TTS. Extend `content-validate.ts` to require a resolvable `src` for non-TTS entries.
+- [ ] **Build the app audio layer (net-new):** a module that, given an `audio_id`, plays the recorded asset if present, else falls back to the **Web Speech API (`speechSynthesis`)** for words/sentences. All playback is **gesture-initiated** (tap handler) to satisfy iOS Safari autoplay rules. Unit-test the asset-vs-TTS selection.
+- [ ] Produce/source the K-relevant phoneme + digraph assets; add manifest entries with `src`. Raise manifest audio coverage.
+- [ ] Pilot-device QA on the ADR-002 matrix (iPadOS Safari primary; desktop/mobile Chrome/Safari): real-device gesture playback + TTS availability/quality. Commit.
 
 ### Task 5: Phase 1 verification gate
 
-- [ ] `pnpm content:validate` (manifest gate green for K U1–2) · `pnpm -r typecheck && pnpm -r test` (scheduler still serves K from expanded content) · app build.
-- [ ] Confirm the scheduler produces a coherent K plan from the expanded content (existing `planner`/`practice` tests still green; add coverage if the larger set changes ordering assumptions).
+- [ ] `pnpm content:validate` (manifest gate green for K U1–2) · `pnpm -r typecheck && pnpm -r test` · app build.
+- [ ] **Update the tests that expanded content will break (deterministic, not "if"):** `api/src/scheduler/planner.test.ts` asserts the **exact** 4-skill K list (`["pa_k_u1_blend_two_sound", …]`) and `api/src/routes/practice.test.ts` asserts K card ordering/counts — both change when K U1–2 content lands. Update these assertions to match the new ordered set (and the daily-plan cap once item counts exceed it). Add coverage where the larger set introduces new ordering behavior.
 - [ ] Update `docs/state/workflow-state.md`; close `rw-1gz.8.1`/`.8.2`/`.8.3` as their tasks complete.
 
 ---
