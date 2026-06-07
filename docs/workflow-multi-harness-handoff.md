@@ -6,7 +6,7 @@ Reader's Way work happens across Claude Code, OpenCode, and Codex — on any dev
 
 Run `bd prime` at the start of every session. It injects the full command reference, current project memories, and open-work state into context.
 
-- **Claude Code / Codex:** fires automatically via the SessionStart hook.
+- **Claude Code / Codex:** fires automatically via each harness's built-in `SessionStart` hook (configured in `.claude/settings.json` and `.codex/hooks.json` respectively — installed by `bd init`, not by Axon).
 - **OpenCode:** run manually before starting work.
 
 ## Getting current status
