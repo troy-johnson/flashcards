@@ -1,180 +1,57 @@
 # Project Instructions for AI Agents
 
-This file provides instructions and context for AI coding agents working on this project.
+Reader's Way — an early-literacy practice app. pnpm monorepo on Cloudflare Workers + React.
+This is the single source of truth for agent instructions; `CLAUDE.md` imports it.
 
 ## 🚦 Merge & PR Policy (hard gate)
 
 **Do NOT merge a pull request without explicit user confirmation for that specific PR.**
 
 - Opening a PR, pushing a branch, and watching CI are fine without asking.
-- **Merging is a separate, explicit step.** After CI is green, **stop and report** — list the PR, its checks, and what changed — then wait for the user to say "merge" (or equivalent) for that PR. Approval to open or work on a PR is **not** approval to merge it.
-- The user often wants a window for **manual review or an independent/adversarial review** before merge. Never collapse that window by auto-merging.
-- This applies to every merge path: `gh pr merge`, the GitHub UI, fast-forward, squash, or direct pushes to a protected branch. `main` is protected; merges land via reviewed PRs.
-- A general "ship it" or standing instruction earlier in a session does **not** authorize merging later PRs — confirm per PR.
+- Merging is a **separate, explicit step**: after CI is green, stop and report (PR #, checks, what changed), then wait for the user to say "merge" for *that* PR.
+- The user often wants a window for manual or independent/adversarial review — never collapse it by auto-merging.
+- Applies to every path: `gh pr merge`, the GitHub UI, fast-forward, squash, or direct pushes. A general "ship it" earlier in a session does **not** authorize merging later PRs.
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:full hash:19cc25d9 -->
-## Issue Tracking with bd (beads)
+## Git workflow
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+- `main` is protected; all changes land via PRs. Branch with a `plan/<id>-slug` or `docs/<slug>` name.
+- **Conservative by default:** don't commit or push unless asked. When asked, branch → commit → push → open PR, then stop at the merge gate above.
+- End commit messages with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
-### Why bd?
+## Issue tracking — bd (beads)
 
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Dolt-powered version control with native sync
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
+Use **bd** for all task tracking (not markdown TODOs). Run **`bd prime`** at the start of operational work — it injects the full command reference and project memories each session, so they aren't duplicated here. Common loop: `bd ready` → `bd show <id>` → `bd update <id> --claim` → `bd close <id> --reason="…"`.
 
-### Quick Start
+**Local-first, single-writer (repo policy):**
+- `.beads/issues.jsonl` + `.beads/config.yaml` are the committed source of truth; the binary Dolt db is gitignored (rehydrate with `bd init --from-jsonl`). `export.auto=true` keeps the JSONL current.
+- **Never run `bd dolt push`** and never `bd init` a second workspace. Going multi-machine is a deliberate, explicit switch — not a default.
+- bd tracks *active work*; `docs/specs`, `docs/plans`, `docs/adrs`, `docs/research` remain the source of truth for behavior and decisions.
 
-**Check for ready work:**
-
-```bash
-bd ready --json
-```
-
-**Create new issues:**
+## Build, test, run
 
 ```bash
-bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
+pnpm install
+pnpm dev                 # api (wrangler) + app (vite) in parallel
+pnpm -r typecheck        # tsc --noEmit across workspaces
+pnpm -r test             # vitest run across workspaces
+pnpm content:validate    # validate content/ against schema + manifest
+pnpm db:migrations:list  # D1 migrations for literacy_preview
 ```
 
-**Claim and update:**
+Scope to one package with `pnpm --filter api …` / `--filter app …`.
 
-```bash
-bd update <id> --claim --json
-bd update bd-42 --priority 1 --json
-```
+## Architecture
 
-**Complete work:**
+pnpm workspace (`pnpm@9.15.0`), three packages:
 
-```bash
-bd close bd-42 --reason "Completed" --json
-```
+- **`api/`** — Hono on Cloudflare Workers, D1 (SQLite). Routes in `api/src/routes/`, the practice scheduler in `api/src/scheduler/`, magic-link auth/email in `api/src/email/` + `routes/auth.ts`. `wrangler.toml` config.
+- **`app/`** — React 19 + Vite SPA (guardian + practice UI).
+- **`packages/copy/`** — TypeScript-only shared brand/UI/email copy, imported as `copy` by both `api` and `app`. Brand strings live here, never in `content/`.
+- **`content/`** — instructional content as validated JSON data (`skills.json`, `scope-sequence.json`, `items/`, `audio/`); `scripts/content-validate.ts` is the gate.
 
-### Issue Types
+## Conventions
 
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
-
-### Workflow for AI Agents
-
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task atomically**: `bd update <id> --claim`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
-
-### Quality
-- Use `--acceptance` and `--design` fields when creating issues
-- Use `--validate` to check description completeness
-
-### Lifecycle
-- `bd defer <id>` / `bd supersede <id>` for issue management
-- `bd stale` / `bd orphans` / `bd lint` for hygiene
-- `bd human <id>` to flag for human decisions
-- `bd formula list` / `bd mol pour <name>` for structured workflows
-
-### Sync
-
-bd stores issue history in Dolt:
-
-- Each write auto-commits to Dolt history
-- Use `bd dolt push`/`bd dolt pull` for remote sync
-- Do not treat `.beads/issues.jsonl` as the sync protocol
-
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
-
-### Important Rules
-
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
-- ❌ Do NOT create markdown TODO lists
-- ❌ Do NOT use external issue trackers
-- ❌ Do NOT duplicate tracking systems
-
-For more details, see README.md and docs/QUICKSTART.md.
-
-## Agent Context Profiles
-
-The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
-
-- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
-- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
-- **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
-
-## Session Completion
-
-This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
-
-1. **File issues for remaining work** - Create beads for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **Handle git/sync by active profile**:
-   ```bash
-   # Conservative/minimal/default: report status and proposed commands; wait for approval.
-   git status
-
-   # Team-maintainer opt-in only, unless current instructions forbid it:
-   git pull --rebase
-   bd dolt push
-   git push
-   git status
-   ```
-5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
-
-**Critical rules:**
-- Explicit user or orchestrator instructions override this Beads block.
-- Do not commit or push without clear authority from the active profile or the current user request.
-- If a required sync or push is blocked, stop and report the exact command and error.
-
-<!-- END BEADS INTEGRATION -->
-
-
-## Build & Test
-
-_Add your build and test commands here_
-
-```bash
-# Example:
-# npm install
-# npm test
-```
-
-## Architecture Overview
-
-_Add a brief overview of your project architecture_
-
-## Conventions & Patterns
-
-_Add your project-specific conventions here_
-
-## Beads — repo policy (overrides the generated block above)
-
-This repo runs Beads **local-first, single-writer**. Where this conflicts with the
-generated integration block above, this section wins.
-
-- Beads (`bd`) is the operational source of truth for active work: status, dependencies,
-  blockers, the ready queue, and milestone/roadmap execution. Run `bd prime` at the start
-  of operational work; use `bd ready`, `bd show`, `bd update --claim`, `bd close`.
-- Canonical technical docs (`docs/specs`, `docs/plans`, `docs/adrs`, `docs/research`) remain
-  the source of truth for behavior and decisions. Beads links to them; it does not replace them.
-- **Tracking model:** `.beads/issues.jsonl` + `.beads/config.yaml` are the durable, diffable,
-  committed source. The binary Dolt db is gitignored and rehydrated with `bd init --from-jsonl`.
-  `export.auto=true` keeps the JSONL current.
-- **Do NOT run `bd dolt push`** and do NOT `bd init` a second workspace. Going multi-machine
-  requires an explicit, deliberate switch to Dolt remote sync — not a default.
+- **TDD is the default for code** (RED → GREEN → REFACTOR with per-stage checkpoint commits). No production code before an observed failing test.
+- **api tests** run in the `@cloudflare/vitest-pool-workers` workerd isolate: import `env` / `SELF` from `cloudflare:test`. `vi.stubGlobal("fetch")` does **not** patch fetch in that pool, and the hand-written `cloudflare-test.d.ts` exports only `env`/`SELF` (no `fetchMock`) — **dependency-inject** `fetch` instead.
+- **app tests** use Vitest + jsdom with raw `createRoot` + `act` (no `@testing-library`).
+- Content is data: extend the JSON files and let `content:validate` enforce integrity; no brand chrome in `content/`.
