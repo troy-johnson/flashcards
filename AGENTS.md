@@ -25,9 +25,10 @@ This is the single source of truth for agent instructions; `CLAUDE.md` imports i
 
 Use **bd** for all task tracking (not markdown TODOs). Run **`bd prime`** at the start of operational work — it injects the full command reference and project memories each session, so they aren't duplicated here. Common loop: `bd ready` → `bd show <id>` → `bd update <id> --claim` → `bd close <id> --reason="…"`.
 
-**Local-first, single-writer (repo policy):**
-- `.beads/issues.jsonl` + `.beads/config.yaml` are the committed source of truth; the binary Dolt db is gitignored (rehydrate with `bd init --from-jsonl`). `export.auto=true` keeps the JSONL current.
-- **Never run `bd dolt push`** and never `bd init` a second workspace. Going multi-machine is a deliberate, explicit switch — not a default.
+**Single-writer, cross-machine sync:**
+- The Dolt db is local and gitignored. Use `bd dolt pull` at the start of a session on any machine, and `bd dolt push` before switching machines — syncs via `sync.remote` in `.beads/config.yaml`.
+- **Single writer only** — one person, multiple machines, one active session at a time. Never share the Dolt remote with other contributors (multi-writer Dolt sync is not configured).
+- `export.auto=true` keeps `.beads/issues.jsonl` current as a committed fallback. Never `bd init` a second workspace.
 - bd tracks *active work*; `docs/specs`, `docs/plans`, `docs/adrs`, `docs/research` remain the source of truth for behavior and decisions.
 
 ## Build, test, run

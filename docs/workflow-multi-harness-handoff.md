@@ -45,10 +45,13 @@ bd update <id> --notes="where you left off, what's next, any blockers"
 bd memories handoff              # check existing keys first; update in place
 bd remember --key <slug> "key decisions, gotchas, next action"
 
-# 3. Quality gates (if code changed)
+# 3. Push Dolt db to remote so the other machine can pull it
+bd dolt push
+
+# 4. Quality gates (if code changed)
 pnpm -r typecheck && pnpm -r test
 
-# 4. Commit and push (if authorised — see merge gate in AGENTS.md)
+# 5. Commit and push (if authorised — see merge gate in AGENTS.md)
 git status
 git push
 ```
@@ -56,6 +59,7 @@ git push
 ## Incoming checklist (picking up work)
 
 ```bash
+bd dolt pull          # sync Dolt db from remote before anything else
 git pull --ff-only    # get latest code
 bd prime              # load session context
 bd ready              # see what's unblocked
@@ -86,5 +90,5 @@ See `.agents/snapshots/` for worked examples.
 ## Repo policy (all harnesses)
 
 - **Merge gate:** never merge a PR without explicit per-PR user confirmation — stop after CI green and report. See `AGENTS.md`.
-- **No `bd dolt push`:** local-first, single-writer. `.beads/issues.jsonl` + `.beads/config.yaml` are the committed source; the Dolt db is local and gitignored.
+- **`bd dolt push` / `bd dolt pull`:** use these to sync the Dolt db between machines (single writer only — never share the remote with other contributors). Push before switching machines; pull before starting a session.
 - **No second `bd init`:** one workspace at `.beads/`.
