@@ -20,11 +20,20 @@ const GRADE_ORDER: Record<string, number> = { K: 0, "1": 1 };
 type Skill = { skill_id: string; grade: "K" | "1"; prerequisites?: string[]; deprecated?: boolean };
 type Item = { item_id: string; skill_id: string; audio_id?: string; deprecated?: boolean };
 type ScopeUnit = { unit_id: string; grade: "K" | "1"; skill_ids: string[] };
+type ManifestCategory = { v1_target: number; required_now: number };
+type Manifest = {
+  phase: "phase_a";
+  categories: Record<
+    "phonics_skills" | "heart_words" | "decodable_words" | "fluency_sentences" | "phoneme_digraph_audio",
+    ManifestCategory
+  >;
+};
 
 const skills = readJson<Skill[]>("content/skills.json");
 const items = readJson<Item[]>("content/items/seed.json");
 const scope = readJson<ScopeUnit[]>("content/scope-sequence.json");
-const audio = readJson<{ audio: { audio_id: string; tts_fallback?: boolean }[] }>("content/audio/manifest.json");
+const audio = readJson<{ audio: { audio_id: string; src?: string; tts_fallback?: boolean }[] }>("content/audio/manifest.json");
+const manifest = readJson<Manifest>("content/manifest.json");
 
 const unique = (label: string, values: string[]) => {
   const seen = new Set<string>();
@@ -71,6 +80,31 @@ for (const skill of skills) {
   }
 }
 
+const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
+const actualManifestCounts: Record<keyof Manifest["categories"], number> = {
+  phonics_skills: skills.filter((skill) => skill.skill_id.startsWith("pa_") || skill.skill_id.startsWith("phonics_"))
+    .length,
+  heart_words: items.filter((item) => item.item_id.startsWith("heart_")).length,
+  decodable_words: items.filter((item) => item.item_id.startsWith("phonics_")).length,
+  fluency_sentences: items.filter((item) => item.item_id.startsWith("fluency_")).length,
+  phoneme_digraph_audio: audio.audio.filter(hasRealAudioSource).length
+};
+
+for (const [category, target] of Object.entries(manifest.categories) as [keyof Manifest["categories"], ManifestCategory][]) {
+  if (target.required_now > target.v1_target) {
+    fail(`${category} required_now ${target.required_now} exceeds v1_target ${target.v1_target}`);
+  }
+  const actual = actualManifestCounts[category];
+  if (actual < target.required_now) {
+    fail(`${category} requires at least ${target.required_now}, found ${actual}`);
+  }
+  if (target.required_now < target.v1_target) {
+    console.warn(
+      `[content-validate] ${category}: ${target.required_now}/${target.v1_target} required for Phase A v1 target`
+    );
+  }
+}
+
 const currentBranch = execSync("git rev-parse --abbrev-ref HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
 if (currentBranch !== "main") {
   const checkImmutability = <T extends { deprecated?: boolean }>(
@@ -90,6 +124,23 @@ if (currentBranch !== "main") {
   };
   checkImmutability<Skill>("skill_id", "content/skills.json", (s) => s.skill_id, skills);
   checkImmutability<Item>("item_id", "content/items/seed.json", (i) => i.item_id, items);
+
+  const previousManifest =
+    readJsonFromGit<Manifest>("origin/main", "content/manifest.json") ?? readJsonFromGit<Manifest>("main", "content/manifest.json");
+  if (previousManifest) {
+    for (const [category, previousTarget] of Object.entries(previousManifest.categories) as [
+      keyof Manifest["categories"],
+      ManifestCategory
+    ][]) {
+      const currentTarget = manifest.categories[category];
+      if (!currentTarget) fail(`manifest category ${category} present on main is missing on HEAD`);
+      if (currentTarget.v1_target < previousTarget.v1_target) {
+        fail(
+          `${category} v1_target ${currentTarget.v1_target} is below main's ${previousTarget.v1_target}; v1 targets are immutable`
+        );
+      }
+    }
+  }
 }
 
 for (const item of items) {

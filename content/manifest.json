@@ -1,0 +1,25 @@
+{
+  "phase": "phase_a",
+  "categories": {
+    "phonics_skills": {
+      "v1_target": 12,
+      "required_now": 2
+    },
+    "heart_words": {
+      "v1_target": 50,
+      "required_now": 1
+    },
+    "decodable_words": {
+      "v1_target": 200,
+      "required_now": 1
+    },
+    "fluency_sentences": {
+      "v1_target": 30,
+      "required_now": 1
+    },
+    "phoneme_digraph_audio": {
+      "v1_target": 56,
+      "required_now": 0
+    }
+  }
+}
