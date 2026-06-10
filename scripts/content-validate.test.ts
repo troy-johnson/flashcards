@@ -37,6 +37,14 @@ const writeManifest = (categories: Record<string, { v1_target: number; required_
   );
 };
 
+const validCategories = {
+  phonics_skills: { v1_target: 12, required_now: 2 },
+  heart_words: { v1_target: 50, required_now: 1 },
+  decodable_words: { v1_target: 200, required_now: 1 },
+  fluency_sentences: { v1_target: 30, required_now: 1 },
+  phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+};
+
 describe("content manifest count gate", () => {
   afterEach(restoreManifest);
 
@@ -55,15 +63,23 @@ describe("content manifest count gate", () => {
     );
   });
 
-  it("passes when authored content meets the manifest minimum", () => {
+  it("fails when the manifest categories do not exactly match the expected keys", () => {
+    const { phonics_skills: _phonicsSkills, ...categoriesWithMissingKey } = validCategories;
+
     writeManifest({
-      phonics_skills: { v1_target: 12, required_now: 2 },
-      heart_words: { v1_target: 50, required_now: 1 },
-      decodable_words: { v1_target: 200, required_now: 1 },
-      fluency_sentences: { v1_target: 30, required_now: 1 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      ...categoriesWithMissingKey,
+      phonics_skill: { v1_target: 12, required_now: 2 }
     });
 
-    assert.match(runValidator(), /\[content-validate\] ok: 4 skills, 4 items, 3 audio entries/);
+    assert.throws(
+      runValidator,
+      /manifest categories must include exactly: phonics_skills, heart_words, decodable_words, fluency_sentences, phoneme_digraph_audio/
+    );
+  });
+
+  it("passes when authored content meets the manifest minimum", () => {
+    writeManifest(validCategories);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
   });
 });

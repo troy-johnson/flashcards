@@ -28,6 +28,14 @@ type Manifest = {
     ManifestCategory
   >;
 };
+const MANIFEST_CATEGORIES = [
+  "phonics_skills",
+  "heart_words",
+  "decodable_words",
+  "fluency_sentences",
+  "phoneme_digraph_audio"
+] as const;
+type ManifestCategoryName = (typeof MANIFEST_CATEGORIES)[number];
 
 const skills = readJson<Skill[]>("content/skills.json");
 const items = readJson<Item[]>("content/items/seed.json");
@@ -81,7 +89,7 @@ for (const skill of skills) {
 }
 
 const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
-const actualManifestCounts: Record<keyof Manifest["categories"], number> = {
+const actualManifestCounts: Record<ManifestCategoryName, number> = {
   phonics_skills: skills.filter((skill) => skill.skill_id.startsWith("pa_") || skill.skill_id.startsWith("phonics_"))
     .length,
   heart_words: items.filter((item) => item.item_id.startsWith("heart_")).length,
@@ -90,7 +98,17 @@ const actualManifestCounts: Record<keyof Manifest["categories"], number> = {
   phoneme_digraph_audio: audio.audio.filter(hasRealAudioSource).length
 };
 
-for (const [category, target] of Object.entries(manifest.categories) as [keyof Manifest["categories"], ManifestCategory][]) {
+const expectedManifestCategories = new Set<string>(MANIFEST_CATEGORIES);
+const actualManifestCategories = Object.keys(manifest.categories);
+if (
+  actualManifestCategories.length !== MANIFEST_CATEGORIES.length ||
+  actualManifestCategories.some((category) => !expectedManifestCategories.has(category))
+) {
+  fail(`manifest categories must include exactly: ${MANIFEST_CATEGORIES.join(", ")}`);
+}
+
+for (const category of MANIFEST_CATEGORIES) {
+  const target = manifest.categories[category];
   if (target.required_now > target.v1_target) {
     fail(`${category} required_now ${target.required_now} exceeds v1_target ${target.v1_target}`);
   }
