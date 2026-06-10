@@ -6,7 +6,8 @@
     "dev": "pnpm --parallel --stream --filter app --filter api dev",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",
-    "test": "pnpm --recursive test",
+    "test": "pnpm --recursive test && pnpm test:scripts",
+    "test:scripts": "node --import tsx --test --test-concurrency=1 scripts/*.test.ts",
     "content:validate": "tsx scripts/content-validate.ts",
     "replay:attempts": "tsx scripts/replay-attempts.ts",
     "db:migrations:list": "wrangler d1 migrations list literacy_preview --config api/wrangler.toml"
