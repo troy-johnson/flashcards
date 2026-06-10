@@ -89,13 +89,15 @@ for (const skill of skills) {
 }
 
 const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
+const isPhonemeDigraphAudio = (entry: { audio_id: string }) =>
+  entry.audio_id.startsWith("phoneme_") || entry.audio_id.startsWith("digraph_");
 const actualManifestCounts: Record<ManifestCategoryName, number> = {
   phonics_skills: skills.filter((skill) => skill.skill_id.startsWith("pa_") || skill.skill_id.startsWith("phonics_"))
     .length,
   heart_words: items.filter((item) => item.item_id.startsWith("heart_")).length,
   decodable_words: items.filter((item) => item.item_id.startsWith("phonics_")).length,
   fluency_sentences: items.filter((item) => item.item_id.startsWith("fluency_")).length,
-  phoneme_digraph_audio: audio.audio.filter(hasRealAudioSource).length
+  phoneme_digraph_audio: audio.audio.filter((entry) => hasRealAudioSource(entry) && isPhonemeDigraphAudio(entry)).length
 };
 
 const expectedManifestCategories = new Set<string>(MANIFEST_CATEGORIES);
