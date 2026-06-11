@@ -112,7 +112,19 @@ describe("practice and diagnostic routes", () => {
     const startedAt = "2026-01-01T00:00:00.000Z";
     await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
       .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
-    const skills = ["pa_k_u1_blend_two_sound", "phonics_k_u1_short_a", "heart_k_u1_batch_01", "fluency_k_u1_cvc_sentences"];
+    const skills = [
+      "pa_k_u1_isolate_initial_sound",
+      "pa_k_u1_blend_two_sound",
+      "phonics_k_u1_consonants_mstp",
+      "phonics_k_u1_short_a",
+      "phonics_k_u1_cvc_blend_short_a",
+      "heart_k_u1_batch_01",
+      "fluency_k_u1_cvc_sentences",
+      "pa_k_u2_segment_three_sound",
+      "phonics_k_u2_consonants_ncdg",
+      "phonics_k_u2_short_o",
+      "phonics_k_u2_cvc_blend_short_o"
+    ];
     const statements = [];
     let n = 0;
     for (const skillId of skills) {

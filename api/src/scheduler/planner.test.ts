@@ -113,10 +113,17 @@ describe("buildPracticePlan", () => {
     // skills pass, the review plan is empty. The pure planner returns no cards;
     // `planTerminalReason` (below) names why, and the start route surfaces it.
     const allPassed = {
+      pa_k_u1_isolate_initial_sound: fourCorrect,
       pa_k_u1_blend_two_sound: fourCorrect,
+      phonics_k_u1_consonants_mstp: fourCorrect,
       phonics_k_u1_short_a: fourCorrect,
+      phonics_k_u1_cvc_blend_short_a: fourCorrect,
       heart_k_u1_batch_01: fourCorrect,
-      fluency_k_u1_cvc_sentences: fourCorrect
+      fluency_k_u1_cvc_sentences: fourCorrect,
+      pa_k_u2_segment_three_sound: fourCorrect,
+      phonics_k_u2_consonants_ncdg: fourCorrect,
+      phonics_k_u2_short_o: fourCorrect,
+      phonics_k_u2_cvc_blend_short_o: fourCorrect
     };
     const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
     expect(plan.cards).toEqual([]);
@@ -125,10 +132,17 @@ describe("buildPracticePlan", () => {
 
 describe("planTerminalReason", () => {
   const allPassed = {
+    pa_k_u1_isolate_initial_sound: fourCorrect,
     pa_k_u1_blend_two_sound: fourCorrect,
+    phonics_k_u1_consonants_mstp: fourCorrect,
     phonics_k_u1_short_a: fourCorrect,
+    phonics_k_u1_cvc_blend_short_a: fourCorrect,
     heart_k_u1_batch_01: fourCorrect,
-    fluency_k_u1_cvc_sentences: fourCorrect
+    fluency_k_u1_cvc_sentences: fourCorrect,
+    pa_k_u2_segment_three_sound: fourCorrect,
+    phonics_k_u2_consonants_ncdg: fourCorrect,
+    phonics_k_u2_short_o: fourCorrect,
+    phonics_k_u2_cvc_blend_short_o: fourCorrect
   };
 
   it("reports review-complete when a 1st grader has review-passed every K skill", () => {

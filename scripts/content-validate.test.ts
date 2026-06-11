@@ -62,8 +62,11 @@ describe("content manifest count gate", () => {
   afterEach(restoreContentFiles);
 
   it("fails when authored content is below the manifest minimum", () => {
+    // required_now at the v1_target ceiling, which authored phonics content has
+    // not yet reached — the count is intentionally not pinned so this stays
+    // valid as K/1 phonics skills are authored up toward the target.
     writeManifest({
-      phonics_skills: { v1_target: 12, required_now: 5 },
+      phonics_skills: { v1_target: 12, required_now: 12 },
       heart_words: { v1_target: 50, required_now: 1 },
       decodable_words: { v1_target: 200, required_now: 1 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
@@ -72,7 +75,7 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /phonics_skills requires at least 5, found 2/
+      /phonics_skills requires at least 12, found \d+/
     );
   });
 
