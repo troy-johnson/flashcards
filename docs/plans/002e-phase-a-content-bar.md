@@ -14,7 +14,7 @@
 
 - **Phasing (C-scope):** Phase 1 = **K Units 1–2**; Phase 2 = **1st-grade Unit 1**. AC11 (full v1.0 bar) is *partial* until Phase 2; the manifest is raised to the full v1.0 counts when Phase 2 lands.
 - **Audio (C2 / ADR-002):** recorded/sourced audio for 44 phonemes + digraphs; TTS fallback for words/sentences; gesture-initiated playback; device QA on iPadOS Safari + desktop/mobile Chrome/Safari.
-- **Authoring (C9 / FR17):** **pilot = LLM-assisted** generation against a UFLI-style scaffold → `content-validate` → human QA pass. **Long-term = hand authoring** (revisit if LLM proves best practice). Every generated batch passes the validator and a human review before merge.
+- **Authoring (C9 / FR17):** **pilot = LLM-assisted** generation against a UFLI-style scaffold → `content-validate` → human QA pass. **Long-term = hand authoring** (revisit if LLM proves best practice). Every generated batch passes the validator and a human review before merge. **Full loop, ID/prefix conventions, and QA checklist:** see [Content Authoring Pipeline](#content-authoring-pipeline-c9--fr17) below.
 - **Manifest counts (C1):** the manifest is the single source of truth for "complete." Phase 1 declares the K U1–2 targets; Phase 2 raises to the full v1.0 bar. Illustrative targets below; finalized in the manifest during authoring against the UFLI scope.
 
 | Category | Phase 1 (K U1–2) target | Full v1.0 (after Phase 2) |
@@ -25,6 +25,62 @@
 | Fluency sentences | ~18 | ~30 |
 | Phoneme/digraph audio | K-relevant phonemes + digraphs | 44 phonemes + ~12 digraphs |
 | TTS fallback (words/sentences) | required | required |
+
+---
+
+## Content Authoring Pipeline (C9 / FR17)
+
+> **Status:** authoring SOP for the pilot. Pilot = **LLM-assisted** generation against a UFLI-style scaffold; **long-term = hand authoring** (revisit if LLM proves best practice). Every generated batch passes `content-validate` **and** a human QA pass before merge. This section is the deliverable of bead `rw-1gz.8.3`; it drives the authoring tasks (`rw-1jk`, Tasks 2–3 below).
+
+### ID / prefix conventions (the validator counts by prefix — get these right or content silently won't count)
+
+`scripts/content-validate.ts` derives every manifest category count from **ID prefixes**, not from a `type` field. Generated content that uses the wrong prefix passes referential integrity but **does not count toward the manifest gate** (and may be miscounted in another category). Author to these exactly:
+
+| Category | Counted from | Required prefix |
+|---|---|---|
+| `phonics_skills` | `content/skills.json` `skill_id` | `pa_` or `phonics_` |
+| `heart_words` | `content/items/seed.json` `item_id` | `heart_` |
+| `decodable_words` | items `item_id` | `phonics_` |
+| `fluency_sentences` | items `item_id` | `fluency_` |
+| `phoneme_digraph_audio` | `content/audio/manifest.json` | `phoneme_` or `digraph_` **and** a real `src` (TTS-fallback entries do **not** count — ADR-002) |
+
+Suggested ID shape: `<prefix>_<grade>_<unit>_<slug>` (e.g. `phonics_k_u1_short_a_cat`, `heart_k_u1_the`, `fluency_k_u1_cat_sat`). IDs are **immutable post-ship** — the validator's `checkImmutability` fails any branch that drops or renames a shipped `skill_id`/`item_id` without `deprecated: true`. Never reuse or rename; add new IDs.
+
+### The loop (per unit, per category)
+
+1. **Select scope.** Pick the unit + target skill(s) from the UFLI-style scope/sequence. List the graphemes/skills taught **at or before** this unit — this is the decodability budget for the batch.
+2. **Build the scaffold prompt.** Give the LLM: the target skill, the allowed-grapheme budget (step 1), the exact JSON shape (fields below), the required ID prefix, the batch size needed to raise `required_now`, and the rule that decodable words may use **only** allowed graphemes (heart/irregular words are the sole exception and must be tagged).
+3. **Generate a batch** in the exact JSON shape, appended to the right file (`skills.json`, `scope-sequence.json`, or `items/seed.json`).
+4. **Validate:** `pnpm content:validate`. Fix every failure (unique IDs, skill/audio references, prereq order, prefix → count, manifest gate). The gate is hard; the batch is not done until it's green.
+5. **Human QA pass** against the checklist below. Reject and regenerate items that fail — do not hand-patch silently past a QA failure.
+6. **Raise `manifest.json` `required_now`** for the category to the new count (never above `v1_target`; `v1_target` is immutable and never lowered). Re-run `content:validate` so the higher gate is enforced.
+7. **Commit per category** (e.g. `content(k-u1): author heart words batch 01`). One category per commit keeps QA and review reviewable.
+
+> **Ordering preconditions** (from Task 1 review): if items are split beyond `seed.json`, the validator must glob all item files **before** authoring at volume (it currently hard-reads `seed.json`). For audio, the `src` schema (Task 4) must land **before** the audio `required_now` is raised — a numeric count alone is satisfiable by TTS entries, which violates ADR-002.
+
+### Item JSON shapes (from current seed)
+
+- **PA/blend skill item:** `{ item_id (pa_*), skill_id, prompt, answer }`
+- **Decodable word:** `{ item_id (phonics_*), skill_id, text, audio_id }`
+- **Heart word:** `{ item_id (heart_*), skill_id, text, regular_parts[], irregular_parts[], audio_id }`
+- **Fluency sentence:** `{ item_id (fluency_*), skill_id, text, audio_id }`
+- **Audio entry:** `{ audio_id, src? , tts_fallback? }` — words/sentences use `tts_fallback: true`; phonemes/digraphs need a real `src`.
+
+### Human QA checklist (every batch, before merge)
+
+- [ ] **Decodability** — each decodable word uses only graphemes/skills taught at or before its unit; no untaught patterns leak in. Heart/irregular words are the only exception **and** are tagged.
+- [ ] **Heart-word tagging** — `regular_parts` / `irregular_parts` correctly split the word; the irregular part is the genuinely irregular grapheme→phoneme correspondence (not just "hard").
+- [ ] **Skill mapping** — each item's `skill_id` is the skill it actually practices, and that skill exists in `skills.json`.
+- [ ] **Scope / prerequisite order** — prerequisites precede dependents; the first unit of each grade has no unmet prerequisite (validator enforces, but confirm the teaching order reads sensibly).
+- [ ] **Audio references** — every `audio_id` resolves in the audio manifest; TTS-fallback words/sentences pronounce correctly (watch homographs the TTS may mis-read).
+- [ ] **Prefix / ID conventions** — IDs use the counting prefix above and the `<prefix>_<grade>_<unit>_<slug>` shape; no reused or renamed shipped IDs.
+- [ ] **Developmental appropriateness** — age-appropriate vocabulary for the grade; no proper nouns or obscure words a reader at this level can't reasonably attempt; no problematic content.
+- [ ] **Counts** — the batch raises the category to the intended `required_now`, and `required_now ≤ v1_target`.
+- [ ] **Validator green** — `pnpm content:validate` passes on the final batch (referential integrity + manifest gate + immutability off `main`).
+
+### Provenance
+
+Pilot content is LLM-generated and human-reviewed; record the QA reviewer in the PR. Long-term the loop converges on hand authoring (or stays LLM-assisted if it proves the better practice) — the validator + human-QA gate is identical either way, so the source of generation can change without changing the bar.
 
 ---
 
