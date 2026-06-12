@@ -47,14 +47,19 @@ export function buildPracticePlan(
   const planSize = content.dailyPlanSizeByGrade[input.grade] ?? 0;
 
   // Skills in scope-sequence order (units in file order, skill_ids in unit order).
-  const orderedSkillIds = content.units.flatMap((unit) => unit.skill_ids);
+  // Restrict to practiceable skills only — those with at least one item — so that
+  // no-item skills (scope declared ahead of content authoring) never produce empty
+  // card slots or block terminal-reason detection.
+  const practiceable = content.units
+    .flatMap((unit) => unit.skill_ids)
+    .filter((id) => id in content.itemsBySkill);
 
   const selectedSkillIds =
     input.grade === "1"
-      ? orderedSkillIds.filter(
+      ? practiceable.filter(
           (skillId) => !evaluateReviewSkill(input.recentAttempts[skillId] ?? []).reviewPassed
         )
-      : orderedSkillIds;
+      : practiceable;
 
   const cards: PlanCard[] = [];
   for (const skillId of selectedSkillIds) {
@@ -83,9 +88,11 @@ export function planTerminalReason(
   content: SchedulerContent = loadSchedulerContent()
 ): PlanTerminalReason | null {
   if (input.grade !== "1") return null;
-  const orderedSkillIds = content.units.flatMap((unit) => unit.skill_ids);
+  const practiceable = content.units
+    .flatMap((unit) => unit.skill_ids)
+    .filter((id) => id in content.itemsBySkill);
   const allReviewPassed =
-    orderedSkillIds.length > 0 &&
-    orderedSkillIds.every((skillId) => evaluateReviewSkill(input.recentAttempts[skillId] ?? []).reviewPassed);
+    practiceable.length > 0 &&
+    practiceable.every((skillId) => evaluateReviewSkill(input.recentAttempts[skillId] ?? []).reviewPassed);
   return allReviewPassed ? "review_complete_no_active_content" : null;
 }

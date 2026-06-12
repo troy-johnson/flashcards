@@ -8,8 +8,8 @@
   {
     "item_id": "phonics_k_u1_short_a_cat",
     "skill_id": "phonics_k_u1_short_a",
-    "text": "cat",
-    "audio_id": "tts_word_cat"
+    "text": "mat",
+    "audio_id": "tts_word_mat"
   },
   {
     "item_id": "heart_k_u1_the",
@@ -22,7 +22,7 @@
   {
     "item_id": "fluency_k_u1_cat_sat",
     "skill_id": "fluency_k_u1_cvc_sentences",
-    "text": "The cat sat.",
-    "audio_id": "tts_sentence_the_cat_sat"
+    "text": "Sam sat.",
+    "audio_id": "tts_sentence_sam_sat"
   }
 ]

@@ -10,13 +10,20 @@ describe("loadSchedulerContent", () => {
         "fluency_k_u1_cvc_sentences",
         "heart_k_u1_batch_01",
         "pa_k_u1_blend_two_sound",
-        "phonics_k_u1_short_a"
+        "pa_k_u1_isolate_initial_sound",
+        "pa_k_u2_segment_three_sound",
+        "phonics_k_u1_consonants_mstp",
+        "phonics_k_u1_cvc_blend_short_a",
+        "phonics_k_u1_short_a",
+        "phonics_k_u2_consonants_ncdg",
+        "phonics_k_u2_cvc_blend_short_o",
+        "phonics_k_u2_short_o"
       ].sort()
     );
   });
 
   it("loads every unit from scope-sequence.json", () => {
-    expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1_seed"]);
+    expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1", "k_u2"]);
   });
 
   it("indexes every item by id", () => {
@@ -43,7 +50,7 @@ describe("loadSchedulerContent", () => {
     // item with prompt only falls back to prompt
     expect(content.itemsById["pa_k_u1_blend_at"]?.text).toBe("Blend /a/ and /t/.");
     // item with text uses text directly
-    expect(content.itemsById["phonics_k_u1_short_a_cat"]?.text).toBe("cat");
+    expect(content.itemsById["phonics_k_u1_short_a_cat"]?.text).toBe("mat");
   });
 
   it("never produces an item with undefined text", () => {

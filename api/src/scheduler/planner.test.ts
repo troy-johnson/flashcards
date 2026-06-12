@@ -108,15 +108,36 @@ describe("buildPracticePlan", () => {
     expect(buildPracticePlan({ grade: "Z", ...emptyState }).cards).toEqual([]);
   });
 
+  it("returns an empty plan when a 1st grader has review-passed all item-backed skills but no-item skills remain in scope", () => {
+    // Only 4 K skills have items; the remaining 7 no-item skills can never receive attempts.
+    // The plan must be empty and planTerminalReason must fire (tested below).
+    const itemBackedPassed = {
+      pa_k_u1_blend_two_sound: fourCorrect,
+      phonics_k_u1_short_a: fourCorrect,
+      heart_k_u1_batch_01: fourCorrect,
+      fluency_k_u1_cvc_sentences: fourCorrect
+    };
+    expect(
+      buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed }).cards
+    ).toEqual([]);
+  });
+
   it("returns an empty plan for a 1st grader who has review-passed every K skill", () => {
     // Phase A has no authored 1st-grade active content, so once all K review
     // skills pass, the review plan is empty. The pure planner returns no cards;
     // `planTerminalReason` (below) names why, and the start route surfaces it.
     const allPassed = {
+      pa_k_u1_isolate_initial_sound: fourCorrect,
       pa_k_u1_blend_two_sound: fourCorrect,
+      phonics_k_u1_consonants_mstp: fourCorrect,
       phonics_k_u1_short_a: fourCorrect,
+      phonics_k_u1_cvc_blend_short_a: fourCorrect,
       heart_k_u1_batch_01: fourCorrect,
-      fluency_k_u1_cvc_sentences: fourCorrect
+      fluency_k_u1_cvc_sentences: fourCorrect,
+      pa_k_u2_segment_three_sound: fourCorrect,
+      phonics_k_u2_consonants_ncdg: fourCorrect,
+      phonics_k_u2_short_o: fourCorrect,
+      phonics_k_u2_cvc_blend_short_o: fourCorrect
     };
     const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
     expect(plan.cards).toEqual([]);
@@ -125,10 +146,17 @@ describe("buildPracticePlan", () => {
 
 describe("planTerminalReason", () => {
   const allPassed = {
+    pa_k_u1_isolate_initial_sound: fourCorrect,
     pa_k_u1_blend_two_sound: fourCorrect,
+    phonics_k_u1_consonants_mstp: fourCorrect,
     phonics_k_u1_short_a: fourCorrect,
+    phonics_k_u1_cvc_blend_short_a: fourCorrect,
     heart_k_u1_batch_01: fourCorrect,
-    fluency_k_u1_cvc_sentences: fourCorrect
+    fluency_k_u1_cvc_sentences: fourCorrect,
+    pa_k_u2_segment_three_sound: fourCorrect,
+    phonics_k_u2_consonants_ncdg: fourCorrect,
+    phonics_k_u2_short_o: fourCorrect,
+    phonics_k_u2_cvc_blend_short_o: fourCorrect
   };
 
   it("reports review-complete when a 1st grader has review-passed every K skill", () => {
@@ -146,5 +174,19 @@ describe("planTerminalReason", () => {
 
   it("never reports terminal for K, even when review-pass criteria are met", () => {
     expect(planTerminalReason({ grade: "K", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed })).toBeNull();
+  });
+
+  it("reports terminal when a 1st grader has review-passed all item-backed skills, even though no-item skills remain", () => {
+    // No-item skills can never be review-passed (no cards to attempt).
+    // Terminal reason must fire once all practiceable (item-backed) skills are passed.
+    const itemBackedPassed = {
+      pa_k_u1_blend_two_sound: fourCorrect,
+      phonics_k_u1_short_a: fourCorrect,
+      heart_k_u1_batch_01: fourCorrect,
+      fluency_k_u1_cvc_sentences: fourCorrect
+    };
+    expect(
+      planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed })
+    ).toBe("review_complete_no_active_content");
   });
 });

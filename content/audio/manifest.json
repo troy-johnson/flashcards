@@ -1,7 +1,7 @@
 {
   "audio": [
-    { "audio_id": "tts_word_cat", "tts_fallback": true },
+    { "audio_id": "tts_word_mat", "tts_fallback": true },
     { "audio_id": "tts_word_the", "tts_fallback": true },
-    { "audio_id": "tts_sentence_the_cat_sat", "tts_fallback": true }
+    { "audio_id": "tts_sentence_sam_sat", "tts_fallback": true }
   ]
 }

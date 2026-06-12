@@ -7,8 +7,14 @@ import { afterEach, describe, it } from "node:test";
 const root = process.cwd();
 const manifestPath = join(root, "content/manifest.json");
 const audioManifestPath = join(root, "content/audio/manifest.json");
+const skillsPath = join(root, "content/skills.json");
+const scopePath = join(root, "content/scope-sequence.json");
+const itemsPath = join(root, "content/items/seed.json");
 const originalManifest = existsSync(manifestPath) ? readFileSync(manifestPath, "utf8") : null;
 const originalAudioManifest = readFileSync(audioManifestPath, "utf8");
+const originalSkills = readFileSync(skillsPath, "utf8");
+const originalScope = readFileSync(scopePath, "utf8");
+const originalItems = readFileSync(itemsPath, "utf8");
 
 const restoreContentFiles = () => {
   if (originalManifest === null) {
@@ -17,6 +23,21 @@ const restoreContentFiles = () => {
     writeFileSync(manifestPath, originalManifest);
   }
   writeFileSync(audioManifestPath, originalAudioManifest);
+  writeFileSync(skillsPath, originalSkills);
+  writeFileSync(scopePath, originalScope);
+  writeFileSync(itemsPath, originalItems);
+};
+
+const writeSkills = (skills: unknown[]) => {
+  writeFileSync(skillsPath, `${JSON.stringify(skills, null, 2)}\n`);
+};
+
+const writeScopeSequence = (units: unknown[]) => {
+  writeFileSync(scopePath, `${JSON.stringify(units, null, 2)}\n`);
+};
+
+const writeItems = (items: unknown[]) => {
+  writeFileSync(itemsPath, `${JSON.stringify(items, null, 2)}\n`);
 };
 
 const runValidator = () =>
@@ -45,13 +66,13 @@ const writeAudioManifest = (audio: Record<string, unknown>[]) => {
 };
 
 const ttsAudioEntries = [
-  { audio_id: "tts_word_cat", tts_fallback: true },
+  { audio_id: "tts_word_mat", tts_fallback: true },
   { audio_id: "tts_word_the", tts_fallback: true },
-  { audio_id: "tts_sentence_the_cat_sat", tts_fallback: true }
+  { audio_id: "tts_sentence_sam_sat", tts_fallback: true }
 ];
 
 const validCategories = {
-  phonics_skills: { v1_target: 12, required_now: 2 },
+  phonics_skills: { v1_target: 12, required_now: 9 },
   heart_words: { v1_target: 50, required_now: 1 },
   decodable_words: { v1_target: 200, required_now: 1 },
   fluency_sentences: { v1_target: 30, required_now: 1 },
@@ -62,8 +83,11 @@ describe("content manifest count gate", () => {
   afterEach(restoreContentFiles);
 
   it("fails when authored content is below the manifest minimum", () => {
+    // required_now at the v1_target ceiling, which authored phonics content has
+    // not yet reached — the count is intentionally not pinned so this stays
+    // valid as K/1 phonics skills are authored up toward the target.
     writeManifest({
-      phonics_skills: { v1_target: 12, required_now: 5 },
+      phonics_skills: { v1_target: 12, required_now: 12 },
       heart_words: { v1_target: 50, required_now: 1 },
       decodable_words: { v1_target: 200, required_now: 1 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
@@ -72,7 +96,7 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /phonics_skills requires at least 5, found 2/
+      /phonics_skills requires at least 12, found \d+/
     );
   });
 
@@ -115,5 +139,31 @@ describe("content manifest count gate", () => {
     writeManifest(validCategories);
 
     assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("fails when a skill has a prerequisite that appears in a later scope unit", () => {
+    // skill_b (k_u2) lists skill_c (k_u3) as a prerequisite — prereq is later than skill.
+    // The first-unit and grade-order checks do not catch this; only the cross-unit check does.
+    writeSkills([
+      { skill_id: "skill_a", grade: "K", prerequisites: [] },
+      { skill_id: "skill_b", grade: "K", prerequisites: ["skill_c"] },
+      { skill_id: "skill_c", grade: "K", prerequisites: [] }
+    ]);
+    writeScopeSequence([
+      { unit_id: "k_u1", grade: "K", skill_ids: ["skill_a"] },
+      { unit_id: "k_u2", grade: "K", skill_ids: ["skill_b"] },
+      { unit_id: "k_u3", grade: "K", skill_ids: ["skill_c"] }
+    ]);
+    writeItems([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 0 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+    writeAudioManifest([]);
+
+    assert.throws(runValidator, /has prerequisite .+ from a later unit/);
   });
 });

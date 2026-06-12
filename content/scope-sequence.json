@@ -1,3 +1,25 @@
 [
-  { "unit_id": "k_u1_seed", "grade": "K", "skill_ids": ["pa_k_u1_blend_two_sound", "phonics_k_u1_short_a", "heart_k_u1_batch_01", "fluency_k_u1_cvc_sentences"] }
+  {
+    "unit_id": "k_u1",
+    "grade": "K",
+    "skill_ids": [
+      "pa_k_u1_isolate_initial_sound",
+      "pa_k_u1_blend_two_sound",
+      "phonics_k_u1_consonants_mstp",
+      "phonics_k_u1_short_a",
+      "phonics_k_u1_cvc_blend_short_a",
+      "heart_k_u1_batch_01",
+      "fluency_k_u1_cvc_sentences"
+    ]
+  },
+  {
+    "unit_id": "k_u2",
+    "grade": "K",
+    "skill_ids": [
+      "pa_k_u2_segment_three_sound",
+      "phonics_k_u2_consonants_ncdg",
+      "phonics_k_u2_short_o",
+      "phonics_k_u2_cvc_blend_short_o"
+    ]
+  }
 ]
