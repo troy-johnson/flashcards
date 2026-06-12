@@ -68,7 +68,7 @@ const writeAudioManifest = (audio: Record<string, unknown>[]) => {
 const ttsAudioEntries = [
   { audio_id: "tts_word_mat", tts_fallback: true },
   { audio_id: "tts_word_the", tts_fallback: true },
-  { audio_id: "tts_sentence_the_mat_sat", tts_fallback: true }
+  { audio_id: "tts_sentence_sam_sat", tts_fallback: true }
 ];
 
 const validCategories = {

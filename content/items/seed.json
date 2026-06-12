@@ -22,7 +22,7 @@
   {
     "item_id": "fluency_k_u1_cat_sat",
     "skill_id": "fluency_k_u1_cvc_sentences",
-    "text": "The mat sat.",
-    "audio_id": "tts_sentence_the_mat_sat"
+    "text": "Sam sat.",
+    "audio_id": "tts_sentence_sam_sat"
   }
 ]
