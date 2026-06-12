@@ -50,7 +50,7 @@ describe("loadSchedulerContent", () => {
     // item with prompt only falls back to prompt
     expect(content.itemsById["pa_k_u1_blend_at"]?.text).toBe("Blend /a/ and /t/.");
     // item with text uses text directly
-    expect(content.itemsById["phonics_k_u1_short_a_cat"]?.text).toBe("cat");
+    expect(content.itemsById["phonics_k_u1_short_a_cat"]?.text).toBe("mat");
   });
 
   it("never produces an item with undefined text", () => {

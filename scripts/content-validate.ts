@@ -88,6 +88,19 @@ for (const skill of skills) {
   }
 }
 
+const skillUnitIndex = new Map<string, number>();
+scope.forEach((unit, idx) => { for (const skillId of unit.skill_ids) skillUnitIndex.set(skillId, idx); });
+for (const skill of skills) {
+  const skillIdx = skillUnitIndex.get(skill.skill_id);
+  if (skillIdx === undefined) continue;
+  for (const prereqId of skill.prerequisites ?? []) {
+    const prereqIdx = skillUnitIndex.get(prereqId);
+    if (prereqIdx !== undefined && prereqIdx > skillIdx) {
+      fail(`skill ${skill.skill_id} has prerequisite ${prereqId} from a later unit (unit index ${prereqIdx} > ${skillIdx})`);
+    }
+  }
+}
+
 const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
 const isPhonemeDigraphAudio = (entry: { audio_id: string }) =>
   entry.audio_id.startsWith("phoneme_") || entry.audio_id.startsWith("digraph_");
