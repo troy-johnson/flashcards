@@ -36,7 +36,7 @@ const postAttempt = (sessionId: string, body: Record<string, unknown>) =>
 const skillRow = (skillId = "phonics_k_u1_short_a") =>
   env.DB.prepare("SELECT level, streak, ease, due_at, last_seen_at FROM skill_mastery WHERE student_id = ? AND skill_id = ?")
     .bind("student1", skillId).first<MasteryRow>();
-const itemRow = (itemId = "phonics_k_u1_short_a_cat") =>
+const itemRow = (itemId = "phonics_k_u1_short_a_mat") =>
   env.DB.prepare("SELECT level, streak, ease, due_at, last_seen_at FROM item_mastery WHERE student_id = ? AND item_id = ?")
     .bind("student1", itemId).first<MasteryRow>();
 const masteryRowsFor = async (card: { skill_id: string; item_id: string }) => [await skillRow(card.skill_id), await itemRow(card.item_id)];
@@ -123,7 +123,8 @@ describe("practice and diagnostic routes", () => {
       "pa_k_u2_segment_three_sound",
       "phonics_k_u2_consonants_ncdg",
       "phonics_k_u2_short_o",
-      "phonics_k_u2_cvc_blend_short_o"
+      "phonics_k_u2_cvc_blend_short_o",
+      "fluency_k_u2_cvc_sentences"
     ];
     const statements = [];
     let n = 0;

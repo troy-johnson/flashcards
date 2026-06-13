@@ -9,5 +9,6 @@
   { "skill_id": "pa_k_u2_segment_three_sound", "grade": "K", "prerequisites": ["pa_k_u1_blend_two_sound"] },
   { "skill_id": "phonics_k_u2_consonants_ncdg", "grade": "K", "prerequisites": ["phonics_k_u1_consonants_mstp"] },
   { "skill_id": "phonics_k_u2_short_o", "grade": "K", "prerequisites": ["phonics_k_u1_short_a"] },
-  { "skill_id": "phonics_k_u2_cvc_blend_short_o", "grade": "K", "prerequisites": ["phonics_k_u2_short_o", "phonics_k_u2_consonants_ncdg", "phonics_k_u1_cvc_blend_short_a"] }
+  { "skill_id": "phonics_k_u2_cvc_blend_short_o", "grade": "K", "prerequisites": ["phonics_k_u2_short_o", "phonics_k_u2_consonants_ncdg", "phonics_k_u1_cvc_blend_short_a"] },
+  { "skill_id": "fluency_k_u2_cvc_sentences", "grade": "K", "prerequisites": ["fluency_k_u1_cvc_sentences", "phonics_k_u2_cvc_blend_short_o"] }
 ]

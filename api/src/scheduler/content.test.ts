@@ -8,6 +8,7 @@ describe("loadSchedulerContent", () => {
     expect(content.skills.map((s) => s.skill_id).sort()).toEqual(
       [
         "fluency_k_u1_cvc_sentences",
+        "fluency_k_u2_cvc_sentences",
         "heart_k_u1_batch_01",
         "pa_k_u1_blend_two_sound",
         "pa_k_u1_isolate_initial_sound",
@@ -26,20 +27,28 @@ describe("loadSchedulerContent", () => {
     expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1", "k_u2"]);
   });
 
-  it("indexes every item by id", () => {
-    expect(Object.keys(content.itemsById).sort()).toEqual(
-      [
-        "fluency_k_u1_cat_sat",
+  it("indexes live items by id and excludes deprecated ones", () => {
+    const ids = Object.keys(content.itemsById);
+    // Representative live items across every category are indexed.
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "pa_k_u1_blend_at",
+        "phonics_k_u1_short_a_mat",
+        "phonics_k_u2_o_dog",
         "heart_k_u1_the",
-        "phonics_k_u1_short_a_cat",
-        "pa_k_u1_blend_at"
-      ].sort()
+        "fluency_k_u1_sam_sat",
+        "fluency_k_u2_the_cat_sat"
+      ])
     );
+    // Deprecated cat items are retired — never indexed (R2-F4).
+    expect(ids).not.toContain("phonics_k_u1_short_a_cat");
+    expect(ids).not.toContain("fluency_k_u1_cat_sat");
   });
 
   it("groups items by skill", () => {
+    // The short-a vowel exemplar is the R2-F4 replacement, not the retired cat item.
     expect(content.itemsBySkill["phonics_k_u1_short_a"]?.map((i) => i.item_id)).toEqual([
-      "phonics_k_u1_short_a_cat"
+      "phonics_k_u1_short_a_mat"
     ]);
     expect(content.itemsBySkill["pa_k_u1_blend_two_sound"]?.map((i) => i.item_id)).toEqual([
       "pa_k_u1_blend_at"
@@ -50,7 +59,7 @@ describe("loadSchedulerContent", () => {
     // item with prompt only falls back to prompt
     expect(content.itemsById["pa_k_u1_blend_at"]?.text).toBe("Blend /a/ and /t/.");
     // item with text uses text directly
-    expect(content.itemsById["phonics_k_u1_short_a_cat"]?.text).toBe("mat");
+    expect(content.itemsById["phonics_k_u1_short_a_mat"]?.text).toBe("mat");
   });
 
   it("never produces an item with undefined text", () => {
