@@ -25,6 +25,15 @@ type RawItem = {
   audio_id?: string;
   regular_parts?: string[];
   irregular_parts?: string[];
+  /** Retired content kept for ID immutability; never loaded into a plan. */
+  deprecated?: boolean;
+};
+
+/** Overridable raw sources; defaults to the bundled `content/` JSON. Used for tests. */
+export type SchedulerContentSources = {
+  skills?: Skill[];
+  units?: Unit[];
+  items?: RawItem[];
 };
 
 /** A normalized item with a guaranteed non-empty `text`. */
@@ -43,13 +52,14 @@ export type SchedulerContent = {
  *
  * Each item's `text` is resolved as `text ?? prompt ?? item_id` (matching the
  * legacy plan builder in routes/practice.ts) so the planner can never emit a
- * card with `text: undefined`. Throws if an item or unit references an unknown
- * skill.
+ * card with `text: undefined`. Items marked `deprecated` are kept in the JSON
+ * for ID immutability but are skipped here so they can never reach a plan.
+ * Throws if a (non-deprecated) item or unit references an unknown skill.
  */
-export function loadSchedulerContent(): SchedulerContent {
-  const skills = skillsJson as Skill[];
-  const units = scopeSequence as Unit[];
-  const rawItems = seedItems as RawItem[];
+export function loadSchedulerContent(sources: SchedulerContentSources = {}): SchedulerContent {
+  const skills = sources.skills ?? (skillsJson as Skill[]);
+  const units = sources.units ?? (scopeSequence as Unit[]);
+  const rawItems = sources.items ?? (seedItems as RawItem[]);
 
   const skillIds = new Set(skills.map((s) => s.skill_id));
 
@@ -57,6 +67,7 @@ export function loadSchedulerContent(): SchedulerContent {
   const itemsBySkill: Record<string, SchedulerItem[]> = {};
 
   for (const raw of rawItems) {
+    if (raw.deprecated) continue;
     if (!skillIds.has(raw.skill_id)) {
       throw new Error(`item ${raw.item_id} references unknown skill ${raw.skill_id}`);
     }

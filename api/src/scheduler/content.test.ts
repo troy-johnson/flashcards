@@ -80,4 +80,21 @@ describe("loadSchedulerContent", () => {
       }
     }
   });
+
+  it("excludes deprecated items from itemsById and itemsBySkill (never schedulable)", () => {
+    const injected = loadSchedulerContent({
+      skills: [{ skill_id: "phonics_k_u1_short_a", grade: "K", prerequisites: [] }],
+      units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_k_u1_short_a"] }],
+      items: [
+        { item_id: "phonics_k_u1_short_a_cat", skill_id: "phonics_k_u1_short_a", text: "mat", deprecated: true },
+        { item_id: "phonics_k_u1_short_a_mat", skill_id: "phonics_k_u1_short_a", text: "mat" }
+      ]
+    });
+
+    // Deprecated item is not resolvable and never reaches a plan.
+    expect(injected.itemsById["phonics_k_u1_short_a_cat"]).toBeUndefined();
+    expect(injected.itemsBySkill["phonics_k_u1_short_a"]?.map((i) => i.item_id)).toEqual([
+      "phonics_k_u1_short_a_mat"
+    ]);
+  });
 });
