@@ -7,15 +7,15 @@
     },
     "heart_words": {
       "v1_target": 50,
-      "required_now": 1
+      "required_now": 20
     },
     "decodable_words": {
       "v1_target": 200,
-      "required_now": 1
+      "required_now": 45
     },
     "fluency_sentences": {
       "v1_target": 30,
-      "required_now": 1
+      "required_now": 18
     },
     "phoneme_digraph_audio": {
       "v1_target": 56,
