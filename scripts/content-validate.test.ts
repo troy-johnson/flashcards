@@ -141,6 +141,27 @@ describe("content manifest count gate", () => {
     assert.match(runValidator(), /\[content-validate\] ok:/);
   });
 
+  it("does not count deprecated items toward manifest category totals", () => {
+    // One live decodable + one deprecated decodable; a required_now of 2 must fail
+    // because retired content cannot satisfy the content bar.
+    writeSkills([{ skill_id: "phonics_k_u1_short_a", grade: "K", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_k_u1_short_a"] }]);
+    writeItems([
+      { item_id: "phonics_k_u1_short_a_mat", skill_id: "phonics_k_u1_short_a", text: "mat" },
+      { item_id: "phonics_k_u1_short_a_cat", skill_id: "phonics_k_u1_short_a", text: "mat", deprecated: true }
+    ]);
+    writeAudioManifest([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 1 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 2 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /decodable_words requires at least 2, found 1/);
+  });
+
   it("fails when a skill has a prerequisite that appears in a later scope unit", () => {
     // skill_b (k_u2) lists skill_c (k_u3) as a prerequisite — prereq is later than skill.
     // The first-unit and grade-order checks do not catch this; only the cross-unit check does.

@@ -104,12 +104,17 @@ for (const skill of skills) {
 const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
 const isPhonemeDigraphAudio = (entry: { audio_id: string }) =>
   entry.audio_id.startsWith("phoneme_") || entry.audio_id.startsWith("digraph_");
+// Deprecated (retired) content is kept for ID immutability but does not count
+// toward the content bar — only live content satisfies the manifest gate.
+const liveSkills = skills.filter((skill) => !skill.deprecated);
+const liveItems = items.filter((item) => !item.deprecated);
 const actualManifestCounts: Record<ManifestCategoryName, number> = {
-  phonics_skills: skills.filter((skill) => skill.skill_id.startsWith("pa_") || skill.skill_id.startsWith("phonics_"))
-    .length,
-  heart_words: items.filter((item) => item.item_id.startsWith("heart_")).length,
-  decodable_words: items.filter((item) => item.item_id.startsWith("phonics_")).length,
-  fluency_sentences: items.filter((item) => item.item_id.startsWith("fluency_")).length,
+  phonics_skills: liveSkills.filter(
+    (skill) => skill.skill_id.startsWith("pa_") || skill.skill_id.startsWith("phonics_")
+  ).length,
+  heart_words: liveItems.filter((item) => item.item_id.startsWith("heart_")).length,
+  decodable_words: liveItems.filter((item) => item.item_id.startsWith("phonics_")).length,
+  fluency_sentences: liveItems.filter((item) => item.item_id.startsWith("fluency_")).length,
   phoneme_digraph_audio: audio.audio.filter((entry) => hasRealAudioSource(entry) && isPhonemeDigraphAudio(entry)).length
 };
 
