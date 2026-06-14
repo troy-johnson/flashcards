@@ -1,31 +1,46 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 
 const root = process.cwd();
-const manifestPath = join(root, "content/manifest.json");
-const audioManifestPath = join(root, "content/audio/manifest.json");
-const skillsPath = join(root, "content/skills.json");
-const scopePath = join(root, "content/scope-sequence.json");
-const itemsPath = join(root, "content/items/seed.json");
-const originalManifest = existsSync(manifestPath) ? readFileSync(manifestPath, "utf8") : null;
-const originalAudioManifest = readFileSync(audioManifestPath, "utf8");
-const originalSkills = readFileSync(skillsPath, "utf8");
-const originalScope = readFileSync(scopePath, "utf8");
-const originalItems = readFileSync(itemsPath, "utf8");
+const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
+const productionAudioManifest = readFileSync(join(root, "content/audio/manifest.json"), "utf8");
+const productionSkills = readFileSync(join(root, "content/skills.json"), "utf8");
+const productionScope = readFileSync(join(root, "content/scope-sequence.json"), "utf8");
+const productionItems = readFileSync(join(root, "content/items/seed.json"), "utf8");
+let contentRoot = "";
+let manifestPath = "";
+let audioManifestPath = "";
+let skillsPath = "";
+let scopePath = "";
+let itemsPath = "";
 
-const restoreContentFiles = () => {
-  if (originalManifest === null) {
-    rmSync(manifestPath, { force: true });
-  } else {
-    writeFileSync(manifestPath, originalManifest);
-  }
-  writeFileSync(audioManifestPath, originalAudioManifest);
-  writeFileSync(skillsPath, originalSkills);
-  writeFileSync(scopePath, originalScope);
-  writeFileSync(itemsPath, originalItems);
+const createTempContentRoot = () => {
+  const tempContentRoot = mkdtempSync(join(tmpdir(), "content-validate-"));
+  mkdirSync(join(tempContentRoot, "items"));
+  mkdirSync(join(tempContentRoot, "audio"));
+  writeFileSync(join(tempContentRoot, "manifest.json"), productionManifest);
+  writeFileSync(join(tempContentRoot, "audio/manifest.json"), productionAudioManifest);
+  writeFileSync(join(tempContentRoot, "skills.json"), productionSkills);
+  writeFileSync(join(tempContentRoot, "scope-sequence.json"), productionScope);
+  writeFileSync(join(tempContentRoot, "items/seed.json"), productionItems);
+  return tempContentRoot;
+};
+
+const resetTempContentRoot = () => {
+  contentRoot = createTempContentRoot();
+  manifestPath = join(contentRoot, "manifest.json");
+  audioManifestPath = join(contentRoot, "audio/manifest.json");
+  skillsPath = join(contentRoot, "skills.json");
+  scopePath = join(contentRoot, "scope-sequence.json");
+  itemsPath = join(contentRoot, "items/seed.json");
+};
+
+const removeTempContentRoot = () => {
+  rmSync(contentRoot, { recursive: true, force: true });
 };
 
 const writeSkills = (skills: unknown[]) => {
@@ -44,6 +59,7 @@ const runValidator = () =>
   execFileSync(process.execPath, ["--import", "tsx", "scripts/content-validate.ts"], {
     cwd: root,
     encoding: "utf8",
+    env: { ...process.env, CONTENT_VALIDATE_CONTENT_ROOT: contentRoot },
     stdio: ["ignore", "pipe", "pipe"]
   });
 
@@ -80,7 +96,24 @@ const validCategories = {
 };
 
 describe("content manifest count gate", () => {
-  afterEach(restoreContentFiles);
+  beforeEach(resetTempContentRoot);
+  afterEach(removeTempContentRoot);
+
+  it("can validate an injected content root without using production content files", () => {
+    writeSkills([{ skill_id: "phonics_temp", grade: "K", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "k_temp", grade: "K", skill_ids: ["phonics_temp"] }]);
+    writeItems([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 2 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+    writeAudioManifest([]);
+
+    assert.throws(runValidator, /phonics_skills requires at least 2, found 1/);
+  });
 
   it("fails when authored content is below the manifest minimum", () => {
     // required_now at the v1_target ceiling, which authored phonics content has

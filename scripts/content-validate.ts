@@ -1,9 +1,13 @@
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 const root = process.cwd();
-const readJson = <T>(path: string): T => JSON.parse(readFileSync(join(root, path), "utf8"));
+const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
+  ? resolve(root, process.env.CONTENT_VALIDATE_CONTENT_ROOT)
+  : resolve(root, "content");
+const usingDefaultContentRoot = contentRoot === resolve(root, "content");
+const readContentJson = <T>(path: string): T => JSON.parse(readFileSync(join(contentRoot, path), "utf8"));
 const readJsonFromGit = <T>(ref: string, path: string): T | null => {
   try {
     return JSON.parse(execSync(`git show ${ref}:${path}`, { stdio: ["ignore", "pipe", "ignore"] }).toString());
@@ -37,11 +41,11 @@ const MANIFEST_CATEGORIES = [
 ] as const;
 type ManifestCategoryName = (typeof MANIFEST_CATEGORIES)[number];
 
-const skills = readJson<Skill[]>("content/skills.json");
-const items = readJson<Item[]>("content/items/seed.json");
-const scope = readJson<ScopeUnit[]>("content/scope-sequence.json");
-const audio = readJson<{ audio: { audio_id: string; src?: string; tts_fallback?: boolean }[] }>("content/audio/manifest.json");
-const manifest = readJson<Manifest>("content/manifest.json");
+const skills = readContentJson<Skill[]>("skills.json");
+const items = readContentJson<Item[]>("items/seed.json");
+const scope = readContentJson<ScopeUnit[]>("scope-sequence.json");
+const audio = readContentJson<{ audio: { audio_id: string; src?: string; tts_fallback?: boolean }[] }>("audio/manifest.json");
+const manifest = readContentJson<Manifest>("manifest.json");
 
 const unique = (label: string, values: string[]) => {
   const seen = new Set<string>();
@@ -156,7 +160,7 @@ for (const category of MANIFEST_CATEGORIES) {
 }
 
 const currentBranch = execSync("git rev-parse --abbrev-ref HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
-if (currentBranch !== "main") {
+if (usingDefaultContentRoot && currentBranch !== "main") {
   const checkImmutability = <T extends { deprecated?: boolean }>(
     label: string,
     path: string,
