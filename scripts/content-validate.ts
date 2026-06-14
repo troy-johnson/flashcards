@@ -88,6 +88,18 @@ for (const skill of skills) {
   }
 }
 
+// Grade monotonicity: scope-sequence must list all units of an earlier grade
+// before any unit of a later grade. The cross-unit prerequisite check below relies
+// on a single global scope-array index, which is only sound under this ordering.
+let maxGradeSeen = -1;
+for (const unit of scope) {
+  const gradeOrder = GRADE_ORDER[unit.grade];
+  if (gradeOrder < maxGradeSeen) {
+    fail(`scope-sequence: ${unit.grade} unit ${unit.unit_id} appears after a grade-1 unit; all K units must precede grade-1 units`);
+  }
+  maxGradeSeen = Math.max(maxGradeSeen, gradeOrder);
+}
+
 const skillUnitIndex = new Map<string, number>();
 scope.forEach((unit, idx) => { for (const skillId of unit.skill_ids) skillUnitIndex.set(skillId, idx); });
 for (const skill of skills) {

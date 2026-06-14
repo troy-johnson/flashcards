@@ -187,4 +187,29 @@ describe("content manifest count gate", () => {
 
     assert.throws(runValidator, /has prerequisite .+ from a later unit/);
   });
+
+  it("fails when a grade-1 unit appears before a K unit in scope-sequence", () => {
+    // The cross-unit prereq check relies on a global scope-array index that is only
+    // sound if all K units precede all grade-1 units. Enforce that ordering explicitly:
+    // here g1_u1 (grade 1) is listed before k_u1 (grade K), which must be rejected.
+    writeSkills([
+      { skill_id: "skill_k", grade: "K", prerequisites: [] },
+      { skill_id: "skill_1", grade: "1", prerequisites: [] }
+    ]);
+    writeScopeSequence([
+      { unit_id: "g1_u1", grade: "1", skill_ids: ["skill_1"] },
+      { unit_id: "k_u1", grade: "K", skill_ids: ["skill_k"] }
+    ]);
+    writeItems([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 0 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+    writeAudioManifest([]);
+
+    assert.throws(runValidator, /K unit .+ appears after a grade-1 unit/);
+  });
 });
