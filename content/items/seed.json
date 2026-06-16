@@ -5,7 +5,6 @@
     "prompt": "Blend /a/ and /t/.",
     "answer": "at"
   },
-
   {
     "item_id": "phonics_k_u1_short_a_cat",
     "skill_id": "phonics_k_u1_short_a",
@@ -19,82 +18,444 @@
     "text": "mat",
     "audio_id": "tts_word_mat"
   },
-
-  { "item_id": "phonics_k_u1_cvc_a_am", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "am" },
-  { "item_id": "phonics_k_u1_cvc_a_at", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "at" },
-  { "item_id": "phonics_k_u1_cvc_a_as", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "as" },
-  { "item_id": "phonics_k_u1_cvc_a_sat", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "sat" },
-  { "item_id": "phonics_k_u1_cvc_a_pat", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "pat" },
-  { "item_id": "phonics_k_u1_cvc_a_tap", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "tap" },
-  { "item_id": "phonics_k_u1_cvc_a_map", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "map" },
-  { "item_id": "phonics_k_u1_cvc_a_sap", "skill_id": "phonics_k_u1_cvc_blend_short_a", "text": "sap" },
-
-  { "item_id": "phonics_k_u2_a_can", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "can" },
-  { "item_id": "phonics_k_u2_a_cat", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "cat" },
-  { "item_id": "phonics_k_u2_a_cap", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "cap" },
-  { "item_id": "phonics_k_u2_a_dad", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "dad" },
-  { "item_id": "phonics_k_u2_a_mad", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "mad" },
-  { "item_id": "phonics_k_u2_a_sad", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "sad" },
-  { "item_id": "phonics_k_u2_a_pad", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "pad" },
-  { "item_id": "phonics_k_u2_a_nap", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "nap" },
-  { "item_id": "phonics_k_u2_a_gap", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "gap" },
-  { "item_id": "phonics_k_u2_a_gas", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "gas" },
-  { "item_id": "phonics_k_u2_a_man", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "man" },
-  { "item_id": "phonics_k_u2_a_pan", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "pan" },
-  { "item_id": "phonics_k_u2_a_tan", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "tan" },
-  { "item_id": "phonics_k_u2_a_nag", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "nag" },
-  { "item_id": "phonics_k_u2_a_gag", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "gag" },
-  { "item_id": "phonics_k_u2_a_tag", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "tag" },
-  { "item_id": "phonics_k_u2_a_sag", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "sag" },
-  { "item_id": "phonics_k_u2_a_dam", "skill_id": "phonics_k_u2_consonants_ncdg", "text": "dam" },
-
-  { "item_id": "phonics_k_u2_o_cot", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "cot" },
-  { "item_id": "phonics_k_u2_o_cod", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "cod" },
-  { "item_id": "phonics_k_u2_o_cog", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "cog" },
-  { "item_id": "phonics_k_u2_o_dog", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "dog" },
-  { "item_id": "phonics_k_u2_o_dot", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "dot" },
-  { "item_id": "phonics_k_u2_o_got", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "got" },
-  { "item_id": "phonics_k_u2_o_mom", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "mom" },
-  { "item_id": "phonics_k_u2_o_mop", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "mop" },
-  { "item_id": "phonics_k_u2_o_top", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "top" },
-  { "item_id": "phonics_k_u2_o_tot", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "tot" },
-  { "item_id": "phonics_k_u2_o_pot", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "pot" },
-  { "item_id": "phonics_k_u2_o_pop", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "pop" },
-  { "item_id": "phonics_k_u2_o_pod", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "pod" },
-  { "item_id": "phonics_k_u2_o_nod", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "nod" },
-  { "item_id": "phonics_k_u2_o_not", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "not" },
-  { "item_id": "phonics_k_u2_o_cop", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "cop" },
-  { "item_id": "phonics_k_u2_o_sod", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "sod" },
-  { "item_id": "phonics_k_u2_o_on", "skill_id": "phonics_k_u2_cvc_blend_short_o", "text": "on" },
-
+  {
+    "item_id": "phonics_k_u1_cvc_a_am",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "am"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_at",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "at"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_as",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "as"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_sat",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "sat"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_pat",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "pat"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_tap",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "tap"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_map",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "map"
+  },
+  {
+    "item_id": "phonics_k_u1_cvc_a_sap",
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "text": "sap"
+  },
+  {
+    "item_id": "phonics_k_u2_a_can",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "can"
+  },
+  {
+    "item_id": "phonics_k_u2_a_cat",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "cat"
+  },
+  {
+    "item_id": "phonics_k_u2_a_cap",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "cap"
+  },
+  {
+    "item_id": "phonics_k_u2_a_dad",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "dad"
+  },
+  {
+    "item_id": "phonics_k_u2_a_mad",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "mad"
+  },
+  {
+    "item_id": "phonics_k_u2_a_sad",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "sad"
+  },
+  {
+    "item_id": "phonics_k_u2_a_pad",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "pad"
+  },
+  {
+    "item_id": "phonics_k_u2_a_nap",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "nap"
+  },
+  {
+    "item_id": "phonics_k_u2_a_gap",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "gap"
+  },
+  {
+    "item_id": "phonics_k_u2_a_gas",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "gas"
+  },
+  {
+    "item_id": "phonics_k_u2_a_man",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "man"
+  },
+  {
+    "item_id": "phonics_k_u2_a_pan",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "pan"
+  },
+  {
+    "item_id": "phonics_k_u2_a_tan",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "tan"
+  },
+  {
+    "item_id": "phonics_k_u2_a_nag",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "nag"
+  },
+  {
+    "item_id": "phonics_k_u2_a_gag",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "gag"
+  },
+  {
+    "item_id": "phonics_k_u2_a_tag",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "tag"
+  },
+  {
+    "item_id": "phonics_k_u2_a_sag",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "sag"
+  },
+  {
+    "item_id": "phonics_k_u2_a_dam",
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "text": "dam"
+  },
+  {
+    "item_id": "phonics_k_u2_o_cot",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "cot"
+  },
+  {
+    "item_id": "phonics_k_u2_o_cod",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "cod"
+  },
+  {
+    "item_id": "phonics_k_u2_o_cog",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "cog"
+  },
+  {
+    "item_id": "phonics_k_u2_o_dog",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "dog"
+  },
+  {
+    "item_id": "phonics_k_u2_o_dot",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "dot"
+  },
+  {
+    "item_id": "phonics_k_u2_o_got",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "got"
+  },
+  {
+    "item_id": "phonics_k_u2_o_mom",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "mom"
+  },
+  {
+    "item_id": "phonics_k_u2_o_mop",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "mop"
+  },
+  {
+    "item_id": "phonics_k_u2_o_top",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "top"
+  },
+  {
+    "item_id": "phonics_k_u2_o_tot",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "tot"
+  },
+  {
+    "item_id": "phonics_k_u2_o_pot",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "pot"
+  },
+  {
+    "item_id": "phonics_k_u2_o_pop",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "pop"
+  },
+  {
+    "item_id": "phonics_k_u2_o_pod",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "pod"
+  },
+  {
+    "item_id": "phonics_k_u2_o_nod",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "nod"
+  },
+  {
+    "item_id": "phonics_k_u2_o_not",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "not"
+  },
+  {
+    "item_id": "phonics_k_u2_o_cop",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "cop"
+  },
+  {
+    "item_id": "phonics_k_u2_o_sod",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "sod"
+  },
+  {
+    "item_id": "phonics_k_u2_o_on",
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "text": "on"
+  },
   {
     "item_id": "heart_k_u1_the",
     "skill_id": "heart_k_u1_batch_01",
     "text": "the",
-    "regular_parts": ["th"],
-    "irregular_parts": ["e"],
+    "regular_parts": [
+      "th"
+    ],
+    "irregular_parts": [
+      "e"
+    ],
     "audio_id": "tts_word_the"
   },
-  { "item_id": "heart_k_u1_a", "skill_id": "heart_k_u1_batch_01", "text": "a", "regular_parts": [], "irregular_parts": ["a"] },
-  { "item_id": "heart_k_u1_i", "skill_id": "heart_k_u1_batch_01", "text": "I", "regular_parts": [], "irregular_parts": ["I"] },
-  { "item_id": "heart_k_u1_is", "skill_id": "heart_k_u1_batch_01", "text": "is", "regular_parts": ["i"], "irregular_parts": ["s"] },
-  { "item_id": "heart_k_u1_was", "skill_id": "heart_k_u1_batch_01", "text": "was", "regular_parts": ["w"], "irregular_parts": ["a", "s"] },
-  { "item_id": "heart_k_u1_of", "skill_id": "heart_k_u1_batch_01", "text": "of", "regular_parts": [], "irregular_parts": ["o", "f"] },
-  { "item_id": "heart_k_u1_to", "skill_id": "heart_k_u1_batch_01", "text": "to", "regular_parts": ["t"], "irregular_parts": ["o"] },
-  { "item_id": "heart_k_u1_you", "skill_id": "heart_k_u1_batch_01", "text": "you", "regular_parts": ["y"], "irregular_parts": ["ou"] },
-  { "item_id": "heart_k_u1_your", "skill_id": "heart_k_u1_batch_01", "text": "your", "regular_parts": ["y"], "irregular_parts": ["our"] },
-  { "item_id": "heart_k_u1_said", "skill_id": "heart_k_u1_batch_01", "text": "said", "regular_parts": ["s", "d"], "irregular_parts": ["ai"] },
-  { "item_id": "heart_k_u1_are", "skill_id": "heart_k_u1_batch_01", "text": "are", "regular_parts": [], "irregular_parts": ["are"] },
-  { "item_id": "heart_k_u1_were", "skill_id": "heart_k_u1_batch_01", "text": "were", "regular_parts": ["w"], "irregular_parts": ["ere"] },
-  { "item_id": "heart_k_u1_he", "skill_id": "heart_k_u1_batch_01", "text": "he", "regular_parts": ["h"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_she", "skill_id": "heart_k_u1_batch_01", "text": "she", "regular_parts": ["sh"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_we", "skill_id": "heart_k_u1_batch_01", "text": "we", "regular_parts": ["w"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_me", "skill_id": "heart_k_u1_batch_01", "text": "me", "regular_parts": ["m"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_be", "skill_id": "heart_k_u1_batch_01", "text": "be", "regular_parts": ["b"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_have", "skill_id": "heart_k_u1_batch_01", "text": "have", "regular_parts": ["h", "a", "v"], "irregular_parts": ["e"] },
-  { "item_id": "heart_k_u1_they", "skill_id": "heart_k_u1_batch_01", "text": "they", "regular_parts": ["th"], "irregular_parts": ["ey"] },
-  { "item_id": "heart_k_u1_for", "skill_id": "heart_k_u1_batch_01", "text": "for", "regular_parts": ["f"], "irregular_parts": ["or"] },
-
+  {
+    "item_id": "heart_k_u1_a",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "a",
+    "regular_parts": [],
+    "irregular_parts": [
+      "a"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_i",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "I",
+    "regular_parts": [],
+    "irregular_parts": [
+      "I"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_is",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "is",
+    "regular_parts": [
+      "i"
+    ],
+    "irregular_parts": [
+      "s"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_was",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "was",
+    "regular_parts": [
+      "w"
+    ],
+    "irregular_parts": [
+      "a",
+      "s"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_of",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "of",
+    "regular_parts": [],
+    "irregular_parts": [
+      "o",
+      "f"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_to",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "to",
+    "regular_parts": [
+      "t"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_you",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "you",
+    "regular_parts": [
+      "y"
+    ],
+    "irregular_parts": [
+      "ou"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_your",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "your",
+    "regular_parts": [
+      "y"
+    ],
+    "irregular_parts": [
+      "our"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_said",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "said",
+    "regular_parts": [
+      "s",
+      "d"
+    ],
+    "irregular_parts": [
+      "ai"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_are",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "are",
+    "regular_parts": [],
+    "irregular_parts": [
+      "are"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_were",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "were",
+    "regular_parts": [
+      "w"
+    ],
+    "irregular_parts": [
+      "ere"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_he",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "he",
+    "regular_parts": [
+      "h"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_she",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "she",
+    "regular_parts": [
+      "sh"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_we",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "we",
+    "regular_parts": [
+      "w"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_me",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "me",
+    "regular_parts": [
+      "m"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_be",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "be",
+    "regular_parts": [
+      "b"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_have",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "have",
+    "regular_parts": [
+      "h",
+      "a",
+      "v"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_they",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "they",
+    "regular_parts": [
+      "th"
+    ],
+    "irregular_parts": [
+      "ey"
+    ]
+  },
+  {
+    "item_id": "heart_k_u1_for",
+    "skill_id": "heart_k_u1_batch_01",
+    "text": "for",
+    "regular_parts": [
+      "f"
+    ],
+    "irregular_parts": [
+      "or"
+    ]
+  },
   {
     "item_id": "fluency_k_u1_cat_sat",
     "skill_id": "fluency_k_u1_cvc_sentences",
@@ -108,22 +469,1279 @@
     "text": "Sam sat.",
     "audio_id": "tts_sentence_sam_sat"
   },
-  { "item_id": "fluency_k_u1_i_am_sam", "skill_id": "fluency_k_u1_cvc_sentences", "text": "I am Sam." },
-  { "item_id": "fluency_k_u1_sam_at_mat", "skill_id": "fluency_k_u1_cvc_sentences", "text": "Sam sat at the mat." },
-  { "item_id": "fluency_k_u1_tap_the_map", "skill_id": "fluency_k_u1_cvc_sentences", "text": "Tap the map." },
-  { "item_id": "fluency_k_u1_pat_sat", "skill_id": "fluency_k_u1_cvc_sentences", "text": "Pat sat." },
-  { "item_id": "fluency_k_u1_i_am_pat", "skill_id": "fluency_k_u1_cvc_sentences", "text": "I am Pat." },
-
-  { "item_id": "fluency_k_u2_the_cat_sat", "skill_id": "fluency_k_u2_cvc_sentences", "text": "The cat sat." },
-  { "item_id": "fluency_k_u2_dog_can_nap", "skill_id": "fluency_k_u2_cvc_sentences", "text": "The dog can nap." },
-  { "item_id": "fluency_k_u2_mom_got_cap", "skill_id": "fluency_k_u2_cvc_sentences", "text": "Mom got a cap." },
-  { "item_id": "fluency_k_u2_dad_got_cat", "skill_id": "fluency_k_u2_cvc_sentences", "text": "Dad got a cat." },
-  { "item_id": "fluency_k_u2_cat_on_mat", "skill_id": "fluency_k_u2_cvc_sentences", "text": "The cat is on the mat." },
-  { "item_id": "fluency_k_u2_can_pat_dog", "skill_id": "fluency_k_u2_cvc_sentences", "text": "I can pat the dog." },
-  { "item_id": "fluency_k_u2_pot_on_top", "skill_id": "fluency_k_u2_cvc_sentences", "text": "The pot is on top." },
-  { "item_id": "fluency_k_u2_sam_got_dog", "skill_id": "fluency_k_u2_cvc_sentences", "text": "Sam got a dog." },
-  { "item_id": "fluency_k_u2_mom_can_mop", "skill_id": "fluency_k_u2_cvc_sentences", "text": "Mom can mop." },
-  { "item_id": "fluency_k_u2_dad_sat_cot", "skill_id": "fluency_k_u2_cvc_sentences", "text": "Dad sat on a cot." },
-  { "item_id": "fluency_k_u2_the_man_sat", "skill_id": "fluency_k_u2_cvc_sentences", "text": "The man sat." },
-  { "item_id": "fluency_k_u2_i_am_sad", "skill_id": "fluency_k_u2_cvc_sentences", "text": "I am sad." }
+  {
+    "item_id": "fluency_k_u1_i_am_sam",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "I am Sam."
+  },
+  {
+    "item_id": "fluency_k_u1_sam_at_mat",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "Sam sat at the mat."
+  },
+  {
+    "item_id": "fluency_k_u1_tap_the_map",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "Tap the map."
+  },
+  {
+    "item_id": "fluency_k_u1_pat_sat",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "Pat sat."
+  },
+  {
+    "item_id": "fluency_k_u1_i_am_pat",
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "text": "I am Pat."
+  },
+  {
+    "item_id": "fluency_k_u2_the_cat_sat",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "The cat sat."
+  },
+  {
+    "item_id": "fluency_k_u2_dog_can_nap",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "The dog can nap."
+  },
+  {
+    "item_id": "fluency_k_u2_mom_got_cap",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "Mom got a cap."
+  },
+  {
+    "item_id": "fluency_k_u2_dad_got_cat",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "Dad got a cat."
+  },
+  {
+    "item_id": "fluency_k_u2_cat_on_mat",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "The cat is on the mat."
+  },
+  {
+    "item_id": "fluency_k_u2_can_pat_dog",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "I can pat the dog."
+  },
+  {
+    "item_id": "fluency_k_u2_pot_on_top",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "The pot is on top."
+  },
+  {
+    "item_id": "fluency_k_u2_sam_got_dog",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "Sam got a dog."
+  },
+  {
+    "item_id": "fluency_k_u2_mom_can_mop",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "Mom can mop."
+  },
+  {
+    "item_id": "fluency_k_u2_dad_sat_cot",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "Dad sat on a cot."
+  },
+  {
+    "item_id": "fluency_k_u2_the_man_sat",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "The man sat."
+  },
+  {
+    "item_id": "fluency_k_u2_i_am_sad",
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "text": "I am sad."
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_bib",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "bib"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_bid",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "bid"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_big",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "big"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_bin",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "bin"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_bit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "bit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_did",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "did"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_dig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "dig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_dim",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "dim"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_dip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "dip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_fig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "fig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_fin",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "fin"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_fit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "fit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_fib",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "fib"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_gig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "gig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_hid",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "hid"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_him",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "him"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_hip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "hip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_hit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "hit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_jig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "jig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_kid",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "kid"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_kit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "kit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_lid",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "lid"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_lip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "lip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_lit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "lit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_mix",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "mix"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_nib",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "nib"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_nip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "nip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_pin",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "pin"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_pit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "pit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_pig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "pig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_rib",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "rib"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_rid",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "rid"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_rig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "rig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_rim",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "rim"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_rip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "rip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_sip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "sip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_sit",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "sit"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_six",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "six"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_tin",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "tin"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_tip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "tip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_win",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "win"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_wig",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "wig"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_zip",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "zip"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_fix",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "fix"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_kick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "kick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_pick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "pick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_lick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "lick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_sick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "sick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_brick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "brick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_click",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "click"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_chick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "chick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_stick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "stick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_trick",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "trick"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_spill",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "spill"
+  },
+  {
+    "item_id": "phonics_1_u1_short_i_skill",
+    "skill_id": "phonics_1_u1_short_i",
+    "text": "skill"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bed",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bed"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_beg",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "beg"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bet",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bet"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_den",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "den"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_hen",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "hen"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_men",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "men"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_pen",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "pen"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_pet",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "pet"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_red",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "red"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_wed",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "wed"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_wet",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "wet"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_web",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "web"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_vet",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "vet"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_yes",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "yes"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_jet",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "jet"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_let",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "let"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_leg",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "leg"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_peg",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "peg"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_ten",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "ten"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_met",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "met"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_set",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "set"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_get",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "get"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_neck",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "neck"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_deck",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "deck"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_peck",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "peck"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bell",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bell"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_sell",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "sell"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_well",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "well"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_yell",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "yell"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bun",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bun"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_bus",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "bus"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_but",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "but"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_cup",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "cup"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_cut",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "cut"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_dug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "dug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_fun",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "fun"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_gum",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "gum"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_gun",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "gun"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_hug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "hug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_hut",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "hut"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_jug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "jug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_mud",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "mud"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_mug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "mug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_nut",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "nut"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_pup",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "pup"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_run",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "run"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_rug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "rug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_sun",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "sun"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_tub",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "tub"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_tug",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "tug"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_yum",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "yum"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_sub",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "sub"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_sum",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "sum"
+  },
+  {
+    "item_id": "phonics_1_u1_short_e_u_cub",
+    "skill_id": "phonics_1_u1_short_e_u",
+    "text": "cub"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bag",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bag"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bam",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bam"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bat",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bat"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bad",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bad"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_ban",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "ban"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cab",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cab"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cad",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cad"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cam",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cam"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_fan",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "fan"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_ham",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "ham"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_jam",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "jam"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_lap",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "lap"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_rag",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "rag"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_ram",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "ram"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_ran",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "ran"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_rat",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "rat"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_wag",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "wag"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_yak",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "yak"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bob",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bob"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_box",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "box"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_fox",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "fox"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_hop",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "hop"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_hot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "hot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_jog",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "jog"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_lot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "lot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_log",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "log"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_rob",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "rob"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_rod",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "rod"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_rot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "rot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_sob",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "sob"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_sock",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "sock"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_mop",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "mop"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_pop",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "pop"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_pot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "pot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_top",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "top"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_dot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "dot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cot",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cot"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cub",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cub"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bud",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bud"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bug",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bug"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bun",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bun"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_bus",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "bus"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cup",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cup"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_cut",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "cut"
+  },
+  {
+    "item_id": "phonics_1_u1_mixed_dug",
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "text": "dug"
+  },
+  {
+    "item_id": "heart_1_u1_do",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "do",
+    "regular_parts": [
+      "d"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_does",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "does",
+    "regular_parts": [
+      "d"
+    ],
+    "irregular_parts": [
+      "oe",
+      "s"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_one",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "one",
+    "regular_parts": [],
+    "irregular_parts": [
+      "one"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_once",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "once",
+    "regular_parts": [],
+    "irregular_parts": [
+      "once"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_two",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "two",
+    "regular_parts": [
+      "t"
+    ],
+    "irregular_parts": [
+      "wo"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_who",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "who",
+    "regular_parts": [
+      "h"
+    ],
+    "irregular_parts": [
+      "wo"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_what",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "what",
+    "regular_parts": [
+      "w",
+      "t"
+    ],
+    "irregular_parts": [
+      "ha"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_where",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "where",
+    "regular_parts": [
+      "w"
+    ],
+    "irregular_parts": [
+      "here"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_when",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "when",
+    "regular_parts": [
+      "w",
+      "e",
+      "n"
+    ],
+    "irregular_parts": [
+      "h"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_why",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "why",
+    "regular_parts": [
+      "w"
+    ],
+    "irregular_parts": [
+      "hy"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_come",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "come",
+    "regular_parts": [
+      "c",
+      "m"
+    ],
+    "irregular_parts": [
+      "o",
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_some",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "some",
+    "regular_parts": [
+      "s",
+      "m"
+    ],
+    "irregular_parts": [
+      "o",
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_from",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "from",
+    "regular_parts": [
+      "f",
+      "r",
+      "m"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_give",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "give",
+    "regular_parts": [
+      "g",
+      "i",
+      "v"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_live",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "live",
+    "regular_parts": [
+      "l",
+      "i",
+      "v"
+    ],
+    "irregular_parts": [
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_go",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "go",
+    "regular_parts": [
+      "g"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_no",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "no",
+    "regular_parts": [
+      "n"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_so",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "so",
+    "regular_parts": [
+      "s"
+    ],
+    "irregular_parts": [
+      "o"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_by",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "by",
+    "regular_parts": [
+      "b"
+    ],
+    "irregular_parts": [
+      "y"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_my",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "my",
+    "regular_parts": [
+      "m"
+    ],
+    "irregular_parts": [
+      "y"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_try",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "try",
+    "regular_parts": [
+      "t",
+      "r"
+    ],
+    "irregular_parts": [
+      "y"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_very",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "very",
+    "regular_parts": [
+      "v",
+      "e",
+      "r"
+    ],
+    "irregular_parts": [
+      "y"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_there",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "there",
+    "regular_parts": [
+      "th"
+    ],
+    "irregular_parts": [
+      "ere"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_their",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "their",
+    "regular_parts": [
+      "th"
+    ],
+    "irregular_parts": [
+      "eir"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_here",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "here",
+    "regular_parts": [
+      "h"
+    ],
+    "irregular_parts": [
+      "ere"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_friend",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "friend",
+    "regular_parts": [
+      "f",
+      "r",
+      "n",
+      "d"
+    ],
+    "irregular_parts": [
+      "ie"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_school",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "school",
+    "regular_parts": [
+      "s",
+      "l"
+    ],
+    "irregular_parts": [
+      "ch",
+      "oo"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_again",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "again",
+    "regular_parts": [
+      "a",
+      "g",
+      "n"
+    ],
+    "irregular_parts": [
+      "ai"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_because",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "because",
+    "regular_parts": [
+      "b",
+      "c",
+      "s"
+    ],
+    "irregular_parts": [
+      "e",
+      "au",
+      "e"
+    ]
+  },
+  {
+    "item_id": "heart_1_u1_could",
+    "skill_id": "heart_1_u1_batch_01",
+    "text": "could",
+    "regular_parts": [
+      "c",
+      "d"
+    ],
+    "irregular_parts": [
+      "oul"
+    ]
+  },
+  {
+    "item_id": "fluency_1_u1_the_kid_can_sit",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The kid can sit."
+  },
+  {
+    "item_id": "fluency_1_u1_a_dog_can_run",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "A dog can run."
+  },
+  {
+    "item_id": "fluency_1_u1_the_cub_is_in_the_sun",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The cub is in the sun."
+  },
+  {
+    "item_id": "fluency_1_u1_i_can_get_the_red_cup",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "I can get the red cup."
+  },
+  {
+    "item_id": "fluency_1_u1_the_bug_is_on_the_rug",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The bug is on the rug."
+  },
+  {
+    "item_id": "fluency_1_u1_dad_can_fix_the_big_bed",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "Dad can fix the big bed."
+  },
+  {
+    "item_id": "fluency_1_u1_mom_can_help_the_kid_dig",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "Mom can help the kid dig."
+  },
+  {
+    "item_id": "fluency_1_u1_the_pet_can_nap_in_the_den",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The pet can nap in the den."
+  },
+  {
+    "item_id": "fluency_1_u1_we_can_hop_and_run",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "We can hop and run."
+  },
+  {
+    "item_id": "fluency_1_u1_the_pup_got_mud_on_the_rug",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The pup got mud on the rug."
+  },
+  {
+    "item_id": "fluency_1_u1_i_can_pick_up_the_pen",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "I can pick up the pen."
+  },
+  {
+    "item_id": "fluency_1_u1_the_kid_can_swim_to_the_dock",
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "text": "The kid can swim to the dock."
+  }
 ]

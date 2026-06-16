@@ -7,12 +7,17 @@ describe("loadSchedulerContent", () => {
   it("loads every skill from skills.json", () => {
     expect(content.skills.map((s) => s.skill_id).sort()).toEqual(
       [
+        "fluency_1_u1_short_vowel_sentences",
         "fluency_k_u1_cvc_sentences",
         "fluency_k_u2_cvc_sentences",
+        "heart_1_u1_batch_01",
         "heart_k_u1_batch_01",
         "pa_k_u1_blend_two_sound",
         "pa_k_u1_isolate_initial_sound",
         "pa_k_u2_segment_three_sound",
+        "phonics_1_u1_mixed_short_vowels",
+        "phonics_1_u1_short_e_u",
+        "phonics_1_u1_short_i",
         "phonics_k_u1_consonants_mstp",
         "phonics_k_u1_cvc_blend_short_a",
         "phonics_k_u1_short_a",
@@ -24,7 +29,7 @@ describe("loadSchedulerContent", () => {
   });
 
   it("loads every unit from scope-sequence.json", () => {
-    expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1", "k_u2"]);
+    expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1", "k_u2", "1_u1"]);
   });
 
   it("indexes live items by id and excludes deprecated ones", () => {
@@ -35,9 +40,12 @@ describe("loadSchedulerContent", () => {
         "pa_k_u1_blend_at",
         "phonics_k_u1_short_a_mat",
         "phonics_k_u2_o_dog",
+        "phonics_1_u1_short_i_bit",
         "heart_k_u1_the",
+        "heart_1_u1_do",
         "fluency_k_u1_sam_sat",
-        "fluency_k_u2_the_cat_sat"
+        "fluency_k_u2_the_cat_sat",
+        "fluency_1_u1_the_kid_can_sit"
       ])
     );
     // Deprecated cat items are retired — never indexed (R2-F4).

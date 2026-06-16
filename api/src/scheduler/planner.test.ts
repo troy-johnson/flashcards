@@ -143,27 +143,25 @@ describe("buildPracticePlan", () => {
     expect(buildPracticePlan({ grade: "Z", ...emptyState }).cards).toEqual([]);
   });
 
-  it("returns an empty plan when a 1st grader has review-passed all item-backed skills but no-item skills remain in scope", () => {
-    // 8 of the 12 K skills have items; the remaining no-item skills can never receive attempts.
-    // The plan must be empty and planTerminalReason must fire (tested below).
-    expect(
-      buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed }).cards
-    ).toEqual([]);
+  it("serves 1st-grade active content after a 1st grader has review-passed K skills", () => {
+    const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
+
+    expect(plan.cards.length).toBe(22);
+    expect(plan.cards[0]?.skill_id).toBe("phonics_1_u1_short_i");
+    expect(plan.cards.every((card) => card.skill_id.startsWith("phonics_1_u1_"))).toBe(true);
   });
 
-  it("returns an empty plan for a 1st grader who has review-passed every K skill", () => {
-    // Phase A has no authored 1st-grade active content, so once all K review
-    // skills pass, the review plan is empty. The pure planner returns no cards;
-    // `planTerminalReason` (below) names why, and the start route surfaces it.
-    const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
-    expect(plan.cards).toEqual([]);
+  it("serves 1st-grade active content after all current item-backed K review skills pass", () => {
+    expect(
+      buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed }).cards[0]
+        ?.skill_id
+    ).toBe("phonics_1_u1_short_i");
   });
 });
 
 describe("planTerminalReason", () => {
-  it("reports review-complete when a 1st grader has review-passed every K skill", () => {
-    expect(planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed }))
-      .toBe("review_complete_no_active_content");
+  it("does not report terminal while 1st-grade active content remains after K review", () => {
+    expect(planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed })).toBeNull();
   });
 
   it("returns null for a 1st grader with skills still to review", () => {
@@ -178,11 +176,8 @@ describe("planTerminalReason", () => {
     expect(planTerminalReason({ grade: "K", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed })).toBeNull();
   });
 
-  it("reports terminal when a 1st grader has review-passed all item-backed skills, even though no-item skills remain", () => {
-    // No-item skills can never be review-passed (no cards to attempt).
-    // Terminal reason must fire once all practiceable (item-backed) skills are passed.
-    expect(
-      planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed })
-    ).toBe("review_complete_no_active_content");
+  it("does not report terminal after current item-backed K review skills pass when 1st-grade content remains", () => {
+    expect(planTerminalReason({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed }))
+      .toBeNull();
   });
 });

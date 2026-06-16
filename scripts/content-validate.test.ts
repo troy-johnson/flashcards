@@ -116,20 +116,22 @@ describe("content manifest count gate", () => {
   });
 
   it("fails when authored content is below the manifest minimum", () => {
-    // required_now at the v1_target ceiling, which authored phonics content has
-    // not yet reached — the count is intentionally not pinned so this stays
-    // valid as K/1 phonics skills are authored up toward the target.
+    writeItems(
+      JSON.parse(productionItems).filter(
+        (item: { item_id: string }) => item.item_id !== "phonics_1_u1_mixed_dug"
+      )
+    );
     writeManifest({
       phonics_skills: { v1_target: 12, required_now: 12 },
       heart_words: { v1_target: 50, required_now: 1 },
-      decodable_words: { v1_target: 200, required_now: 1 },
+      decodable_words: { v1_target: 200, required_now: 200 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
       phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
     });
 
     assert.throws(
       runValidator,
-      /phonics_skills requires at least 12, found \d+/
+      /decodable_words requires at least 200, found 199/
     );
   });
 

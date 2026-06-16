@@ -1,14 +1,113 @@
 [
-  { "skill_id": "pa_k_u1_isolate_initial_sound", "grade": "K", "prerequisites": [] },
-  { "skill_id": "pa_k_u1_blend_two_sound", "grade": "K", "prerequisites": [] },
-  { "skill_id": "phonics_k_u1_consonants_mstp", "grade": "K", "prerequisites": [] },
-  { "skill_id": "phonics_k_u1_short_a", "grade": "K", "prerequisites": [] },
-  { "skill_id": "phonics_k_u1_cvc_blend_short_a", "grade": "K", "prerequisites": ["pa_k_u1_blend_two_sound", "phonics_k_u1_consonants_mstp", "phonics_k_u1_short_a"] },
-  { "skill_id": "heart_k_u1_batch_01", "grade": "K", "prerequisites": [] },
-  { "skill_id": "fluency_k_u1_cvc_sentences", "grade": "K", "prerequisites": ["phonics_k_u1_short_a"] },
-  { "skill_id": "pa_k_u2_segment_three_sound", "grade": "K", "prerequisites": ["pa_k_u1_blend_two_sound"] },
-  { "skill_id": "phonics_k_u2_consonants_ncdg", "grade": "K", "prerequisites": ["phonics_k_u1_consonants_mstp"] },
-  { "skill_id": "phonics_k_u2_short_o", "grade": "K", "prerequisites": ["phonics_k_u1_short_a"] },
-  { "skill_id": "phonics_k_u2_cvc_blend_short_o", "grade": "K", "prerequisites": ["phonics_k_u2_short_o", "phonics_k_u2_consonants_ncdg", "phonics_k_u1_cvc_blend_short_a"] },
-  { "skill_id": "fluency_k_u2_cvc_sentences", "grade": "K", "prerequisites": ["fluency_k_u1_cvc_sentences", "phonics_k_u2_cvc_blend_short_o"] }
+  {
+    "skill_id": "pa_k_u1_isolate_initial_sound",
+    "grade": "K",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "pa_k_u1_blend_two_sound",
+    "grade": "K",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "phonics_k_u1_consonants_mstp",
+    "grade": "K",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "phonics_k_u1_short_a",
+    "grade": "K",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "grade": "K",
+    "prerequisites": [
+      "pa_k_u1_blend_two_sound",
+      "phonics_k_u1_consonants_mstp",
+      "phonics_k_u1_short_a"
+    ]
+  },
+  {
+    "skill_id": "heart_k_u1_batch_01",
+    "grade": "K",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "fluency_k_u1_cvc_sentences",
+    "grade": "K",
+    "prerequisites": [
+      "phonics_k_u1_short_a"
+    ]
+  },
+  {
+    "skill_id": "pa_k_u2_segment_three_sound",
+    "grade": "K",
+    "prerequisites": [
+      "pa_k_u1_blend_two_sound"
+    ]
+  },
+  {
+    "skill_id": "phonics_k_u2_consonants_ncdg",
+    "grade": "K",
+    "prerequisites": [
+      "phonics_k_u1_consonants_mstp"
+    ]
+  },
+  {
+    "skill_id": "phonics_k_u2_short_o",
+    "grade": "K",
+    "prerequisites": [
+      "phonics_k_u1_short_a"
+    ]
+  },
+  {
+    "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "grade": "K",
+    "prerequisites": [
+      "phonics_k_u2_short_o",
+      "phonics_k_u2_consonants_ncdg",
+      "phonics_k_u1_cvc_blend_short_a"
+    ]
+  },
+  {
+    "skill_id": "fluency_k_u2_cvc_sentences",
+    "grade": "K",
+    "prerequisites": [
+      "fluency_k_u1_cvc_sentences",
+      "phonics_k_u2_cvc_blend_short_o"
+    ]
+  },
+  {
+    "skill_id": "phonics_1_u1_short_i",
+    "grade": "1",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "phonics_1_u1_short_e_u",
+    "grade": "1",
+    "prerequisites": [
+      "phonics_1_u1_short_i"
+    ]
+  },
+  {
+    "skill_id": "phonics_1_u1_mixed_short_vowels",
+    "grade": "1",
+    "prerequisites": [
+      "phonics_1_u1_short_e_u"
+    ]
+  },
+  {
+    "skill_id": "heart_1_u1_batch_01",
+    "grade": "1",
+    "prerequisites": []
+  },
+  {
+    "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "grade": "1",
+    "prerequisites": [
+      "phonics_1_u1_mixed_short_vowels",
+      "heart_1_u1_batch_01"
+    ]
+  }
 ]
