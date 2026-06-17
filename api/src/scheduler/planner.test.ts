@@ -147,7 +147,7 @@ describe("buildPracticePlan", () => {
     const plan = buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: allPassed });
 
     expect(plan.cards.length).toBe(22);
-    expect(plan.cards[0]?.skill_id).toBe("phonics_1_u1_short_i");
+    expect(plan.cards[0]?.skill_id).toBe("phonics_1_u1_alphabet_review");
     expect(plan.cards.every((card) => card.skill_id.startsWith("phonics_1_u1_"))).toBe(true);
   });
 
@@ -155,7 +155,7 @@ describe("buildPracticePlan", () => {
     expect(
       buildPracticePlan({ grade: "1", skillMastery: {}, itemMastery: {}, recentAttempts: itemBackedPassed }).cards[0]
         ?.skill_id
-    ).toBe("phonics_1_u1_short_i");
+    ).toBe("phonics_1_u1_alphabet_review");
   });
 });
 

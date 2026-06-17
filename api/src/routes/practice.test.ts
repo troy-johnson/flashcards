@@ -138,7 +138,7 @@ describe("practice and diagnostic routes", () => {
     expect(start.status).toBe(201);
     const body = await start.json<{ practice_session: { plan: { cards: { skill_id: string }[] } }; terminal_reason?: string }>();
     expect(body.practice_session.plan.cards).toHaveLength(22);
-    expect(body.practice_session.plan.cards[0]?.skill_id).toBe("phonics_1_u1_short_i");
+    expect(body.practice_session.plan.cards[0]?.skill_id).toBe("phonics_1_u1_alphabet_review");
     expect(body.terminal_reason).toBeUndefined();
   });
 
@@ -155,9 +155,9 @@ describe("practice and diagnostic routes", () => {
       "phonics_k_u2_consonants_ncdg",
       "phonics_k_u2_cvc_blend_short_o",
       "fluency_k_u2_cvc_sentences",
+      "phonics_1_u1_alphabet_review",
       "phonics_1_u1_short_i",
       "phonics_1_u1_short_e_u",
-      "phonics_1_u1_mixed_short_vowels",
       "heart_1_u1_batch_01",
       "fluency_1_u1_short_vowel_sentences"
     ];

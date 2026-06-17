@@ -27,9 +27,9 @@
     "unit_id": "1_u1",
     "grade": "1",
     "skill_ids": [
+      "phonics_1_u1_alphabet_review",
       "phonics_1_u1_short_i",
       "phonics_1_u1_short_e_u",
-      "phonics_1_u1_mixed_short_vowels",
       "heart_1_u1_batch_01",
       "fluency_1_u1_short_vowel_sentences"
     ]

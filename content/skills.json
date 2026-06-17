@@ -79,22 +79,22 @@
     ]
   },
   {
-    "skill_id": "phonics_1_u1_short_i",
+    "skill_id": "phonics_1_u1_alphabet_review",
     "grade": "1",
     "prerequisites": []
+  },
+  {
+    "skill_id": "phonics_1_u1_short_i",
+    "grade": "1",
+    "prerequisites": [
+      "phonics_1_u1_alphabet_review"
+    ]
   },
   {
     "skill_id": "phonics_1_u1_short_e_u",
     "grade": "1",
     "prerequisites": [
       "phonics_1_u1_short_i"
-    ]
-  },
-  {
-    "skill_id": "phonics_1_u1_mixed_short_vowels",
-    "grade": "1",
-    "prerequisites": [
-      "phonics_1_u1_short_e_u"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "skill_id": "fluency_1_u1_short_vowel_sentences",
     "grade": "1",
     "prerequisites": [
-      "phonics_1_u1_mixed_short_vowels",
+      "phonics_1_u1_short_e_u",
       "heart_1_u1_batch_01"
     ]
   }

@@ -15,7 +15,7 @@ describe("loadSchedulerContent", () => {
         "pa_k_u1_blend_two_sound",
         "pa_k_u1_isolate_initial_sound",
         "pa_k_u2_segment_three_sound",
-        "phonics_1_u1_mixed_short_vowels",
+        "phonics_1_u1_alphabet_review",
         "phonics_1_u1_short_e_u",
         "phonics_1_u1_short_i",
         "phonics_k_u1_consonants_mstp",
