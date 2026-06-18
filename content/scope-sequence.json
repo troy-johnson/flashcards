@@ -22,5 +22,16 @@
       "phonics_k_u2_cvc_blend_short_o",
       "fluency_k_u2_cvc_sentences"
     ]
+  },
+  {
+    "unit_id": "1_u1",
+    "grade": "1",
+    "skill_ids": [
+      "phonics_1_u1_alphabet_review",
+      "phonics_1_u1_short_i",
+      "phonics_1_u1_short_e_u",
+      "heart_1_u1_batch_01",
+      "fluency_1_u1_short_vowel_sentences"
+    ]
   }
 ]

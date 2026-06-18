@@ -3,19 +3,19 @@
   "categories": {
     "phonics_skills": {
       "v1_target": 12,
-      "required_now": 9
+      "required_now": 12
     },
     "heart_words": {
       "v1_target": 50,
-      "required_now": 20
+      "required_now": 50
     },
     "decodable_words": {
       "v1_target": 200,
-      "required_now": 45
+      "required_now": 200
     },
     "fluency_sentences": {
       "v1_target": 30,
-      "required_now": 18
+      "required_now": 30
     },
     "phoneme_digraph_audio": {
       "v1_target": 56,

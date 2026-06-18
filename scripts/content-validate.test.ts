@@ -17,6 +17,7 @@ let audioManifestPath = "";
 let skillsPath = "";
 let scopePath = "";
 let itemsPath = "";
+let decodabilityMapPath = "";
 
 const createTempContentRoot = () => {
   const tempContentRoot = mkdtempSync(join(tmpdir(), "content-validate-"));
@@ -37,6 +38,7 @@ const resetTempContentRoot = () => {
   skillsPath = join(contentRoot, "skills.json");
   scopePath = join(contentRoot, "scope-sequence.json");
   itemsPath = join(contentRoot, "items/seed.json");
+  decodabilityMapPath = join(contentRoot, "decodability-map.json");
 };
 
 const removeTempContentRoot = () => {
@@ -53,6 +55,10 @@ const writeScopeSequence = (units: unknown[]) => {
 
 const writeItems = (items: unknown[]) => {
   writeFileSync(itemsPath, `${JSON.stringify(items, null, 2)}\n`);
+};
+
+const writeDecodabilityMap = (entries: unknown[]) => {
+  writeFileSync(decodabilityMapPath, `${JSON.stringify(entries, null, 2)}\n`);
 };
 
 const runValidator = () =>
@@ -115,21 +121,40 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /phonics_skills requires at least 2, found 1/);
   });
 
+  it("fails when a decodable word uses graphemes not introduced before its skill", () => {
+    writeSkills([{ skill_id: "phonics_k_u1_short_a", grade: "K", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_k_u1_short_a"] }]);
+    writeItems([{ item_id: "phonics_k_u1_bad", skill_id: "phonics_k_u1_short_a", text: "bat" }]);
+    writeAudioManifest([]);
+    writeDecodabilityMap([{ skill_id: "phonics_k_u1_short_a", graphemes: ["a", "t"] }]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 1 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 1 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /phonics_k_u1_bad uses untaught grapheme b/);
+  });
+
   it("fails when authored content is below the manifest minimum", () => {
-    // required_now at the v1_target ceiling, which authored phonics content has
-    // not yet reached — the count is intentionally not pinned so this stays
-    // valid as K/1 phonics skills are authored up toward the target.
+    writeItems(
+      JSON.parse(productionItems).filter(
+        (item: { item_id: string }) => item.item_id !== "phonics_1_u1_short_e_u_yum"
+      )
+    );
     writeManifest({
       phonics_skills: { v1_target: 12, required_now: 12 },
       heart_words: { v1_target: 50, required_now: 1 },
-      decodable_words: { v1_target: 200, required_now: 1 },
+      decodable_words: { v1_target: 200, required_now: 200 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
       phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
     });
 
     assert.throws(
       runValidator,
-      /phonics_skills requires at least 12, found \d+/
+      /decodable_words requires at least 200, found 199/
     );
   });
 

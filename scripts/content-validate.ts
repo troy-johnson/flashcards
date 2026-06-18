@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const root = process.cwd();
@@ -22,7 +22,15 @@ const fail = (message: string): never => {
 const GRADE_ORDER: Record<string, number> = { K: 0, "1": 1 };
 
 type Skill = { skill_id: string; grade: "K" | "1"; prerequisites?: string[]; deprecated?: boolean };
-type Item = { item_id: string; skill_id: string; audio_id?: string; deprecated?: boolean };
+type Item = {
+  item_id: string;
+  skill_id: string;
+  text?: string;
+  prompt?: string;
+  audio_id?: string;
+  deprecated?: boolean;
+};
+type DecodabilityEntry = { skill_id: string; graphemes: string[] };
 type ScopeUnit = { unit_id: string; grade: "K" | "1"; skill_ids: string[] };
 type ManifestCategory = { v1_target: number; required_now: number };
 type Manifest = {
@@ -113,6 +121,73 @@ for (const skill of skills) {
     const prereqIdx = skillUnitIndex.get(prereqId);
     if (prereqIdx !== undefined && prereqIdx > skillIdx) {
       fail(`skill ${skill.skill_id} has prerequisite ${prereqId} from a later unit (unit index ${prereqIdx} > ${skillIdx})`);
+    }
+  }
+}
+
+const decodabilityMapPath = join(contentRoot, "decodability-map.json");
+if (existsSync(decodabilityMapPath)) {
+  const decodabilityEntries = readContentJson<DecodabilityEntry[]>("decodability-map.json");
+  unique("decodability skill_id", decodabilityEntries.map((entry) => entry.skill_id));
+  const introducedBySkill = new Map<string, string[]>();
+  for (const entry of decodabilityEntries) {
+    if (!skillsById.has(entry.skill_id)) fail(`decodability-map references missing skill ${entry.skill_id}`);
+    introducedBySkill.set(entry.skill_id, entry.graphemes.map((grapheme) => grapheme.toLowerCase()));
+  }
+
+  const scopeSkillOrder = scope.flatMap((unit) => unit.skill_ids);
+  const cumulativeGraphemesBySkill = new Map<string, Set<string>>();
+  const cumulativeHeartWordsBySkill = new Map<string, Set<string>>();
+  const cumulativeGraphemes = new Set<string>();
+  const cumulativeHeartWords = new Set<string>();
+  const liveItemsBySkill = new Map<string, Item[]>();
+  for (const item of items.filter((row) => !row.deprecated)) {
+    (liveItemsBySkill.get(item.skill_id) ?? liveItemsBySkill.set(item.skill_id, []).get(item.skill_id)!).push(item);
+  }
+
+  for (const skillId of scopeSkillOrder) {
+    for (const grapheme of introducedBySkill.get(skillId) ?? []) cumulativeGraphemes.add(grapheme);
+    for (const item of liveItemsBySkill.get(skillId) ?? []) {
+      if (item.item_id.startsWith("heart_") && item.text) cumulativeHeartWords.add(item.text.toLowerCase());
+    }
+    cumulativeGraphemesBySkill.set(skillId, new Set(cumulativeGraphemes));
+    cumulativeHeartWordsBySkill.set(skillId, new Set(cumulativeHeartWords));
+  }
+
+  const untaughtGraphemes = (text: string, allowed: Set<string>) => {
+    const source = text.toLowerCase().replace(/[^a-z]/g, "");
+    const graphemes = [...allowed].sort((a, b) => b.length - a.length);
+    const missing: string[] = [];
+    for (let i = 0; i < source.length;) {
+      const match = graphemes.find((grapheme) => source.startsWith(grapheme, i));
+      if (match) {
+        i += match.length;
+      } else {
+        missing.push(source[i]!);
+        i += 1;
+      }
+    }
+    return [...new Set(missing)];
+  };
+
+  const checkDecodableText = (item: Item, text: string) => {
+    const allowed = cumulativeGraphemesBySkill.get(item.skill_id);
+    if (!allowed) fail(`item ${item.item_id} references skill ${item.skill_id} outside scope-sequence`);
+    const missing = untaughtGraphemes(text, allowed);
+    if (missing.length > 0) {
+      fail(`decodability: ${item.item_id} uses untaught grapheme ${missing[0]} in "${text}"`);
+    }
+  };
+
+  for (const item of items.filter((row) => !row.deprecated)) {
+    const text = item.text ?? item.prompt;
+    if (!text) continue;
+    if (item.item_id.startsWith("phonics_")) checkDecodableText(item, text);
+    if (item.item_id.startsWith("fluency_")) {
+      const heartWords = cumulativeHeartWordsBySkill.get(item.skill_id) ?? new Set<string>();
+      for (const word of text.toLowerCase().match(/[a-z]+/g) ?? []) {
+        if (!heartWords.has(word)) checkDecodableText(item, word);
+      }
     }
   }
 }

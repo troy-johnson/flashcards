@@ -105,14 +105,11 @@ describe("practice and diagnostic routes", () => {
     expect(JSON.parse(stored!.plan_json)).toEqual(session.plan);
   });
 
-  it("surfaces a terminal reason when a 1st grader has exhausted the K-review path", async () => {
-    // Make every K review skill review-passed (>=4 correct attempts each) for the
-    // grade-"1" student, so the planner has no remaining review skills and — with
-    // K-only content — nothing left to schedule.
+  it("serves 1st-grade active content when a 1st grader has exhausted the K-review path", async () => {
     const startedAt = "2026-01-01T00:00:00.000Z";
     await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
       .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
-    const skills = [
+    const kSkills = [
       "pa_k_u1_isolate_initial_sound",
       "pa_k_u1_blend_two_sound",
       "phonics_k_u1_consonants_mstp",
@@ -128,10 +125,48 @@ describe("practice and diagnostic routes", () => {
     ];
     const statements = [];
     let n = 0;
-    for (const skillId of skills) {
+    for (const skillId of kSkills) {
       for (let i = 0; i < 4; i++) {
         const scoredAt = new Date(Date.parse(startedAt) + n * 1000).toISOString();
         statements.push(insertAttemptStatement(`rp_${n}`, "student2", skillId, `${skillId}_item`, scoredAt));
+        n++;
+      }
+    }
+    await env.DB.batch(statements);
+
+    const start = await SELF.fetch("https://api.test/practice/student2/start", { method: "POST", headers: { cookie: "session=s_diag" } });
+    expect(start.status).toBe(201);
+    const body = await start.json<{ practice_session: { plan: { cards: { skill_id: string }[] } }; terminal_reason?: string }>();
+    expect(body.practice_session.plan.cards).toHaveLength(22);
+    expect(body.practice_session.plan.cards[0]?.skill_id).toBe("phonics_1_u1_alphabet_review");
+    expect(body.terminal_reason).toBeUndefined();
+  });
+
+  it("surfaces a terminal reason only at the true end of the K plus 1st-grade sequence", async () => {
+    const startedAt = "2026-01-01T00:00:00.000Z";
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
+      .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
+    const allPracticeableSkills = [
+      "pa_k_u1_blend_two_sound",
+      "phonics_k_u1_short_a",
+      "phonics_k_u1_cvc_blend_short_a",
+      "heart_k_u1_batch_01",
+      "fluency_k_u1_cvc_sentences",
+      "phonics_k_u2_consonants_ncdg",
+      "phonics_k_u2_cvc_blend_short_o",
+      "fluency_k_u2_cvc_sentences",
+      "phonics_1_u1_alphabet_review",
+      "phonics_1_u1_short_i",
+      "phonics_1_u1_short_e_u",
+      "heart_1_u1_batch_01",
+      "fluency_1_u1_short_vowel_sentences"
+    ];
+    const statements = [];
+    let n = 0;
+    for (const skillId of allPracticeableSkills) {
+      for (let i = 0; i < 4; i++) {
+        const scoredAt = new Date(Date.parse(startedAt) + n * 1000).toISOString();
+        statements.push(insertAttemptStatement(`end_${n}`, "student2", skillId, `${skillId}_item`, scoredAt));
         n++;
       }
     }
