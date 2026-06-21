@@ -262,9 +262,12 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 **Files:**
 - Create: `content/audio/sounds.json`
 - Create: `content/audio/patterns.json`
+- Create: `content/audio/masters/.gitkeep`
+- Create: `content/audio/playback/.gitkeep`
 - Create: `scripts/audio-schema.ts`
 - Create: `scripts/audio-schema.test.ts`
 - Modify: `scripts/content-validate.ts`
+- Modify: `content/manifest.json`
 
 **Interfaces:**
 - Produces:
@@ -341,8 +344,9 @@ processing profile, and current file hashes. Exclude review records themselves.
 
 Transcribe every row from
 `docs/research/2026-06-21-audio-inventory-and-architecture-research.md`. Keep
-`master_path`, media hashes, and reviews absent until media exists. Use exact IDs from the
-research artifact.
+`master_path` and media hashes absent until media exists. Set `reviews` to an empty array
+until review records exist. Use exact IDs from the research artifact. Create empty committed
+`content/audio/masters/` and `content/audio/playback/` directories with `.gitkeep` files.
 
 - [ ] **Step 5: Integrate with content validation**
 
@@ -365,7 +369,7 @@ Expected: PASS; mappings report 12/12 and recordings report 0/44.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add content/audio/sounds.json content/audio/patterns.json scripts/audio-schema.ts scripts/audio-schema.test.ts scripts/content-validate.ts content/manifest.json
+git add content/audio/sounds.json content/audio/patterns.json content/audio/masters/.gitkeep content/audio/playback/.gitkeep scripts/audio-schema.ts scripts/audio-schema.test.ts scripts/content-validate.ts content/manifest.json
 git commit -m "feat(audio): add canonical sound and grapheme inventory
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -437,7 +441,9 @@ pnpm audio:manifest:check  # exits nonzero if generated output differs
 - [ ] **Step 4: Implement clean staging**
 
 `audio-stage.ts` must remove only `app/public/audio/generated`, recreate it, and copy the
-single committed playback set while verifying SHA-256.
+single committed playback set while verifying SHA-256. An empty `content/audio/playback/`
+directory is a valid no-op before approved media exists; staging must still recreate an empty
+generated directory and complete successfully.
 
 Use:
 
