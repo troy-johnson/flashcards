@@ -69,11 +69,15 @@ const runValidator = () =>
     stdio: ["ignore", "pipe", "pipe"]
   });
 
-const writeManifest = (categories: Record<string, { v1_target: number; required_now: number }>) => {
+const writeManifest = (
+  categories: Record<string, { v1_target: number; required_now: number }>,
+  schemaVersion = 2
+) => {
   writeFileSync(
     manifestPath,
     `${JSON.stringify(
       {
+        schema_version: schemaVersion,
         phase: "phase_a",
         categories
       },
@@ -94,11 +98,12 @@ const ttsAudioEntries = [
 ];
 
 const validCategories = {
-  phonics_skills: { v1_target: 12, required_now: 9 },
-  heart_words: { v1_target: 50, required_now: 1 },
-  decodable_words: { v1_target: 200, required_now: 1 },
-  fluency_sentences: { v1_target: 30, required_now: 1 },
-  phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+  phonics_skills: { v1_target: 12, required_now: 12 },
+  heart_words: { v1_target: 50, required_now: 50 },
+  decodable_words: { v1_target: 200, required_now: 200 },
+  fluency_sentences: { v1_target: 30, required_now: 30 },
+  recorded_sound_targets: { v1_target: 44, required_now: 0 },
+  grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
 };
 
 describe("content manifest count gate", () => {
@@ -114,7 +119,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 
@@ -132,7 +138,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 1 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(runValidator, /phonics_k_u1_bad uses untaught grapheme b/);
@@ -149,7 +156,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 1 },
       decodable_words: { v1_target: 200, required_now: 200 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(
@@ -168,14 +176,29 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /manifest categories must include exactly: phonics_skills, heart_words, decodable_words, fluency_sentences, phoneme_digraph_audio/
+      /manifest categories must include exactly: phonics_skills, heart_words, decodable_words, fluency_sentences, recorded_sound_targets, grapheme_pattern_mappings/
     );
+  });
+
+  it("rejects schema v2 when recorded sounds and mappings are combined", () => {
+    writeManifest({
+      ...validCategories,
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /recorded_sound_targets.*grapheme_pattern_mappings/);
+  });
+
+  it("allows only the explicit schema v1 to v2 target migration", () => {
+    writeManifest(validCategories, 2);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
   });
 
   it("counts only real phoneme and digraph assets for audio coverage", () => {
     writeManifest({
       ...validCategories,
-      phoneme_digraph_audio: { v1_target: 56, required_now: 1 }
+      recorded_sound_targets: { v1_target: 44, required_now: 1 }
     });
     writeAudioManifest([
       ...ttsAudioEntries,
@@ -185,7 +208,7 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /phoneme_digraph_audio requires at least 1, found 0/
+      /recorded_sound_targets requires at least 1, found 0/
     );
 
     writeAudioManifest([...ttsAudioEntries, { audio_id: "phoneme_a", src: "audio/phonemes/a.mp3" }]);
@@ -214,7 +237,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 2 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(runValidator, /decodable_words requires at least 2, found 1/);
@@ -239,7 +263,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 
@@ -264,7 +289,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 

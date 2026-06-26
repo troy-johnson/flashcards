@@ -34,9 +34,15 @@ type DecodabilityEntry = { skill_id: string; graphemes: string[] };
 type ScopeUnit = { unit_id: string; grade: "K" | "1"; skill_ids: string[] };
 type ManifestCategory = { v1_target: number; required_now: number };
 type Manifest = {
+  schema_version: 2;
   phase: "phase_a";
   categories: Record<
-    "phonics_skills" | "heart_words" | "decodable_words" | "fluency_sentences" | "phoneme_digraph_audio",
+    | "phonics_skills"
+    | "heart_words"
+    | "decodable_words"
+    | "fluency_sentences"
+    | "recorded_sound_targets"
+    | "grapheme_pattern_mappings",
     ManifestCategory
   >;
 };
@@ -45,7 +51,8 @@ const MANIFEST_CATEGORIES = [
   "heart_words",
   "decodable_words",
   "fluency_sentences",
-  "phoneme_digraph_audio"
+  "recorded_sound_targets",
+  "grapheme_pattern_mappings"
 ] as const;
 type ManifestCategoryName = (typeof MANIFEST_CATEGORIES)[number];
 
@@ -193,7 +200,7 @@ if (existsSync(decodabilityMapPath)) {
 }
 
 const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
-const isPhonemeDigraphAudio = (entry: { audio_id: string }) =>
+const isRecordedSoundAsset = (entry: { audio_id: string }) =>
   entry.audio_id.startsWith("phoneme_") || entry.audio_id.startsWith("digraph_");
 // Deprecated (retired) content is kept for ID immutability but does not count
 // toward the content bar — only live content satisfies the manifest gate.
@@ -206,7 +213,12 @@ const actualManifestCounts: Record<ManifestCategoryName, number> = {
   heart_words: liveItems.filter((item) => item.item_id.startsWith("heart_")).length,
   decodable_words: liveItems.filter((item) => item.item_id.startsWith("phonics_")).length,
   fluency_sentences: liveItems.filter((item) => item.item_id.startsWith("fluency_")).length,
-  phoneme_digraph_audio: audio.audio.filter((entry) => hasRealAudioSource(entry) && isPhonemeDigraphAudio(entry)).length
+  // recorded_sound_targets counts only real approved playback assets (recorded
+  // phoneme/digraph clips). grapheme_pattern_mappings counts complete mappings
+  // that reference valid sound IDs; that mapping data structure lands in a later
+  // task, so its actual coverage is 0 until then (v1 target stays at 12).
+  recorded_sound_targets: audio.audio.filter((entry) => hasRealAudioSource(entry) && isRecordedSoundAsset(entry)).length,
+  grapheme_pattern_mappings: 0
 };
 
 const expectedManifestCategories = new Set<string>(MANIFEST_CATEGORIES);
@@ -255,13 +267,28 @@ if (usingDefaultContentRoot && currentBranch !== "main") {
   checkImmutability<Item>("item_id", "content/items/seed.json", (i) => i.item_id, items);
 
   const previousManifest =
-    readJsonFromGit<Manifest>("origin/main", "content/manifest.json") ?? readJsonFromGit<Manifest>("main", "content/manifest.json");
+    readJsonFromGit<{ categories: Record<string, ManifestCategory> }>("origin/main", "content/manifest.json") ??
+    readJsonFromGit<{ categories: Record<string, ManifestCategory> }>("main", "content/manifest.json");
   if (previousManifest) {
-    for (const [category, previousTarget] of Object.entries(previousManifest.categories) as [
-      keyof Manifest["categories"],
-      ManifestCategory
-    ][]) {
-      const currentTarget = manifest.categories[category];
+    for (const [category, previousTarget] of Object.entries(previousManifest.categories)) {
+      // Schema v1 -> v2 migration: the single phoneme_digraph_audio target (56)
+      // splits into the independent recorded_sound_targets (44) and
+      // grapheme_pattern_mappings (12) gates. Permit exactly that split and
+      // nothing else; all other categories keep the immutable non-decrease rule.
+      if (category === "phoneme_digraph_audio") {
+        if (previousTarget.v1_target !== 56) {
+          fail(`unexpected legacy phoneme_digraph_audio v1_target ${previousTarget.v1_target} on main; expected 56`);
+        }
+        const recorded = manifest.categories.recorded_sound_targets;
+        const mappings = manifest.categories.grapheme_pattern_mappings;
+        if (recorded.v1_target !== 44 || mappings.v1_target !== 12) {
+          fail(
+            `phoneme_digraph_audio (56) may only migrate to recorded_sound_targets (44) and grapheme_pattern_mappings (12); found ${recorded.v1_target} and ${mappings.v1_target}`
+          );
+        }
+        continue;
+      }
+      const currentTarget = manifest.categories[category as ManifestCategoryName];
       if (!currentTarget) fail(`manifest category ${category} present on main is missing on HEAD`);
       if (currentTarget.v1_target < previousTarget.v1_target) {
         fail(

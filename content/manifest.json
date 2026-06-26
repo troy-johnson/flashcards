@@ -1,4 +1,5 @@
 {
+  "schema_version": 2,
   "phase": "phase_a",
   "categories": {
     "phonics_skills": {
@@ -17,8 +18,12 @@
       "v1_target": 30,
       "required_now": 30
     },
-    "phoneme_digraph_audio": {
-      "v1_target": 56,
+    "recorded_sound_targets": {
+      "v1_target": 44,
+      "required_now": 0
+    },
+    "grapheme_pattern_mappings": {
+      "v1_target": 12,
       "required_now": 0
     }
   }
