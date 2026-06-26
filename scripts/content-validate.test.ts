@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
+import { checkManifestMigration } from "./manifest-migration.ts";
 
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
@@ -69,11 +70,15 @@ const runValidator = () =>
     stdio: ["ignore", "pipe", "pipe"]
   });
 
-const writeManifest = (categories: Record<string, { v1_target: number; required_now: number }>) => {
+const writeManifest = (
+  categories: Record<string, { v1_target: number; required_now: number }>,
+  schemaVersion = 2
+) => {
   writeFileSync(
     manifestPath,
     `${JSON.stringify(
       {
+        schema_version: schemaVersion,
         phase: "phase_a",
         categories
       },
@@ -94,11 +99,12 @@ const ttsAudioEntries = [
 ];
 
 const validCategories = {
-  phonics_skills: { v1_target: 12, required_now: 9 },
-  heart_words: { v1_target: 50, required_now: 1 },
-  decodable_words: { v1_target: 200, required_now: 1 },
-  fluency_sentences: { v1_target: 30, required_now: 1 },
-  phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+  phonics_skills: { v1_target: 12, required_now: 12 },
+  heart_words: { v1_target: 50, required_now: 50 },
+  decodable_words: { v1_target: 200, required_now: 200 },
+  fluency_sentences: { v1_target: 30, required_now: 30 },
+  recorded_sound_targets: { v1_target: 44, required_now: 0 },
+  grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
 };
 
 describe("content manifest count gate", () => {
@@ -114,7 +120,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 
@@ -132,7 +139,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 1 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(runValidator, /phonics_k_u1_bad uses untaught grapheme b/);
@@ -149,7 +157,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 1 },
       decodable_words: { v1_target: 200, required_now: 200 },
       fluency_sentences: { v1_target: 30, required_now: 1 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(
@@ -168,14 +177,38 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /manifest categories must include exactly: phonics_skills, heart_words, decodable_words, fluency_sentences, phoneme_digraph_audio/
+      /manifest categories must include exactly: phonics_skills, heart_words, decodable_words, fluency_sentences, recorded_sound_targets, grapheme_pattern_mappings/
     );
+  });
+
+  it("rejects a manifest that still includes the legacy phoneme_digraph_audio category", () => {
+    // The legacy category is no longer one of the exactly-six v2 categories, so a
+    // manifest carrying it (here alongside the v2 set) is rejected by the
+    // exact-categories gate, which lists the required v2 category names.
+    writeManifest({
+      ...validCategories,
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /recorded_sound_targets.*grapheme_pattern_mappings/);
+  });
+
+  it("accepts a complete schema v2 manifest", () => {
+    writeManifest(validCategories, 2);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("rejects a manifest whose schema_version is not 2", () => {
+    writeManifest(validCategories, 1);
+
+    assert.throws(runValidator, /schema_version must be 2, found 1/);
   });
 
   it("counts only real phoneme and digraph assets for audio coverage", () => {
     writeManifest({
       ...validCategories,
-      phoneme_digraph_audio: { v1_target: 56, required_now: 1 }
+      recorded_sound_targets: { v1_target: 44, required_now: 1 }
     });
     writeAudioManifest([
       ...ttsAudioEntries,
@@ -185,7 +218,7 @@ describe("content manifest count gate", () => {
 
     assert.throws(
       runValidator,
-      /phoneme_digraph_audio requires at least 1, found 0/
+      /recorded_sound_targets requires at least 1, found 0/
     );
 
     writeAudioManifest([...ttsAudioEntries, { audio_id: "phoneme_a", src: "audio/phonemes/a.mp3" }]);
@@ -214,7 +247,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 2 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(runValidator, /decodable_words requires at least 2, found 1/);
@@ -239,7 +273,8 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 
@@ -264,10 +299,79 @@ describe("content manifest count gate", () => {
       heart_words: { v1_target: 50, required_now: 0 },
       decodable_words: { v1_target: 200, required_now: 0 },
       fluency_sentences: { v1_target: 30, required_now: 0 },
-      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
     writeAudioManifest([]);
 
     assert.throws(runValidator, /K unit .+ appears after a grade-1 unit/);
+  });
+});
+
+// The validator's on-branch immutability check (default content root, non-main
+// branch, vs git main) cannot be reached by the subprocess tests above, which
+// run against a temp content root. These exercise the extracted carve-out logic
+// directly so its v1->v2 migration and non-decrease rules have real coverage.
+describe("manifest migration carve-out", () => {
+  const v1Main = {
+    categories: {
+      phonics_skills: { v1_target: 12, required_now: 12 },
+      heart_words: { v1_target: 50, required_now: 50 },
+      decodable_words: { v1_target: 200, required_now: 200 },
+      fluency_sentences: { v1_target: 30, required_now: 30 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    }
+  };
+  const v2Head = {
+    categories: {
+      phonics_skills: { v1_target: 12, required_now: 12 },
+      heart_words: { v1_target: 50, required_now: 50 },
+      decodable_words: { v1_target: 200, required_now: 200 },
+      fluency_sentences: { v1_target: 30, required_now: 30 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    }
+  };
+
+  it("permits the exact 56 -> 44 + 12 split", () => {
+    assert.equal(checkManifestMigration(v1Main, v2Head), null);
+  });
+
+  it("rejects a split that is not exactly 44 and 12", () => {
+    const wrong = {
+      categories: {
+        ...v2Head.categories,
+        recorded_sound_targets: { v1_target: 40, required_now: 0 }
+      }
+    };
+    assert.match(checkManifestMigration(v1Main, wrong) ?? "", /may only migrate to recorded_sound_targets \(44\) and grapheme_pattern_mappings \(12\)/);
+  });
+
+  it("rejects when the legacy target on main is not 56", () => {
+    const oddMain = {
+      categories: { ...v1Main.categories, phoneme_digraph_audio: { v1_target: 50, required_now: 0 } }
+    };
+    assert.match(checkManifestMigration(oddMain, v2Head) ?? "", /expected 56/);
+  });
+
+  it("rejects when the migration drops one of the new categories", () => {
+    const { grapheme_pattern_mappings: _dropped, ...rest } = v2Head.categories;
+    assert.match(checkManifestMigration(v1Main, { categories: rest }) ?? "", /may only migrate/);
+  });
+
+  it("once main is v2, applies the normal non-decrease rule and permits an unchanged manifest", () => {
+    assert.equal(checkManifestMigration(v2Head, v2Head), null);
+  });
+
+  it("once main is v2, rejects lowering a v1_target", () => {
+    const lowered = {
+      categories: { ...v2Head.categories, recorded_sound_targets: { v1_target: 30, required_now: 0 } }
+    };
+    assert.match(checkManifestMigration(v2Head, lowered) ?? "", /below main's 44; v1 targets are immutable/);
+  });
+
+  it("flags a category present on main but missing on head", () => {
+    const { heart_words: _gone, ...rest } = v2Head.categories;
+    assert.match(checkManifestMigration(v2Head, { categories: rest }) ?? "", /heart_words present on main is missing on HEAD/);
   });
 });
