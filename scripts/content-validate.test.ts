@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
+import { checkManifestMigration } from "./manifest-migration.ts";
 
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
@@ -180,7 +181,10 @@ describe("content manifest count gate", () => {
     );
   });
 
-  it("rejects schema v2 when recorded sounds and mappings are combined", () => {
+  it("rejects a manifest that still includes the legacy phoneme_digraph_audio category", () => {
+    // The legacy category is no longer one of the exactly-six v2 categories, so a
+    // manifest carrying it (here alongside the v2 set) is rejected by the
+    // exact-categories gate, which lists the required v2 category names.
     writeManifest({
       ...validCategories,
       phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
@@ -189,10 +193,16 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /recorded_sound_targets.*grapheme_pattern_mappings/);
   });
 
-  it("allows only the explicit schema v1 to v2 target migration", () => {
+  it("accepts a complete schema v2 manifest", () => {
     writeManifest(validCategories, 2);
 
     assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("rejects a manifest whose schema_version is not 2", () => {
+    writeManifest(validCategories, 1);
+
+    assert.throws(runValidator, /schema_version must be 2, found 1/);
   });
 
   it("counts only real phoneme and digraph assets for audio coverage", () => {
@@ -295,5 +305,73 @@ describe("content manifest count gate", () => {
     writeAudioManifest([]);
 
     assert.throws(runValidator, /K unit .+ appears after a grade-1 unit/);
+  });
+});
+
+// The validator's on-branch immutability check (default content root, non-main
+// branch, vs git main) cannot be reached by the subprocess tests above, which
+// run against a temp content root. These exercise the extracted carve-out logic
+// directly so its v1->v2 migration and non-decrease rules have real coverage.
+describe("manifest migration carve-out", () => {
+  const v1Main = {
+    categories: {
+      phonics_skills: { v1_target: 12, required_now: 12 },
+      heart_words: { v1_target: 50, required_now: 50 },
+      decodable_words: { v1_target: 200, required_now: 200 },
+      fluency_sentences: { v1_target: 30, required_now: 30 },
+      phoneme_digraph_audio: { v1_target: 56, required_now: 0 }
+    }
+  };
+  const v2Head = {
+    categories: {
+      phonics_skills: { v1_target: 12, required_now: 12 },
+      heart_words: { v1_target: 50, required_now: 50 },
+      decodable_words: { v1_target: 200, required_now: 200 },
+      fluency_sentences: { v1_target: 30, required_now: 30 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    }
+  };
+
+  it("permits the exact 56 -> 44 + 12 split", () => {
+    assert.equal(checkManifestMigration(v1Main, v2Head), null);
+  });
+
+  it("rejects a split that is not exactly 44 and 12", () => {
+    const wrong = {
+      categories: {
+        ...v2Head.categories,
+        recorded_sound_targets: { v1_target: 40, required_now: 0 }
+      }
+    };
+    assert.match(checkManifestMigration(v1Main, wrong) ?? "", /may only migrate to recorded_sound_targets \(44\) and grapheme_pattern_mappings \(12\)/);
+  });
+
+  it("rejects when the legacy target on main is not 56", () => {
+    const oddMain = {
+      categories: { ...v1Main.categories, phoneme_digraph_audio: { v1_target: 50, required_now: 0 } }
+    };
+    assert.match(checkManifestMigration(oddMain, v2Head) ?? "", /expected 56/);
+  });
+
+  it("rejects when the migration drops one of the new categories", () => {
+    const { grapheme_pattern_mappings: _dropped, ...rest } = v2Head.categories;
+    assert.match(checkManifestMigration(v1Main, { categories: rest }) ?? "", /may only migrate/);
+  });
+
+  it("once main is v2, applies the normal non-decrease rule and permits an unchanged manifest", () => {
+    assert.equal(checkManifestMigration(v2Head, v2Head), null);
+  });
+
+  it("once main is v2, rejects lowering a v1_target", () => {
+    const lowered = {
+      categories: { ...v2Head.categories, recorded_sound_targets: { v1_target: 30, required_now: 0 } }
+    };
+    assert.match(checkManifestMigration(v2Head, lowered) ?? "", /below main's 44; v1 targets are immutable/);
+  });
+
+  it("flags a category present on main but missing on head", () => {
+    const { heart_words: _gone, ...rest } = v2Head.categories;
+    assert.match(checkManifestMigration(v2Head, { categories: rest }) ?? "", /heart_words present on main is missing on HEAD/);
   });
 });

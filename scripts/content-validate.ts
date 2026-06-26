@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { checkManifestMigration } from "./manifest-migration.ts";
 
 const root = process.cwd();
 const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
@@ -221,6 +222,10 @@ const actualManifestCounts: Record<ManifestCategoryName, number> = {
   grapheme_pattern_mappings: 0
 };
 
+if (manifest.schema_version !== 2) {
+  fail(`manifest schema_version must be 2, found ${manifest.schema_version ?? "missing"}`);
+}
+
 const expectedManifestCategories = new Set<string>(MANIFEST_CATEGORIES);
 const actualManifestCategories = Object.keys(manifest.categories);
 if (
@@ -270,32 +275,8 @@ if (usingDefaultContentRoot && currentBranch !== "main") {
     readJsonFromGit<{ categories: Record<string, ManifestCategory> }>("origin/main", "content/manifest.json") ??
     readJsonFromGit<{ categories: Record<string, ManifestCategory> }>("main", "content/manifest.json");
   if (previousManifest) {
-    for (const [category, previousTarget] of Object.entries(previousManifest.categories)) {
-      // Schema v1 -> v2 migration: the single phoneme_digraph_audio target (56)
-      // splits into the independent recorded_sound_targets (44) and
-      // grapheme_pattern_mappings (12) gates. Permit exactly that split and
-      // nothing else; all other categories keep the immutable non-decrease rule.
-      if (category === "phoneme_digraph_audio") {
-        if (previousTarget.v1_target !== 56) {
-          fail(`unexpected legacy phoneme_digraph_audio v1_target ${previousTarget.v1_target} on main; expected 56`);
-        }
-        const recorded = manifest.categories.recorded_sound_targets;
-        const mappings = manifest.categories.grapheme_pattern_mappings;
-        if (recorded.v1_target !== 44 || mappings.v1_target !== 12) {
-          fail(
-            `phoneme_digraph_audio (56) may only migrate to recorded_sound_targets (44) and grapheme_pattern_mappings (12); found ${recorded.v1_target} and ${mappings.v1_target}`
-          );
-        }
-        continue;
-      }
-      const currentTarget = manifest.categories[category as ManifestCategoryName];
-      if (!currentTarget) fail(`manifest category ${category} present on main is missing on HEAD`);
-      if (currentTarget.v1_target < previousTarget.v1_target) {
-        fail(
-          `${category} v1_target ${currentTarget.v1_target} is below main's ${previousTarget.v1_target}; v1 targets are immutable`
-        );
-      }
-    }
+    const migrationError = checkManifestMigration(previousManifest, manifest);
+    if (migrationError) fail(migrationError);
   }
 }
 
