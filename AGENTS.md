@@ -59,3 +59,4 @@ pnpm workspace (`pnpm@9.15.0`), three packages:
 - **api tests** run in the `@cloudflare/vitest-pool-workers` workerd isolate: import `env` / `SELF` from `cloudflare:test`. `vi.stubGlobal("fetch")` does **not** patch fetch in that pool, and the hand-written `cloudflare-test.d.ts` exports only `env`/`SELF` (no `fetchMock`) — **dependency-inject** `fetch` instead.
 - **app tests** use Vitest + jsdom with raw `createRoot` + `act` (no `@testing-library`).
 - Content is data: extend the JSON files and let `content:validate` enforce integrity; no brand chrome in `content/`.
+- **Research starts at `docs/research/SOURCES.md`.** Use its evidence tiers and supported/unsupported-claim notes before adding sources. Add new sources only when they support a concrete spec/ADR/plan/research claim; record limitations, consuming artifacts, and last verification date.

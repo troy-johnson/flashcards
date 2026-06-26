@@ -214,10 +214,12 @@ FR16. Phase A content must target the v1.0 content bar:
 - approximately 50 heart words with regular/irregular tagging,
 - approximately 200 decodable words,
 - approximately 30 fluency sentences,
-- audio for 44 phonemes and common digraphs including `sh`, `ch`, `th`, `wh`, `ck`, `ng`, `qu`, `ll`, `ss`, `ff`, `zz`, and `ph`,
+- recorded audio for 44 UFLI-aligned instructional sound targets, plus validated mappings for the grapheme patterns `sh`, `ch`, `th`, `wh`, `ck`, `ng`, `qu`, `ll`, `ss`, `ff`, `zz`, and `ph`,
 - TTS fallback for words and sentences.
 
 Phase A audio assumptions must target current iPadOS Safari and current desktop/mobile Chrome/Safari. Audio playback must be initiated by an explicit user gesture, and TTS voice availability/quality must be verified during planning or pilot-device QA rather than assumed uniform across platforms.
+
+The “44” count is an instructional inventory, not a claim that all English dialects share one universal phoneme inventory. Sound definitions and grapheme mappings must be modeled separately; mappings may reuse one sound, select among variants, or reference a sequence of sounds. Dialect differences must not be presented as errors or disorders.
 
 FR17. Content authoring should use the approved hybrid approach:
 - UFLI scaffold,
@@ -351,7 +353,7 @@ AC9. A child can complete a practice session and reach a completion/progress sta
 
 AC10. No pilot-visible UI includes points, streaks, badges, avatars, coins, confetti-as-reward, leaderboards, or reward-economy language.
 
-AC11. The v1.0 content bar exists in validated content files or assets matching the counts declared in the Phase A content manifest, including K Units 1-2, 1st Grade Unit 1 phonics, tagged heart words, decodable words, fluency sentences, phoneme/digraph audio coverage, and TTS fallback.
+AC11. The v1.0 content bar exists in validated content files or assets matching the counts declared in the Phase A content manifest, including K Units 1-2, 1st Grade Unit 1 phonics, tagged heart words, decodable words, fluency sentences, 44 recorded instructional sound targets, 12 validated grapheme-pattern mappings, and whole-item TTS fallback.
 
 AC12. Content validation passes for the Phase A content set.
 

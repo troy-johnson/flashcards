@@ -4,6 +4,7 @@ Implementation plans paired with specs. Numbered as `<spec#><letter>` (e.g., `00
 
 | # | Slug | Status | Date | Summary |
 |---|------|--------|------|---------|
+| 003a | [audio-assets-playback](003a-audio-assets-playback.md) | drafted — ready to execute (Phase 0 first) | 2026-06-21 | Eleven-task plan for Spec 003 / bead `rw-1gz.8.2`: Phase 0 real-iPad TTS spike, schema-v2 TDD migration, canonical 44+12 inventory, deterministic manifest/staging, item `speech_text` propagation, protected catalog API + UI, gesture playback/TTS, codec spike, recording + checksum-bound SLP approval, CI/device QA. |
 | 002h | [phase-a-ui-polish-a11y](002h-phase-a-ui-polish-a11y.md) | drafted — implement last | 2026-06-06 | Cross-cutting pilot polish + accessibility over all FR34 surfaces (FR33–36, AC16–17). a11y = jest-axe automated + manual contrast/reduced-motion/SR checklist; breakpoints 375/768/1280. Beads epic `rw-1gz.11` (blocked-on .9 + .10). |
 | 002g | [phase-a-privacy-terms](002g-phase-a-privacy-terms.md) | drafted — ready to implement | 2026-06-06 | Basic plain-language Privacy + Terms pages + manual support contact route (FR27–29/37–39, AC14/18–19). LLM-drafted for owner review; contact via `mailto:` support email. Beads epic `rw-1gz.10`. |
 | 002f | [phase-a-landing-page](002f-phase-a-landing-page.md) | drafted — ready to implement | 2026-06-06 | Public landing page (FR24–26, AC13): positioning, audience, privacy stance, pilot status, invite-only contact path (`mailto:`). Copy from the copy package. Beads epic `rw-1gz.9`. |
@@ -21,7 +22,7 @@ All Phase A workstreams are planned. Shipped: 002a/b/c. Drafted, ready to implem
 | Beads | Workstream | Plan | Spec coverage | Status |
 |---|---|---|---|---|
 | rw-1gz.7 | Transactional email provider (Resend) | 002d | FR19/22/23, AC3 | drafted |
-| rw-1gz.8 | v1.0 content bar | 002e (+ADR-002) | FR16–18, AC11–12 | drafted (phased; full AC11/AC7 only after Phase 2 = 1st-grade U1) |
+| rw-1gz.8 | v1.0 content bar | 002e + [003a](003a-audio-assets-playback.md) (ADR-002) | FR16–18, AC11–12 | drafted (phased; full AC11/AC7 only after Phase 2 = 1st-grade U1). Audio subsystem (rw-1gz.8.2) designed in Spec 003 / plan 003a. |
 | rw-1gz.9 | Public landing page | 002f | FR24–26, AC13 | drafted |
 | rw-1gz.10 | Privacy Policy & Terms + contact | 002g | FR27–29/37–39, AC14/18–19 | drafted |
 | rw-1gz.11 | Pilot UI polish & accessibility | 002h | FR33–36, AC16–17 | drafted (do last, after .9+.10) |
