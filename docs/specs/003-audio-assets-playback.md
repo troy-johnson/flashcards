@@ -1,7 +1,9 @@
 # Audio Assets and Playback Design
 
 **Bead:** `rw-1gz.8.2`
+**Spec:** `003-audio-assets-playback` — elaborates Spec 002 §8 (v1.0 content bar) / ADR-002
 **Status:** Approved with nits resolved after three independent review rounds
+**Adversarial verdict:** APPROVED WITH NITS (round 3 of 3; all nits resolved)
 **Date:** 2026-06-21
 
 > Round 1 independent review verdict: **BLOCKED**. See
