@@ -237,6 +237,58 @@ describe("content manifest count gate", () => {
     );
   });
 
+  it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {
+    // A pattern whose sound_ids reference a nonexistent sound is caught by
+    // validateAudioSources before counting — the validator must hard-fail.
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_sh",
+          grapheme: "sh",
+          sound_ids: ["sound_nonexistent"],
+          example_word: "ship",
+          note: ""
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(
+      runValidator,
+      /audio schema: mapping_grapheme_sh: unresolved sound_id reference "sound_nonexistent"/
+    );
+  });
+
+  it("grapheme_pattern_mappings count gate fires when empty sound_ids make a mapping uncountable", () => {
+    // A structurally valid mapping with no sound_ids is not counted; setting
+    // required_now: 1 must fail because the count is 0.
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_sh",
+          grapheme: "sh",
+          sound_ids: [],
+          example_word: "ship",
+          note: ""
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 1 }
+    });
+
+    assert.throws(
+      runValidator,
+      /grapheme_pattern_mappings requires at least 1, found 0/
+    );
+  });
+
   it("passes when authored content meets the manifest minimum", () => {
     writeManifest(validCategories);
 

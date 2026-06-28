@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { checkManifestMigration } from "./manifest-migration.ts";
-import { loadAudioSources, validateAudioSources } from "./audio-schema.ts";
+import { loadAudioSources, validateAudioSources, computeReviewSubject } from "./audio-schema.ts";
 
 const root = process.cwd();
 const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
@@ -215,10 +215,10 @@ const soundIds = new Set(audioSources.sounds.map((s) => s.sound_id));
 
 const countedRecordedSoundTargets = audioSources.sounds.filter((s) => {
   if (!s.playback_url || !s.playback_sha256) return false;
-  const hasSlpApproval = s.reviews.some(
-    (r) => r.kind === "slp" && r.status === "approved"
+  const currentSubject = computeReviewSubject(s);
+  return s.reviews.some(
+    (r) => r.kind === "slp" && r.status === "approved" && r.subject_sha256 === currentSubject
   );
-  return hasSlpApproval;
 }).length;
 
 const countedGraphemePatternMappings = audioSources.patterns.filter((p) =>
