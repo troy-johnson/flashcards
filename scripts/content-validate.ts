@@ -235,7 +235,7 @@ for (const sound of audioSources.sounds) {
   }
   const playbackPath = resolvePlaybackPath(contentRoot, sound.playback_url);
   if (!playbackPath) {
-    fail(`audio media: ${sound.sound_id} playback_url must start with /audio/`);
+    fail(`audio media: ${sound.sound_id} playback_url must be a safe path under /audio/ (no traversal)`);
   }
   if (!existsSync(playbackPath)) {
     fail(`audio media: ${sound.sound_id} playback file not found at audio/playback/${sound.playback_url.slice("/audio/".length)}`);

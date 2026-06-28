@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 export type ProductionBehavior = "clip" | "sustain" | "glide" | "sequence";
 export type ReviewStatus = "approved" | "changes_requested";
@@ -196,11 +196,18 @@ export function checkAudioCardinality(
 
 // Resolves a public playback_url ("/audio/<rel>") to its source-of-truth file
 // under the content audio root (content/audio/playback/<rel>). Returns null if
-// the url does not have the expected public shape.
+// the url does not have the expected public shape OR if it would escape the
+// playback directory (path traversal, e.g. "/audio/../../etc/passwd").
 export function resolvePlaybackPath(contentRoot: string, playbackUrl: string): string | null {
   const prefix = "/audio/";
   if (!playbackUrl.startsWith(prefix)) return null;
-  return join(contentRoot, "audio/playback", playbackUrl.slice(prefix.length));
+  const rel = playbackUrl.slice(prefix.length);
+  if (rel.length === 0) return null;
+  const base = resolve(join(contentRoot, "audio/playback"));
+  const resolved = resolve(base, rel);
+  const relFromBase = relative(base, resolved);
+  if (relFromBase === "" || relFromBase.startsWith("..") || isAbsolute(relFromBase)) return null;
+  return resolved;
 }
 
 export function computeFileSha256(path: string): string {

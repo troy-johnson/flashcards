@@ -5,6 +5,7 @@ import {
   loadAudioSources,
   validateAudioSources,
   checkAudioCardinality,
+  resolvePlaybackPath,
   computeReviewSubject,
   type AudioSources,
   type InstructionalSound,
@@ -223,6 +224,27 @@ describe("checkAudioCardinality", () => {
     const short: AudioSources = { sounds: sources.sounds, patterns: sources.patterns.slice(0, 11) };
     const errors = checkAudioCardinality(short, 44, 12);
     assert.ok(errors.some((e) => e.includes("expected 12 patterns") && e.includes("found 11")));
+  });
+});
+
+describe("resolvePlaybackPath", () => {
+  const base = "/tmp/content";
+
+  it("resolves a normal /audio/ url under audio/playback", () => {
+    assert.equal(
+      resolvePlaybackPath(base, "/audio/sound_short_a.mp3"),
+      join(base, "audio/playback", "sound_short_a.mp3")
+    );
+  });
+
+  it("returns null when the url does not start with /audio/", () => {
+    assert.equal(resolvePlaybackPath(base, "https://evil.example/x.mp3"), null);
+    assert.equal(resolvePlaybackPath(base, "audio/x.mp3"), null);
+  });
+
+  it("returns null for a path-traversal url that escapes the playback dir", () => {
+    assert.equal(resolvePlaybackPath(base, "/audio/../../../etc/passwd"), null);
+    assert.equal(resolvePlaybackPath(base, "/audio/"), null);
   });
 });
 

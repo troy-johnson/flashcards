@@ -378,6 +378,29 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /audio media: sound_short_a playback_sha256 does not match/);
   });
 
+  it("rejects a playback_url that attempts path traversal", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/../../../etc/passwd",
+      playback_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback_url must be a safe path/);
+  });
+
   it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {
     // A pattern whose sound_ids reference a nonexistent sound is caught by
     // validateAudioSources before counting — the validator must hard-fail.
