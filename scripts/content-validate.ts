@@ -2,6 +2,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { checkManifestMigration } from "./manifest-migration.ts";
+import { loadAudioSources, validateAudioSources } from "./audio-schema.ts";
 
 const root = process.cwd();
 const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
@@ -200,9 +201,30 @@ if (existsSync(decodabilityMapPath)) {
   }
 }
 
-const hasRealAudioSource = (entry: { src?: string }) => typeof entry.src === "string" && entry.src.trim().length > 0;
-const isRecordedSoundAsset = (entry: { audio_id: string }) =>
-  entry.audio_id.startsWith("phoneme_") || entry.audio_id.startsWith("digraph_");
+// Load canonical audio inventory and validate structural integrity.
+// recorded_sound_targets counts only sounds that have valid media with matching
+// hashes and at least one slp-kind approval whose subject_sha256 matches the
+// current computeReviewSubject(). Before media exists, this count stays 0.
+// grapheme_pattern_mappings counts structurally valid mappings whose sound_ids
+// all resolve into the canonical sound inventory.
+const audioSources = loadAudioSources(contentRoot);
+const audioSchemaErrors = validateAudioSources(audioSources);
+for (const err of audioSchemaErrors) fail(`audio schema: ${err}`);
+
+const soundIds = new Set(audioSources.sounds.map((s) => s.sound_id));
+
+const countedRecordedSoundTargets = audioSources.sounds.filter((s) => {
+  if (!s.playback_url || !s.playback_sha256) return false;
+  const hasSlpApproval = s.reviews.some(
+    (r) => r.kind === "slp" && r.status === "approved"
+  );
+  return hasSlpApproval;
+}).length;
+
+const countedGraphemePatternMappings = audioSources.patterns.filter((p) =>
+  p.sound_ids.length > 0 && p.sound_ids.every((id) => soundIds.has(id))
+).length;
+
 // Deprecated (retired) content is kept for ID immutability but does not count
 // toward the content bar — only live content satisfies the manifest gate.
 const liveSkills = skills.filter((skill) => !skill.deprecated);
@@ -214,12 +236,8 @@ const actualManifestCounts: Record<ManifestCategoryName, number> = {
   heart_words: liveItems.filter((item) => item.item_id.startsWith("heart_")).length,
   decodable_words: liveItems.filter((item) => item.item_id.startsWith("phonics_")).length,
   fluency_sentences: liveItems.filter((item) => item.item_id.startsWith("fluency_")).length,
-  // recorded_sound_targets counts only real approved playback assets (recorded
-  // phoneme/digraph clips). grapheme_pattern_mappings counts complete mappings
-  // that reference valid sound IDs; that mapping data structure lands in a later
-  // task, so its actual coverage is 0 until then (v1 target stays at 12).
-  recorded_sound_targets: audio.audio.filter((entry) => hasRealAudioSource(entry) && isRecordedSoundAsset(entry)).length,
-  grapheme_pattern_mappings: 0
+  recorded_sound_targets: countedRecordedSoundTargets,
+  grapheme_pattern_mappings: countedGraphemePatternMappings,
 };
 
 if (manifest.schema_version !== 2) {

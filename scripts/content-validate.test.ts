@@ -9,12 +9,16 @@ import { checkManifestMigration } from "./manifest-migration.ts";
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
 const productionAudioManifest = readFileSync(join(root, "content/audio/manifest.json"), "utf8");
+const productionSounds = readFileSync(join(root, "content/audio/sounds.json"), "utf8");
+const productionPatterns = readFileSync(join(root, "content/audio/patterns.json"), "utf8");
 const productionSkills = readFileSync(join(root, "content/skills.json"), "utf8");
 const productionScope = readFileSync(join(root, "content/scope-sequence.json"), "utf8");
 const productionItems = readFileSync(join(root, "content/items/seed.json"), "utf8");
 let contentRoot = "";
 let manifestPath = "";
 let audioManifestPath = "";
+let soundsPath = "";
+let patternsPath = "";
 let skillsPath = "";
 let scopePath = "";
 let itemsPath = "";
@@ -26,6 +30,8 @@ const createTempContentRoot = () => {
   mkdirSync(join(tempContentRoot, "audio"));
   writeFileSync(join(tempContentRoot, "manifest.json"), productionManifest);
   writeFileSync(join(tempContentRoot, "audio/manifest.json"), productionAudioManifest);
+  writeFileSync(join(tempContentRoot, "audio/sounds.json"), productionSounds);
+  writeFileSync(join(tempContentRoot, "audio/patterns.json"), productionPatterns);
   writeFileSync(join(tempContentRoot, "skills.json"), productionSkills);
   writeFileSync(join(tempContentRoot, "scope-sequence.json"), productionScope);
   writeFileSync(join(tempContentRoot, "items/seed.json"), productionItems);
@@ -36,6 +42,8 @@ const resetTempContentRoot = () => {
   contentRoot = createTempContentRoot();
   manifestPath = join(contentRoot, "manifest.json");
   audioManifestPath = join(contentRoot, "audio/manifest.json");
+  soundsPath = join(contentRoot, "audio/sounds.json");
+  patternsPath = join(contentRoot, "audio/patterns.json");
   skillsPath = join(contentRoot, "skills.json");
   scopePath = join(contentRoot, "scope-sequence.json");
   itemsPath = join(contentRoot, "items/seed.json");
@@ -104,7 +112,7 @@ const validCategories = {
   decodable_words: { v1_target: 200, required_now: 200 },
   fluency_sentences: { v1_target: 30, required_now: 30 },
   recorded_sound_targets: { v1_target: 44, required_now: 0 },
-  grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+  grapheme_pattern_mappings: { v1_target: 12, required_now: 12 }
 };
 
 describe("content manifest count gate", () => {
@@ -205,25 +213,28 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /schema_version must be 2, found 1/);
   });
 
-  it("counts only real phoneme and digraph assets for audio coverage", () => {
+  it("recorded_sound_targets counts 0 when no sounds have SLP-approved media", () => {
+    // The canonical sounds.json has no media or SLP approvals yet, so the count
+    // must be 0 regardless of required_now being 0 as well.
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 0 }
+    });
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("recorded_sound_targets gate fires when required_now exceeds SLP-approved count", () => {
+    // With no SLP approvals in sounds.json, requiring even 1 should fail.
     writeManifest({
       ...validCategories,
       recorded_sound_targets: { v1_target: 44, required_now: 1 }
     });
-    writeAudioManifest([
-      ...ttsAudioEntries,
-      { audio_id: "tts_word_cat_recorded", src: "audio/words/cat.mp3" },
-      { audio_id: "phoneme_a", tts_fallback: true }
-    ]);
 
     assert.throws(
       runValidator,
       /recorded_sound_targets requires at least 1, found 0/
     );
-
-    writeAudioManifest([...ttsAudioEntries, { audio_id: "phoneme_a", src: "audio/phonemes/a.mp3" }]);
-
-    assert.match(runValidator(), /\[content-validate\] ok:/);
   });
 
   it("passes when authored content meets the manifest minimum", () => {

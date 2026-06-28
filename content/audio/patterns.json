@@ -1,0 +1,86 @@
+[
+  {
+    "mapping_id": "mapping_grapheme_sh",
+    "grapheme": "sh",
+    "sound_ids": ["sound_sh"],
+    "example_word": "ship",
+    "note": "One grapheme pattern, one sound target."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ch",
+    "grapheme": "ch",
+    "sound_ids": ["sound_ch"],
+    "example_word": "chin",
+    "note": "Primary early-reading correspondence only; other pronunciations (e.g. /ʃ/ in 'chef') are later scope."
+  },
+  {
+    "mapping_id": "mapping_grapheme_th",
+    "grapheme": "th",
+    "sound_ids": ["sound_th_unvoiced", "sound_th_voiced"],
+    "example_word": "thin, this",
+    "note": "One spelling pattern maps to two sound targets: voiceless /θ/ and voiced /ð/."
+  },
+  {
+    "mapping_id": "mapping_grapheme_wh",
+    "grapheme": "wh",
+    "sound_ids": ["sound_w"],
+    "example_word": "when",
+    "note": "UFLI's grapheme card maps 'wh' to /w/; the separate /ʍ/ sound target remains available for contrast-preserving dialect review."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ck",
+    "grapheme": "ck",
+    "sound_ids": ["sound_k"],
+    "example_word": "back",
+    "note": "Reuses the /k/ sound target."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ng",
+    "grapheme": "ng",
+    "sound_ids": ["sound_ng"],
+    "example_word": "sing",
+    "note": "Primary correspondence; do not add /g/ to the isolated sound target."
+  },
+  {
+    "mapping_id": "mapping_grapheme_qu",
+    "grapheme": "qu",
+    "sound_ids": ["sound_k", "sound_w"],
+    "example_word": "quit",
+    "note": "Sequence of two phonemes /k/ + /w/, not a digraph under the IES single-sound definition."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ll",
+    "grapheme": "ll",
+    "sound_ids": ["sound_l"],
+    "example_word": "bell",
+    "note": "Reuses /l/; final realization may be darker in natural speech."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ss",
+    "grapheme": "ss",
+    "sound_ids": ["sound_s"],
+    "example_word": "mess",
+    "note": "Reuses /s/."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ff",
+    "grapheme": "ff",
+    "sound_ids": ["sound_f"],
+    "example_word": "off",
+    "note": "Reuses /f/."
+  },
+  {
+    "mapping_id": "mapping_grapheme_zz",
+    "grapheme": "zz",
+    "sound_ids": ["sound_z"],
+    "example_word": "buzz",
+    "note": "Reuses /z/."
+  },
+  {
+    "mapping_id": "mapping_grapheme_ph",
+    "grapheme": "ph",
+    "sound_ids": ["sound_f"],
+    "example_word": "phone",
+    "note": "Reuses /f/; vocabulary is later than initial CVC scope."
+  }
+]
