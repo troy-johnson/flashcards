@@ -53,38 +53,119 @@ export function loadAudioSources(root: string): AudioSources {
 
 const VALID_BEHAVIORS = new Set<string>(["clip", "sustain", "glide", "sequence"]);
 
+// The 12 canonical grapheme patterns Reader's Way teaches. A mapping whose
+// grapheme is not in this set is rejected — the inventory is closed, not
+// open-ended. See docs/research/2026-06-21-audio-inventory-and-architecture-research.md.
+const CANONICAL_GRAPHEMES = new Set<string>([
+  "sh", "ch", "th", "wh", "ck", "ng", "qu", "ll", "ss", "ff", "zz", "ph"
+]);
+
+const REQUIRED_SOUND_STRING_FIELDS = [
+  "sound_id",
+  "instructional_label",
+  "ipa",
+  "example_word",
+  "phonetic_class",
+  "production_notes",
+  "dialect_notes",
+  "recording_guidance",
+  "processing_profile"
+] as const;
+const OPTIONAL_MEDIA_STRING_FIELDS = [
+  "master_path",
+  "master_sha256",
+  "playback_url",
+  "playback_sha256"
+] as const;
+const REQUIRED_PATTERN_STRING_FIELDS = ["mapping_id", "grapheme", "example_word", "note"] as const;
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+// Pure structural validation of the canonical audio sources. Returns a list of
+// human-readable errors (empty == valid). Defensive against malformed JSON:
+// missing/wrong-typed fields produce errors rather than throwing. Cardinality
+// (exactly 44 sounds / 12 patterns) is enforced separately in content-validate
+// against the manifest v1_targets, since this function also runs over subsets.
 export function validateAudioSources(sources: AudioSources): string[] {
   const errors: string[] = [];
 
   const soundIds = new Set<string>();
   for (const sound of sources.sounds) {
-    if (soundIds.has(sound.sound_id)) {
-      errors.push(`duplicate sound_id: ${sound.sound_id}`);
-    }
-    soundIds.add(sound.sound_id);
+    const row = (sound ?? {}) as Record<string, unknown>;
+    const id = typeof row.sound_id === "string" ? row.sound_id : "(missing sound_id)";
 
-    if (!VALID_BEHAVIORS.has(sound.production_behavior)) {
-      errors.push(`${sound.sound_id}: invalid production_behavior "${sound.production_behavior}"`);
+    for (const field of REQUIRED_SOUND_STRING_FIELDS) {
+      if (!isNonEmptyString(row[field])) {
+        errors.push(`${id}: ${field} must be a non-empty string`);
+      }
     }
-    if (typeof sound.dialect_notes !== "string") {
-      errors.push(`${sound.sound_id}: dialect_notes must be a string`);
+    for (const field of OPTIONAL_MEDIA_STRING_FIELDS) {
+      if (row[field] !== undefined && typeof row[field] !== "string") {
+        errors.push(`${id}: ${field} must be a string when present`);
+      }
+    }
+    if (!VALID_BEHAVIORS.has(row.production_behavior as string)) {
+      errors.push(`${id}: invalid production_behavior "${row.production_behavior}"`);
+    }
+    if (!Array.isArray(row.reviews)) {
+      errors.push(`${id}: reviews must be an array`);
+    }
+
+    if (isNonEmptyString(row.sound_id)) {
+      if (soundIds.has(row.sound_id)) errors.push(`duplicate sound_id: ${row.sound_id}`);
+      soundIds.add(row.sound_id);
     }
   }
 
   const mappingIds = new Set<string>();
   for (const pattern of sources.patterns) {
-    if (mappingIds.has(pattern.mapping_id)) {
-      errors.push(`duplicate mapping_id: ${pattern.mapping_id}`);
-    }
-    mappingIds.add(pattern.mapping_id);
+    const row = (pattern ?? {}) as Record<string, unknown>;
+    const id = typeof row.mapping_id === "string" ? row.mapping_id : "(missing mapping_id)";
 
-    for (const soundId of pattern.sound_ids) {
-      if (!soundIds.has(soundId)) {
-        errors.push(`${pattern.mapping_id}: unresolved sound_id reference "${soundId}"`);
+    for (const field of REQUIRED_PATTERN_STRING_FIELDS) {
+      if (!isNonEmptyString(row[field])) {
+        errors.push(`${id}: ${field} must be a non-empty string`);
       }
+    }
+    if (isNonEmptyString(row.grapheme) && !CANONICAL_GRAPHEMES.has(row.grapheme)) {
+      errors.push(`${id}: unknown grapheme "${row.grapheme}"`);
+    }
+
+    if (!Array.isArray(row.sound_ids) || row.sound_ids.length === 0) {
+      errors.push(`${id}: sound_ids must be a non-empty array`);
+    } else {
+      for (const soundId of row.sound_ids) {
+        if (!soundIds.has(soundId as string)) {
+          errors.push(`${id}: unresolved sound_id reference "${soundId}"`);
+        }
+      }
+    }
+
+    if (isNonEmptyString(row.mapping_id)) {
+      if (mappingIds.has(row.mapping_id)) errors.push(`duplicate mapping_id: ${row.mapping_id}`);
+      mappingIds.add(row.mapping_id);
     }
   }
 
+  return errors;
+}
+
+// Cardinality check, separate from validateAudioSources because that function
+// also runs over subsets. Returns errors if the inventory size does not match
+// the promised counts (the manifest v1_targets). Pure and directly unit-tested.
+export function checkAudioCardinality(
+  sources: AudioSources,
+  expectedSounds: number,
+  expectedPatterns: number
+): string[] {
+  const errors: string[] = [];
+  if (sources.sounds.length !== expectedSounds) {
+    errors.push(`expected ${expectedSounds} sounds (recorded_sound_targets v1_target), found ${sources.sounds.length}`);
+  }
+  if (sources.patterns.length !== expectedPatterns) {
+    errors.push(`expected ${expectedPatterns} patterns (grapheme_pattern_mappings v1_target), found ${sources.patterns.length}`);
+  }
   return errors;
 }
 

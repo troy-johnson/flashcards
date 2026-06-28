@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { checkManifestMigration } from "./manifest-migration.ts";
-import { loadAudioSources, validateAudioSources, computeReviewSubject } from "./audio-schema.ts";
+import { loadAudioSources, validateAudioSources, checkAudioCardinality, computeReviewSubject } from "./audio-schema.ts";
 
 const root = process.cwd();
 const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
@@ -202,19 +202,39 @@ if (existsSync(decodabilityMapPath)) {
 }
 
 // Load canonical audio inventory and validate structural integrity.
-// recorded_sound_targets counts only sounds that have valid media with matching
-// hashes and at least one slp-kind approval whose subject_sha256 matches the
-// current computeReviewSubject(). Before media exists, this count stays 0.
+//
+// recorded_sound_targets counts a sound only if it declares playback media and
+// carries a current slp-kind approval whose subject_sha256 matches the present
+// computeReviewSubject() (which folds in the declared playback_sha256). That
+// binds the approval to the declared bytes/guidance. Byte-level verification —
+// the file existing under the staged audio root and its recomputed sha256
+// matching the declared hash — is enforced at staging time (003a Task 4, bead
+// rw-yyl), where the bytes are first introduced. Before media exists this
+// count stays 0.
+//
 // grapheme_pattern_mappings counts structurally valid mappings whose sound_ids
 // all resolve into the canonical sound inventory.
 const audioSources = loadAudioSources(contentRoot);
 const audioSchemaErrors = validateAudioSources(audioSources);
 for (const err of audioSchemaErrors) fail(`audio schema: ${err}`);
 
+// Cardinality: the canonical inventory must define exactly as many sounds and
+// patterns as the manifest v1_targets promise. Enforced only against the real
+// content root (injected test roots use minimal fixtures), mirroring the
+// immutability check below.
+if (usingDefaultContentRoot) {
+  const cardinalityErrors = checkAudioCardinality(
+    audioSources,
+    manifest.categories.recorded_sound_targets.v1_target,
+    manifest.categories.grapheme_pattern_mappings.v1_target
+  );
+  for (const err of cardinalityErrors) fail(`audio inventory: ${err}`);
+}
+
 const soundIds = new Set(audioSources.sounds.map((s) => s.sound_id));
 
 const countedRecordedSoundTargets = audioSources.sounds.filter((s) => {
-  if (!s.playback_url || !s.playback_sha256) return false;
+  if (!s.playback_url || !s.playback_url.startsWith("/audio/") || !s.playback_sha256) return false;
   const currentSubject = computeReviewSubject(s);
   return s.reviews.some(
     (r) => r.kind === "slp" && r.status === "approved" && r.subject_sha256 === currentSubject

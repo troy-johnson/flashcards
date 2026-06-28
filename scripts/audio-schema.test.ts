@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   loadAudioSources,
   validateAudioSources,
+  checkAudioCardinality,
   computeReviewSubject,
   type AudioSources,
   type InstructionalSound,
@@ -117,6 +118,90 @@ describe("validateAudioSources", () => {
     };
     const errors = validateAudioSources(bad);
     assert.ok(errors.some((e) => e.includes("dialect_notes")));
+  });
+
+  it("rejects a sound with an empty required string field (e.g. ipa)", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      sounds: [{ ...sources.sounds[0]!, sound_id: "sound_fake3", ipa: "  " }],
+      patterns: [],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("ipa must be a non-empty string")));
+  });
+
+  it("rejects a sound whose reviews field is not an array", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      // @ts-expect-error intentional bad value
+      sounds: [{ ...sources.sounds[0]!, sound_id: "sound_fake4", reviews: "nope" }],
+      patterns: [],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("reviews must be an array")));
+  });
+
+  it("rejects a pattern whose grapheme is outside the canonical 12", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      sounds: sources.sounds,
+      patterns: [
+        {
+          mapping_id: "mapping_grapheme_xx",
+          grapheme: "xx",
+          sound_ids: ["sound_short_a"],
+          example_word: "test",
+          note: "x",
+        },
+      ],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes('unknown grapheme "xx"')));
+  });
+
+  it("rejects a pattern with an empty sound_ids array", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      sounds: sources.sounds,
+      patterns: [
+        { mapping_id: "mapping_grapheme_sh", grapheme: "sh", sound_ids: [], example_word: "ship", note: "x" },
+      ],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("sound_ids must be a non-empty array")));
+  });
+
+  it("does not throw on malformed sound_ids or missing reviews (returns errors instead)", () => {
+    const bad = {
+      sounds: [{ sound_id: "sound_x" } as unknown as InstructionalSound],
+      // @ts-expect-error intentional malformed shape
+      patterns: [{ mapping_id: "mapping_grapheme_sh", grapheme: "sh", example_word: "ship", note: "x" }],
+    } as AudioSources;
+    assert.doesNotThrow(() => validateAudioSources(bad));
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("sound_ids must be a non-empty array")));
+    assert.ok(errors.some((e) => e.includes("reviews must be an array")));
+  });
+});
+
+describe("checkAudioCardinality", () => {
+  it("returns no errors when counts match", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    assert.deepEqual(checkAudioCardinality(sources, 44, 12), []);
+  });
+
+  it("reports a too-small sound inventory", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const short: AudioSources = { sounds: sources.sounds.slice(0, 43), patterns: sources.patterns };
+    const errors = checkAudioCardinality(short, 44, 12);
+    assert.ok(errors.some((e) => e.includes("expected 44 sounds") && e.includes("found 43")));
+  });
+
+  it("reports a wrong pattern count", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const short: AudioSources = { sounds: sources.sounds, patterns: sources.patterns.slice(0, 11) };
+    const errors = checkAudioCardinality(short, 44, 12);
+    assert.ok(errors.some((e) => e.includes("expected 12 patterns") && e.includes("found 11")));
   });
 });
 

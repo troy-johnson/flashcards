@@ -329,7 +329,7 @@ describe("content manifest count gate", () => {
           grapheme: "sh",
           sound_ids: ["sound_nonexistent"],
           example_word: "ship",
-          note: ""
+          note: "x"
         }
       ], null, 2)
     );
@@ -344,9 +344,9 @@ describe("content manifest count gate", () => {
     );
   });
 
-  it("grapheme_pattern_mappings count gate fires when empty sound_ids make a mapping uncountable", () => {
-    // A structurally valid mapping with no sound_ids is not counted; setting
-    // required_now: 1 must fail because the count is 0.
+  it("grapheme_pattern_mappings rejects an empty sound_ids array at schema validation", () => {
+    // A mapping with no sound_ids is meaningless and must hard-fail validation
+    // rather than silently count as 0.
     writeFileSync(
       patternsPath,
       JSON.stringify([
@@ -355,19 +355,40 @@ describe("content manifest count gate", () => {
           grapheme: "sh",
           sound_ids: [],
           example_word: "ship",
-          note: ""
+          note: "x"
         }
       ], null, 2)
     );
     writeManifest({
       ...validCategories,
-      grapheme_pattern_mappings: { v1_target: 12, required_now: 1 }
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
     });
 
     assert.throws(
       runValidator,
-      /grapheme_pattern_mappings requires at least 1, found 0/
+      /audio schema: mapping_grapheme_sh: sound_ids must be a non-empty array/
     );
+  });
+
+  it("rejects an unknown grapheme outside the canonical 12", () => {
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_xx",
+          grapheme: "xx",
+          sound_ids: ["sound_short_a"],
+          example_word: "test",
+          note: "x"
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /audio schema: mapping_grapheme_xx: unknown grapheme "xx"/);
   });
 
   it("passes when authored content meets the manifest minimum", () => {
