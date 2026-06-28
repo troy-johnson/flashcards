@@ -5,16 +5,21 @@ import { join } from "node:path";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { checkManifestMigration } from "./manifest-migration.ts";
+import { computeReviewSubject, computeFileSha256, type InstructionalSound } from "./audio-schema.ts";
 
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
 const productionAudioManifest = readFileSync(join(root, "content/audio/manifest.json"), "utf8");
+const productionSounds = readFileSync(join(root, "content/audio/sounds.json"), "utf8");
+const productionPatterns = readFileSync(join(root, "content/audio/patterns.json"), "utf8");
 const productionSkills = readFileSync(join(root, "content/skills.json"), "utf8");
 const productionScope = readFileSync(join(root, "content/scope-sequence.json"), "utf8");
 const productionItems = readFileSync(join(root, "content/items/seed.json"), "utf8");
 let contentRoot = "";
 let manifestPath = "";
 let audioManifestPath = "";
+let soundsPath = "";
+let patternsPath = "";
 let skillsPath = "";
 let scopePath = "";
 let itemsPath = "";
@@ -26,6 +31,8 @@ const createTempContentRoot = () => {
   mkdirSync(join(tempContentRoot, "audio"));
   writeFileSync(join(tempContentRoot, "manifest.json"), productionManifest);
   writeFileSync(join(tempContentRoot, "audio/manifest.json"), productionAudioManifest);
+  writeFileSync(join(tempContentRoot, "audio/sounds.json"), productionSounds);
+  writeFileSync(join(tempContentRoot, "audio/patterns.json"), productionPatterns);
   writeFileSync(join(tempContentRoot, "skills.json"), productionSkills);
   writeFileSync(join(tempContentRoot, "scope-sequence.json"), productionScope);
   writeFileSync(join(tempContentRoot, "items/seed.json"), productionItems);
@@ -36,6 +43,8 @@ const resetTempContentRoot = () => {
   contentRoot = createTempContentRoot();
   manifestPath = join(contentRoot, "manifest.json");
   audioManifestPath = join(contentRoot, "audio/manifest.json");
+  soundsPath = join(contentRoot, "audio/sounds.json");
+  patternsPath = join(contentRoot, "audio/patterns.json");
   skillsPath = join(contentRoot, "skills.json");
   scopePath = join(contentRoot, "scope-sequence.json");
   itemsPath = join(contentRoot, "items/seed.json");
@@ -92,6 +101,17 @@ const writeAudioManifest = (audio: Record<string, unknown>[]) => {
   writeFileSync(audioManifestPath, `${JSON.stringify({ audio }, null, 2)}\n`);
 };
 
+// Writes a fake playback file under the temp content root's audio/playback dir
+// and returns its real sha256, so byte-level media verification has a real file
+// to check.
+const writePlaybackFile = (relName: string, bytes: string): string => {
+  const dir = join(contentRoot, "audio/playback");
+  mkdirSync(dir, { recursive: true });
+  const filePath = join(dir, relName);
+  writeFileSync(filePath, bytes);
+  return computeFileSha256(filePath);
+};
+
 const ttsAudioEntries = [
   { audio_id: "tts_word_mat", tts_fallback: true },
   { audio_id: "tts_word_the", tts_fallback: true },
@@ -104,7 +124,7 @@ const validCategories = {
   decodable_words: { v1_target: 200, required_now: 200 },
   fluency_sentences: { v1_target: 30, required_now: 30 },
   recorded_sound_targets: { v1_target: 44, required_now: 0 },
-  grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+  grapheme_pattern_mappings: { v1_target: 12, required_now: 12 }
 };
 
 describe("content manifest count gate", () => {
@@ -205,25 +225,253 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /schema_version must be 2, found 1/);
   });
 
-  it("counts only real phoneme and digraph assets for audio coverage", () => {
+  it("recorded_sound_targets counts 0 when no sounds have SLP-approved media", () => {
+    // The canonical sounds.json has no media or SLP approvals yet, so the count
+    // must be 0 regardless of required_now being 0 as well.
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 0 }
+    });
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("recorded_sound_targets gate fires when required_now exceeds SLP-approved count", () => {
+    // With no SLP approvals in sounds.json, requiring even 1 should fail.
     writeManifest({
       ...validCategories,
       recorded_sound_targets: { v1_target: 44, required_now: 1 }
     });
-    writeAudioManifest([
-      ...ttsAudioEntries,
-      { audio_id: "tts_word_cat_recorded", src: "audio/words/cat.mp3" },
-      { audio_id: "phoneme_a", tts_fallback: true }
-    ]);
 
     assert.throws(
       runValidator,
       /recorded_sound_targets requires at least 1, found 0/
     );
+  });
 
-    writeAudioManifest([...ttsAudioEntries, { audio_id: "phoneme_a", src: "audio/phonemes/a.mp3" }]);
+  it("recorded_sound_targets counts a sound with valid media and a current SLP approval", () => {
+    // Build a minimal sounds.json with one sound that has media and an SLP
+    // approval whose subject_sha256 matches the current computeReviewSubject.
+    // Verifies the positive path including the anti-staleness hash check.
+    const playbackSha = writePlaybackFile("sound_short_a.mp3", "fake-mp3-bytes");
+    const approvedSound: InstructionalSound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: playbackSha,
+      reviews: [],
+    };
+    const subject = computeReviewSubject(approvedSound);
+    approvedSound.reviews = [
+      {
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-01-01T00:00:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      },
+    ];
+    writeFileSync(soundsPath, JSON.stringify([approvedSound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 1 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 },
+    });
 
     assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("recorded_sound_targets ignores an SLP approval with a stale subject_sha256", () => {
+    // Same setup but the review records a different subject_sha256 — simulating
+    // an approval recorded against older guidance or different audio bytes.
+    const playbackSha = writePlaybackFile("sound_short_a.mp3", "fake-mp3-bytes");
+    const sound: InstructionalSound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: playbackSha,
+      reviews: [
+        {
+          kind: "slp",
+          reviewer: "slp-reviewer",
+          reviewed_at: "2026-01-01T00:00:00Z",
+          status: "approved",
+          subject_sha256: "stale-hash-does-not-match",
+        },
+      ],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 1 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 },
+    });
+
+    assert.throws(
+      runValidator,
+      /recorded_sound_targets requires at least 1, found 0/
+    );
+  });
+
+  it("rejects declared playback media when the file does not exist", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback file not found/);
+  });
+
+  it("rejects declared playback media when the sha256 does not match the file bytes", () => {
+    writePlaybackFile("sound_short_a.mp3", "real-bytes");
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "0000000000000000000000000000000000000000000000000000000000000000",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback_sha256 does not match/);
+  });
+
+  it("rejects a playback_url that attempts path traversal", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/../../../etc/passwd",
+      playback_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback_url must be a safe path/);
+  });
+
+  it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {
+    // A pattern whose sound_ids reference a nonexistent sound is caught by
+    // validateAudioSources before counting — the validator must hard-fail.
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_sh",
+          grapheme: "sh",
+          sound_ids: ["sound_nonexistent"],
+          example_word: "ship",
+          note: "x"
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(
+      runValidator,
+      /audio schema: mapping_grapheme_sh: unresolved sound_id reference "sound_nonexistent"/
+    );
+  });
+
+  it("grapheme_pattern_mappings rejects an empty sound_ids array at schema validation", () => {
+    // A mapping with no sound_ids is meaningless and must hard-fail validation
+    // rather than silently count as 0.
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_sh",
+          grapheme: "sh",
+          sound_ids: [],
+          example_word: "ship",
+          note: "x"
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(
+      runValidator,
+      /audio schema: mapping_grapheme_sh: sound_ids must be a non-empty array/
+    );
+  });
+
+  it("rejects an unknown grapheme outside the canonical 12", () => {
+    writeFileSync(
+      patternsPath,
+      JSON.stringify([
+        {
+          mapping_id: "mapping_grapheme_xx",
+          grapheme: "xx",
+          sound_ids: ["sound_short_a"],
+          example_word: "test",
+          note: "x"
+        }
+      ], null, 2)
+    );
+    writeManifest({
+      ...validCategories,
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /audio schema: mapping_grapheme_xx: unknown grapheme "xx"/);
   });
 
   it("passes when authored content meets the manifest minimum", () => {
