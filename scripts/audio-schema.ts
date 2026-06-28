@@ -79,6 +79,9 @@ const OPTIONAL_MEDIA_STRING_FIELDS = [
 ] as const;
 const REQUIRED_PATTERN_STRING_FIELDS = ["mapping_id", "grapheme", "example_word", "note"] as const;
 
+const VALID_REVIEW_KINDS = new Set<string>(["recorder", "owner", "slp"]);
+const VALID_REVIEW_STATUSES = new Set<string>(["approved", "changes_requested"]);
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
@@ -110,6 +113,28 @@ export function validateAudioSources(sources: AudioSources): string[] {
     }
     if (!Array.isArray(row.reviews)) {
       errors.push(`${id}: reviews must be an array`);
+    } else {
+      row.reviews.forEach((review, i) => {
+        const rec = (review ?? {}) as Record<string, unknown>;
+        if (!VALID_REVIEW_KINDS.has(rec.kind as string)) {
+          errors.push(`${id}: reviews[${i}].kind must be one of recorder|owner|slp`);
+        }
+        if (!VALID_REVIEW_STATUSES.has(rec.status as string)) {
+          errors.push(`${id}: reviews[${i}].status must be one of approved|changes_requested`);
+        }
+        if (!isNonEmptyString(rec.reviewer)) {
+          errors.push(`${id}: reviews[${i}].reviewer must be a non-empty string`);
+        }
+        if (!isNonEmptyString(rec.reviewed_at)) {
+          errors.push(`${id}: reviews[${i}].reviewed_at must be a non-empty string`);
+        }
+        if (!isNonEmptyString(rec.subject_sha256)) {
+          errors.push(`${id}: reviews[${i}].subject_sha256 must be a non-empty string`);
+        }
+        if (rec.notes !== undefined && typeof rec.notes !== "string") {
+          errors.push(`${id}: reviews[${i}].notes must be a string when present`);
+        }
+      });
     }
 
     if (isNonEmptyString(row.sound_id)) {
@@ -167,6 +192,19 @@ export function checkAudioCardinality(
     errors.push(`expected ${expectedPatterns} patterns (grapheme_pattern_mappings v1_target), found ${sources.patterns.length}`);
   }
   return errors;
+}
+
+// Resolves a public playback_url ("/audio/<rel>") to its source-of-truth file
+// under the content audio root (content/audio/playback/<rel>). Returns null if
+// the url does not have the expected public shape.
+export function resolvePlaybackPath(contentRoot: string, playbackUrl: string): string | null {
+  const prefix = "/audio/";
+  if (!playbackUrl.startsWith(prefix)) return null;
+  return join(contentRoot, "audio/playback", playbackUrl.slice(prefix.length));
+}
+
+export function computeFileSha256(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 export function computeReviewSubject(sound: InstructionalSound): string {

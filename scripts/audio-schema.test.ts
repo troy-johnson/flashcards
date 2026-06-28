@@ -171,6 +171,27 @@ describe("validateAudioSources", () => {
     assert.ok(errors.some((e) => e.includes("sound_ids must be a non-empty array")));
   });
 
+  it("rejects a review record missing reviewer / reviewed_at and with a bad kind", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      sounds: [
+        {
+          ...sources.sounds[0]!,
+          sound_id: "sound_fake5",
+          reviews: [
+            // @ts-expect-error intentional bad shape
+            { kind: "wizard", status: "approved", subject_sha256: "abc" },
+          ],
+        },
+      ],
+      patterns: [],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("reviews[0].kind")));
+    assert.ok(errors.some((e) => e.includes("reviews[0].reviewer")));
+    assert.ok(errors.some((e) => e.includes("reviews[0].reviewed_at")));
+  });
+
   it("does not throw on malformed sound_ids or missing reviews (returns errors instead)", () => {
     const bad = {
       sounds: [{ sound_id: "sound_x" } as unknown as InstructionalSound],

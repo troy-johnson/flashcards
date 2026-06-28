@@ -2,7 +2,14 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { checkManifestMigration } from "./manifest-migration.ts";
-import { loadAudioSources, validateAudioSources, checkAudioCardinality, computeReviewSubject } from "./audio-schema.ts";
+import {
+  loadAudioSources,
+  validateAudioSources,
+  checkAudioCardinality,
+  computeReviewSubject,
+  resolvePlaybackPath,
+  computeFileSha256
+} from "./audio-schema.ts";
 
 const root = process.cwd();
 const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
@@ -205,18 +212,38 @@ if (existsSync(decodabilityMapPath)) {
 //
 // recorded_sound_targets counts a sound only if it declares playback media and
 // carries a current slp-kind approval whose subject_sha256 matches the present
-// computeReviewSubject() (which folds in the declared playback_sha256). That
-// binds the approval to the declared bytes/guidance. Byte-level verification —
-// the file existing under the staged audio root and its recomputed sha256
-// matching the declared hash — is enforced at staging time (003a Task 4, bead
-// rw-yyl), where the bytes are first introduced. Before media exists this
-// count stays 0.
+// computeReviewSubject() (which folds in the declared playback_sha256). Any
+// declared playback media is byte-verified below: the file must exist under the
+// content audio root and its recomputed sha256 must match the declared hash, so
+// a fabricated /audio/ URL + arbitrary hash cannot satisfy the gate. Before any
+// recordings exist this count stays 0. (Master-asset byte verification and the
+// public app/staging projection land with 003a Task 4, bead rw-yyl.)
 //
 // grapheme_pattern_mappings counts structurally valid mappings whose sound_ids
 // all resolve into the canonical sound inventory.
 const audioSources = loadAudioSources(contentRoot);
 const audioSchemaErrors = validateAudioSources(audioSources);
 for (const err of audioSchemaErrors) fail(`audio schema: ${err}`);
+
+// Byte-level verification of any declared playback media. A sound must declare
+// both playback_url and playback_sha256 or neither; if declared, the file must
+// exist and its bytes must hash to the declared value.
+for (const sound of audioSources.sounds) {
+  if (!sound.playback_url && !sound.playback_sha256) continue;
+  if (!sound.playback_url || !sound.playback_sha256) {
+    fail(`audio media: ${sound.sound_id} must declare both playback_url and playback_sha256, or neither`);
+  }
+  const playbackPath = resolvePlaybackPath(contentRoot, sound.playback_url);
+  if (!playbackPath) {
+    fail(`audio media: ${sound.sound_id} playback_url must start with /audio/`);
+  }
+  if (!existsSync(playbackPath)) {
+    fail(`audio media: ${sound.sound_id} playback file not found at audio/playback/${sound.playback_url.slice("/audio/".length)}`);
+  }
+  if (computeFileSha256(playbackPath) !== sound.playback_sha256) {
+    fail(`audio media: ${sound.sound_id} playback_sha256 does not match the file bytes`);
+  }
+}
 
 // Cardinality: the canonical inventory must define exactly as many sounds and
 // patterns as the manifest v1_targets promise. Enforced only against the real
@@ -234,7 +261,8 @@ if (usingDefaultContentRoot) {
 const soundIds = new Set(audioSources.sounds.map((s) => s.sound_id));
 
 const countedRecordedSoundTargets = audioSources.sounds.filter((s) => {
-  if (!s.playback_url || !s.playback_url.startsWith("/audio/") || !s.playback_sha256) return false;
+  // Media is byte-verified above; here we only require a current SLP approval.
+  if (!s.playback_url || !s.playback_sha256) return false;
   const currentSubject = computeReviewSubject(s);
   return s.reviews.some(
     (r) => r.kind === "slp" && r.status === "approved" && r.subject_sha256 === currentSubject

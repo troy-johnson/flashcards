@@ -5,7 +5,7 @@ import { join } from "node:path";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { checkManifestMigration } from "./manifest-migration.ts";
-import { computeReviewSubject, type InstructionalSound } from "./audio-schema.ts";
+import { computeReviewSubject, computeFileSha256, type InstructionalSound } from "./audio-schema.ts";
 
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
@@ -99,6 +99,17 @@ const writeManifest = (
 
 const writeAudioManifest = (audio: Record<string, unknown>[]) => {
   writeFileSync(audioManifestPath, `${JSON.stringify({ audio }, null, 2)}\n`);
+};
+
+// Writes a fake playback file under the temp content root's audio/playback dir
+// and returns its real sha256, so byte-level media verification has a real file
+// to check.
+const writePlaybackFile = (relName: string, bytes: string): string => {
+  const dir = join(contentRoot, "audio/playback");
+  mkdirSync(dir, { recursive: true });
+  const filePath = join(dir, relName);
+  writeFileSync(filePath, bytes);
+  return computeFileSha256(filePath);
 };
 
 const ttsAudioEntries = [
@@ -242,6 +253,7 @@ describe("content manifest count gate", () => {
     // Build a minimal sounds.json with one sound that has media and an SLP
     // approval whose subject_sha256 matches the current computeReviewSubject.
     // Verifies the positive path including the anti-staleness hash check.
+    const playbackSha = writePlaybackFile("sound_short_a.mp3", "fake-mp3-bytes");
     const approvedSound: InstructionalSound = {
       sound_id: "sound_short_a",
       instructional_label: "ă",
@@ -254,7 +266,7 @@ describe("content manifest count gate", () => {
       recording_guidance: "Record in isolation.",
       processing_profile: "standard_vowel",
       playback_url: "/audio/sound_short_a.mp3",
-      playback_sha256: "abc123",
+      playback_sha256: playbackSha,
       reviews: [],
     };
     const subject = computeReviewSubject(approvedSound);
@@ -281,6 +293,7 @@ describe("content manifest count gate", () => {
   it("recorded_sound_targets ignores an SLP approval with a stale subject_sha256", () => {
     // Same setup but the review records a different subject_sha256 — simulating
     // an approval recorded against older guidance or different audio bytes.
+    const playbackSha = writePlaybackFile("sound_short_a.mp3", "fake-mp3-bytes");
     const sound: InstructionalSound = {
       sound_id: "sound_short_a",
       instructional_label: "ă",
@@ -293,7 +306,7 @@ describe("content manifest count gate", () => {
       recording_guidance: "Record in isolation.",
       processing_profile: "standard_vowel",
       playback_url: "/audio/sound_short_a.mp3",
-      playback_sha256: "abc123",
+      playback_sha256: playbackSha,
       reviews: [
         {
           kind: "slp",
@@ -316,6 +329,53 @@ describe("content manifest count gate", () => {
       runValidator,
       /recorded_sound_targets requires at least 1, found 0/
     );
+  });
+
+  it("rejects declared playback media when the file does not exist", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback file not found/);
+  });
+
+  it("rejects declared playback media when the sha256 does not match the file bytes", () => {
+    writePlaybackFile("sound_short_a.mp3", "real-bytes");
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "0000000000000000000000000000000000000000000000000000000000000000",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a playback_sha256 does not match/);
   });
 
   it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {
