@@ -5,6 +5,7 @@ import { join } from "node:path";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { checkManifestMigration } from "./manifest-migration.ts";
+import { computeReviewSubject, type InstructionalSound } from "./audio-schema.ts";
 
 const root = process.cwd();
 const productionManifest = readFileSync(join(root, "content/manifest.json"), "utf8");
@@ -229,6 +230,86 @@ describe("content manifest count gate", () => {
     writeManifest({
       ...validCategories,
       recorded_sound_targets: { v1_target: 44, required_now: 1 }
+    });
+
+    assert.throws(
+      runValidator,
+      /recorded_sound_targets requires at least 1, found 0/
+    );
+  });
+
+  it("recorded_sound_targets counts a sound with valid media and a current SLP approval", () => {
+    // Build a minimal sounds.json with one sound that has media and an SLP
+    // approval whose subject_sha256 matches the current computeReviewSubject.
+    // Verifies the positive path including the anti-staleness hash check.
+    const approvedSound: InstructionalSound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "abc123",
+      reviews: [],
+    };
+    const subject = computeReviewSubject(approvedSound);
+    approvedSound.reviews = [
+      {
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-01-01T00:00:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      },
+    ];
+    writeFileSync(soundsPath, JSON.stringify([approvedSound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 1 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 },
+    });
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("recorded_sound_targets ignores an SLP approval with a stale subject_sha256", () => {
+    // Same setup but the review records a different subject_sha256 — simulating
+    // an approval recorded against older guidance or different audio bytes.
+    const sound: InstructionalSound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.mp3",
+      playback_sha256: "abc123",
+      reviews: [
+        {
+          kind: "slp",
+          reviewer: "slp-reviewer",
+          reviewed_at: "2026-01-01T00:00:00Z",
+          status: "approved",
+          subject_sha256: "stale-hash-does-not-match",
+        },
+      ],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest({
+      ...validCategories,
+      recorded_sound_targets: { v1_target: 44, required_now: 1 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 },
     });
 
     assert.throws(
