@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 # Local agent state
 .serena/
+.codex/
 
 # Local Cloudflare/Wrangler state
 .wrangler/
