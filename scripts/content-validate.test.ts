@@ -79,6 +79,14 @@ const runValidator = () =>
     stdio: ["ignore", "pipe", "pipe"]
   });
 
+const runValidatorWithEnv = (extra: Record<string, string>) =>
+  execFileSync(process.execPath, ["--import", "tsx", "scripts/content-validate.ts"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CONTENT_VALIDATE_CONTENT_ROOT: contentRoot, ...extra },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+
 const writeManifest = (
   categories: Record<string, { v1_target: number; required_now: number }>,
   schemaVersion = 2
@@ -499,6 +507,33 @@ describe("content manifest count gate", () => {
     writeManifest(validCategories);
 
     assert.throws(runValidator, /audio media: sound_short_a master_path must be a safe path/);
+  });
+
+  it("byte-verifies master media under a configured RW_AUDIO_MASTER_ROOT", () => {
+    // Master WAVs may live outside the repo; the env override relocates the
+    // byte-verification base. Place the master out-of-tree, attach it to a
+    // production sound, and confirm resolution flips on the env var.
+    const externalMasterRoot = mkdtempSync(join(tmpdir(), "master-root-"));
+    try {
+      const masterFile = join(externalMasterRoot, "sound_short_a.wav");
+      writeFileSync(masterFile, "external-master-bytes");
+      const masterSha = computeFileSha256(masterFile);
+
+      const sounds = JSON.parse(productionSounds) as Record<string, unknown>[];
+      sounds[0]!.master_path = "sound_short_a.wav";
+      sounds[0]!.master_sha256 = masterSha;
+      writeFileSync(soundsPath, JSON.stringify(sounds, null, 2));
+
+      // Without the override the master resolves under content/audio/masters and
+      // is not found; with it, byte-verification passes against the external root.
+      assert.throws(runValidator, /master file not found under the master audio root/);
+      assert.match(
+        runValidatorWithEnv({ RW_AUDIO_MASTER_ROOT: externalMasterRoot }),
+        /\[content-validate\] ok:/
+      );
+    } finally {
+      rmSync(externalMasterRoot, { recursive: true, force: true });
+    }
   });
 
   it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {

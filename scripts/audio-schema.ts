@@ -202,9 +202,10 @@ export const GENERATED_URL_PREFIX = "/audio/generated/";
 // the url does not have the expected source shape OR if it would escape the
 // playback directory (path traversal, e.g. "/audio/../../etc/passwd").
 //
-// This takes the SOURCE form only. The staged runtime URL ("/audio/generated/…")
-// is a separate concern owned by the staging layer; convert with
-// generatedUrlToPlaybackUrl before resolving a runtime URL's source.
+// This takes the SOURCE form only. A staged runtime URL ("/audio/generated/…")
+// is a separate concern owned by the staging layer, which derives its own source
+// rel; generatedUrlToPlaybackUrl provides the inverse mapping for any caller that
+// starts from a runtime URL.
 export function resolvePlaybackPath(contentRoot: string, playbackUrl: string): string | null {
   if (!playbackUrl.startsWith(PLAYBACK_URL_PREFIX)) return null;
   const rel = playbackUrl.slice(PLAYBACK_URL_PREFIX.length);
