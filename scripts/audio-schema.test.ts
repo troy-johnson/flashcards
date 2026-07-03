@@ -6,6 +6,9 @@ import {
   validateAudioSources,
   checkAudioCardinality,
   resolvePlaybackPath,
+  resolveMasterPath,
+  playbackUrlToGeneratedUrl,
+  generatedUrlToPlaybackUrl,
   computeReviewSubject,
   type AudioSources,
   type InstructionalSound,
@@ -245,6 +248,58 @@ describe("resolvePlaybackPath", () => {
   it("returns null for a path-traversal url that escapes the playback dir", () => {
     assert.equal(resolvePlaybackPath(base, "/audio/../../../etc/passwd"), null);
     assert.equal(resolvePlaybackPath(base, "/audio/"), null);
+  });
+
+  it("treats a /audio/generated/ url as a literal source rel (not a runtime URL)", () => {
+    // resolvePlaybackPath only understands SOURCE urls now; a runtime URL is a
+    // staging concern. A generated-prefixed url therefore resolves under
+    // playback/generated/ rather than collapsing to the same file as its source.
+    assert.equal(
+      resolvePlaybackPath(base, "/audio/generated/x.mp3"),
+      join(base, "audio/playback", "generated/x.mp3")
+    );
+  });
+});
+
+describe("playbackUrlToGeneratedUrl / generatedUrlToPlaybackUrl", () => {
+  it("maps a source url to its staged runtime url and back", () => {
+    assert.equal(playbackUrlToGeneratedUrl("/audio/x.mp3"), "/audio/generated/x.mp3");
+    assert.equal(generatedUrlToPlaybackUrl("/audio/generated/x.mp3"), "/audio/x.mp3");
+  });
+
+  it("refuses to double-nest an already-generated source url", () => {
+    assert.equal(playbackUrlToGeneratedUrl("/audio/generated/x.mp3"), null);
+  });
+
+  it("returns null for non-matching shapes", () => {
+    assert.equal(playbackUrlToGeneratedUrl("audio/x.mp3"), null);
+    assert.equal(playbackUrlToGeneratedUrl("/audio/"), null);
+    assert.equal(generatedUrlToPlaybackUrl("/audio/x.mp3"), null);
+    assert.equal(generatedUrlToPlaybackUrl("/audio/generated/"), null);
+  });
+});
+
+describe("resolveMasterPath", () => {
+  const base = "/tmp/content";
+
+  it("resolves under content/audio/masters by default", () => {
+    assert.equal(
+      resolveMasterPath(base, "sound_short_a.wav"),
+      join(base, "audio/masters", "sound_short_a.wav")
+    );
+  });
+
+  it("resolves under a configured master root when provided", () => {
+    const masterRoot = "/var/protected/masters";
+    assert.equal(
+      resolveMasterPath(base, "sound_short_a.wav", masterRoot),
+      join(masterRoot, "sound_short_a.wav")
+    );
+  });
+
+  it("rejects traversal that escapes the configured master root", () => {
+    assert.equal(resolveMasterPath(base, "../secret.wav", "/var/protected/masters"), null);
+    assert.equal(resolveMasterPath(base, "", "/var/protected/masters"), null);
   });
 });
 

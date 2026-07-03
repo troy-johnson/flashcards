@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "pnpm --dir .. audio:stage",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",

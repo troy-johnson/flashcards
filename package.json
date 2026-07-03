@@ -9,6 +9,9 @@
     "test": "pnpm --recursive test && pnpm test:scripts",
     "test:scripts": "node --import tsx --test --test-concurrency=1 scripts/*.test.ts",
     "content:validate": "tsx scripts/content-validate.ts",
+    "audio:manifest": "tsx scripts/audio-manifest.ts",
+    "audio:manifest:check": "tsx scripts/audio-manifest.ts --check",
+    "audio:stage": "pnpm audio:manifest:check && tsx scripts/audio-stage.ts",
     "replay:attempts": "tsx scripts/replay-attempts.ts",
     "db:migrations:list": "wrangler d1 migrations list literacy_preview --config api/wrangler.toml"
   },

@@ -8,6 +8,7 @@ import {
   checkAudioCardinality,
   computeReviewSubject,
   resolvePlaybackPath,
+  resolveMasterPath,
   computeFileSha256
 } from "./audio-schema.ts";
 
@@ -16,6 +17,12 @@ const contentRoot = process.env.CONTENT_VALIDATE_CONTENT_ROOT
   ? resolve(root, process.env.CONTENT_VALIDATE_CONTENT_ROOT)
   : resolve(root, "content");
 const usingDefaultContentRoot = contentRoot === resolve(root, "content");
+// Master audio (WAV source-of-truth) may live outside the repo in a protected
+// store; RW_AUDIO_MASTER_ROOT relocates the byte-verification base. Defaults to
+// <contentRoot>/audio/masters.
+const masterRoot = process.env.RW_AUDIO_MASTER_ROOT
+  ? resolve(root, process.env.RW_AUDIO_MASTER_ROOT)
+  : undefined;
 const readContentJson = <T>(path: string): T => JSON.parse(readFileSync(join(contentRoot, path), "utf8"));
 const readJsonFromGit = <T>(ref: string, path: string): T | null => {
   try {
@@ -68,7 +75,7 @@ type ManifestCategoryName = (typeof MANIFEST_CATEGORIES)[number];
 const skills = readContentJson<Skill[]>("skills.json");
 const items = readContentJson<Item[]>("items/seed.json");
 const scope = readContentJson<ScopeUnit[]>("scope-sequence.json");
-const audio = readContentJson<{ audio: { audio_id: string; src?: string; tts_fallback?: boolean }[] }>("audio/manifest.json");
+const audio = readContentJson<{ audio?: { audio_id: string; src?: string; tts_fallback?: boolean }[] }>("audio/manifest.json");
 const manifest = readContentJson<Manifest>("manifest.json");
 
 const unique = (label: string, values: string[]) => {
@@ -80,13 +87,28 @@ const unique = (label: string, values: string[]) => {
 };
 unique("skill_id", skills.map((s) => s.skill_id));
 unique("item_id", items.map((i) => i.item_id));
-unique("audio_id", audio.audio.map((a) => a.audio_id));
+const audioEntries = Array.isArray(audio.audio) ? audio.audio : [];
+unique("audio_id", audioEntries.map((a) => a.audio_id));
 
 const skillsById = new Map(skills.map((s) => [s.skill_id, s]));
-const audioIds = new Set(audio.audio.map((a) => a.audio_id));
+const audioIds = new Set(audioEntries.map((a) => a.audio_id));
 for (const item of items) {
   if (!skillsById.has(item.skill_id)) fail(`item ${item.item_id} references missing skill ${item.skill_id}`);
-  if (item.audio_id && !audioIds.has(item.audio_id)) fail(`item ${item.item_id} references missing audio ${item.audio_id}`);
+  if (item.audio_id) {
+    if (item.audio_id.startsWith("tts_")) {
+      // A tts_ id is synthesized at runtime from the item's own text, so it need
+      // not appear in the recorded audio manifest — but it must have something to
+      // synthesize. This closes the hole where, after recorded entries were
+      // removed from the manifest, any tts_* string (typo or dangling) passed
+      // unchecked.
+      const synthText = (item.text ?? item.prompt ?? "").trim();
+      if (synthText.length === 0) {
+        fail(`item ${item.item_id} references TTS audio ${item.audio_id} but has no text/prompt to synthesize`);
+      }
+    } else if (!audioIds.has(item.audio_id)) {
+      fail(`item ${item.item_id} references missing audio ${item.audio_id}`);
+    }
+  }
 }
 for (const unit of scope) {
   for (const skillId of unit.skill_ids) {
@@ -229,19 +251,36 @@ for (const err of audioSchemaErrors) fail(`audio schema: ${err}`);
 // both playback_url and playback_sha256 or neither; if declared, the file must
 // exist and its bytes must hash to the declared value.
 for (const sound of audioSources.sounds) {
-  if (!sound.playback_url && !sound.playback_sha256) continue;
-  if (!sound.playback_url || !sound.playback_sha256) {
-    fail(`audio media: ${sound.sound_id} must declare both playback_url and playback_sha256, or neither`);
+  if (sound.playback_url || sound.playback_sha256) {
+    if (!sound.playback_url || !sound.playback_sha256) {
+      fail(`audio media: ${sound.sound_id} must declare both playback_url and playback_sha256, or neither`);
+    }
+    const playbackPath = resolvePlaybackPath(contentRoot, sound.playback_url);
+    if (!playbackPath) {
+      fail(`audio media: ${sound.sound_id} playback_url must be a safe path under /audio/ (no traversal)`);
+    }
+    if (!existsSync(playbackPath)) {
+      fail(`audio media: ${sound.sound_id} playback file not found at audio/playback/${sound.playback_url.slice("/audio/".length)}`);
+    }
+    if (computeFileSha256(playbackPath) !== sound.playback_sha256) {
+      fail(`audio media: ${sound.sound_id} playback_sha256 does not match the file bytes`);
+    }
   }
-  const playbackPath = resolvePlaybackPath(contentRoot, sound.playback_url);
-  if (!playbackPath) {
-    fail(`audio media: ${sound.sound_id} playback_url must be a safe path under /audio/ (no traversal)`);
-  }
-  if (!existsSync(playbackPath)) {
-    fail(`audio media: ${sound.sound_id} playback file not found at audio/playback/${sound.playback_url.slice("/audio/".length)}`);
-  }
-  if (computeFileSha256(playbackPath) !== sound.playback_sha256) {
-    fail(`audio media: ${sound.sound_id} playback_sha256 does not match the file bytes`);
+
+  if (sound.master_path || sound.master_sha256) {
+    if (!sound.master_path || !sound.master_sha256) {
+      fail(`audio media: ${sound.sound_id} must declare both master_path and master_sha256, or neither`);
+    }
+    const masterPath = resolveMasterPath(contentRoot, sound.master_path, masterRoot);
+    if (!masterPath) {
+      fail(`audio media: ${sound.sound_id} master_path must be a safe path under the master audio root (no traversal)`);
+    }
+    if (!existsSync(masterPath)) {
+      fail(`audio media: ${sound.sound_id} master file not found under the master audio root: ${sound.master_path}`);
+    }
+    if (computeFileSha256(masterPath) !== sound.master_sha256) {
+      fail(`audio media: ${sound.sound_id} master_sha256 does not match the file bytes`);
+    }
   }
 }
 
@@ -351,4 +390,4 @@ for (const item of items) {
   if (skill?.deprecated && !item.deprecated) fail(`item ${item.item_id} references deprecated skill ${item.skill_id}; deprecate the item too`);
 }
 
-console.log(`[content-validate] ok: ${skills.length} skills, ${items.length} items, ${audio.audio.length} audio entries`);
+console.log(`[content-validate] ok: ${skills.length} skills, ${items.length} items, ${audioEntries.length} audio entries`);

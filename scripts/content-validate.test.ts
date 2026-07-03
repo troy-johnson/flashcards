@@ -112,6 +112,14 @@ const writePlaybackFile = (relName: string, bytes: string): string => {
   return computeFileSha256(filePath);
 };
 
+const writeMasterFile = (relName: string, bytes: string): string => {
+  const dir = join(contentRoot, "audio/masters");
+  mkdirSync(dir, { recursive: true });
+  const filePath = join(dir, relName);
+  writeFileSync(filePath, bytes);
+  return computeFileSha256(filePath);
+};
+
 const ttsAudioEntries = [
   { audio_id: "tts_word_mat", tts_fallback: true },
   { audio_id: "tts_word_the", tts_fallback: true },
@@ -184,6 +192,28 @@ describe("content manifest count gate", () => {
     assert.throws(
       runValidator,
       /decodable_words requires at least 200, found 199/
+    );
+  });
+
+  it("rejects a tts_ audio reference on an item with no text/prompt to synthesize", () => {
+    // Regression for the over-broad tts_ exemption: a tts_* id must have
+    // synthesizable text, not merely the tts_ prefix. Start from passing
+    // production content and strip one tts_ item's text so only this gate fires.
+    const items = JSON.parse(productionItems) as {
+      item_id: string;
+      audio_id?: string;
+      text?: string;
+      prompt?: string;
+    }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    delete target!.text;
+    delete target!.prompt;
+    writeItems(items);
+
+    assert.throws(
+      runValidator,
+      new RegExp(`${target!.item_id} references TTS audio ${target!.audio_id} but has no text/prompt`)
     );
   });
 
@@ -399,6 +429,76 @@ describe("content manifest count gate", () => {
     writeManifest(validCategories);
 
     assert.throws(runValidator, /audio media: sound_short_a playback_url must be a safe path/);
+  });
+
+  it("rejects declared master media when the file does not exist", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "sound_short_a.wav",
+      master_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master file not found/);
+  });
+
+  it("rejects declared master media when the sha256 does not match the file bytes", () => {
+    writeMasterFile("sound_short_a.wav", "real-master-bytes");
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "sound_short_a.wav",
+      master_sha256: "0".repeat(64),
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master_sha256 does not match/);
+  });
+
+  it("rejects a master_path that attempts path traversal", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "../sound_short_a.wav",
+      master_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master_path must be a safe path/);
   });
 
   it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {
