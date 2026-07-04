@@ -251,6 +251,30 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
     }
   });
 
+  it("propagates item speech_text onto plan cards, omitting it when absent (003a Task 5)", () => {
+    const mk = (id: string, speech?: string): SchedulerItem => ({
+      item_id: id,
+      skill_id: "phonics_test",
+      text: id === "phonics_test_read" ? "read" : "mat",
+      kind: "phonics",
+      ...(speech ? { speech_text: speech } : {})
+    });
+    const items = [mk("phonics_test_read", "reed"), mk("phonics_test_mat")];
+    const content: SchedulerContent = {
+      skills: [{ skill_id: "phonics_test", grade: "K", prerequisites: [] }],
+      units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_test"] }],
+      itemsById: Object.fromEntries(items.map((it) => [it.item_id, it])),
+      itemsBySkill: { phonics_test: items },
+      dailyPlanSizeByGrade: { K: 16, "1": 22 }
+    };
+    const plan = buildPracticePlan({ grade: "K", ...emptyState }, content);
+    const read = plan.cards.find((c) => c.item_id === "phonics_test_read");
+    const mat = plan.cards.find((c) => c.item_id === "phonics_test_mat");
+    expect(read?.speech_text).toBe("reed");
+    expect(mat).toBeDefined();
+    expect(mat && "speech_text" in mat).toBe(false);
+  });
+
   it("never exceeds the grade daily_plan size", () => {
     expect(buildPracticePlan({ grade: "K", ...emptyState }).cards.length).toBeLessThanOrEqual(16);
     expect(buildPracticePlan({ grade: "1", ...emptyState }).cards.length).toBeLessThanOrEqual(22);
