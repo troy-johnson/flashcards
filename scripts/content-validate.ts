@@ -97,12 +97,20 @@ for (const item of items) {
   if (item.audio_id) {
     if (item.audio_id.startsWith("tts_")) {
       // A tts_ id is synthesized at runtime from the item's own text, so it need
-      // not appear in the recorded audio manifest — but it must have something to
-      // synthesize. This closes the hole where, after recorded entries were
-      // removed from the manifest, any tts_* string (typo or dangling) passed
-      // unchecked.
-      const synthText = (item.text ?? item.prompt ?? "").trim();
-      if (synthText.length === 0) {
+      // not appear in the recorded audio manifest — but it must be a real id with
+      // something to synthesize. This closes the hole where, after recorded
+      // entries were removed from the manifest, any tts_* string (typo or
+      // dangling) passed unchecked.
+      if (item.audio_id === "tts_") {
+        fail(`item ${item.item_id} has a malformed TTS audio_id "tts_" with no suffix`);
+      }
+      // Either text or prompt can supply the utterance; use whichever is present
+      // and non-blank (not merely the first defined one — a blank text must not
+      // shadow a real prompt).
+      const synthText = [item.text, item.prompt].find(
+        (value): value is string => typeof value === "string" && value.trim().length > 0
+      );
+      if (!synthText) {
         fail(`item ${item.item_id} references TTS audio ${item.audio_id} but has no text/prompt to synthesize`);
       }
     } else if (!audioIds.has(item.audio_id)) {

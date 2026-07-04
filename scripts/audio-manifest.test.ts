@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { computeFileSha256, computeReviewSubject, type InstructionalSound } from "./audio-schema.ts";
 import { checkPublicManifest, projectPublicManifest } from "./audio-manifest.ts";
-import { stageAudioAssets } from "./audio-stage.ts";
+import { stageAudioAssets, stageAudioAssetsChecked } from "./audio-stage.ts";
 
 const makeSound = (overrides: Partial<InstructionalSound> = {}): InstructionalSound => {
   const sound: InstructionalSound = {
@@ -148,6 +148,34 @@ describe("stageAudioAssets", () => {
       stageAudioAssets(root);
 
       assert.equal(readFileSync(join(root, "app/public/audio/generated/sound_short_a.mp3"), "utf8"), "fake-mp3-bytes");
+    });
+  });
+});
+
+describe("stageAudioAssetsChecked", () => {
+  it("refuses to stage when the generated manifest is stale", () => {
+    withTempRoot((root) => {
+      mkdirSync(join(root, "content/audio/playback"), { recursive: true });
+      writeFileSync(join(root, "content/audio/sounds.json"), `${JSON.stringify([], null, 2)}\n`);
+      writeFileSync(join(root, "content/audio/patterns.json"), `${JSON.stringify([], null, 2)}\n`);
+      // Manifest claims an entry the projection (empty sounds) would not emit.
+      writeFileSync(
+        join(root, "content/audio/manifest.json"),
+        `${JSON.stringify({ schema_version: 2, audio: [{ audio_id: "stale", src: "/audio/generated/stale.mp3", sha256: "0".repeat(64) }] }, null, 2)}\n`
+      );
+
+      assert.throws(() => stageAudioAssetsChecked(root), /content\/audio\/manifest\.json is stale/);
+    });
+  });
+
+  it("stages when the manifest is fresh", () => {
+    withTempRoot((root) => {
+      mkdirSync(join(root, "content/audio/playback"), { recursive: true });
+      writeFileSync(join(root, "content/audio/sounds.json"), `${JSON.stringify([], null, 2)}\n`);
+      writeFileSync(join(root, "content/audio/patterns.json"), `${JSON.stringify([], null, 2)}\n`);
+      writeFileSync(join(root, "content/audio/manifest.json"), `${JSON.stringify({ schema_version: 2, audio: [] }, null, 2)}\n`);
+
+      assert.doesNotThrow(() => stageAudioAssetsChecked(root));
     });
   });
 });

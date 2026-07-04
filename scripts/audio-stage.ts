@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { GENERATED_URL_PREFIX, computeFileSha256, resolvePlaybackPath } from "./audio-schema.ts";
+import { checkPublicManifest } from "./audio-manifest.ts";
 
 type PublicAudioEntry = {
   audio_id: string;
@@ -53,6 +54,15 @@ export function stageAudioAssets(root = process.cwd()): void {
   }
 }
 
+// Staging guarded by manifest freshness. Keeping the check in the entrypoint
+// (not only in the `audio:stage` npm script's `&&` chain) means running this
+// script directly — or any build path that reaches it — cannot publish a stale
+// content/audio/manifest.json. stageAudioAssets stays pure for unit tests.
+export function stageAudioAssetsChecked(root = process.cwd()): void {
+  checkPublicManifest(root);
+  stageAudioAssets(root);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  stageAudioAssets();
+  stageAudioAssetsChecked();
 }

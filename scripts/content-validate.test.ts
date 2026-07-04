@@ -225,6 +225,33 @@ describe("content manifest count gate", () => {
     );
   });
 
+  it("rejects a malformed bare \"tts_\" audio_id with no suffix", () => {
+    const items = JSON.parse(productionItems) as { audio_id?: string }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    target!.audio_id = "tts_";
+    writeItems(items);
+
+    assert.throws(runValidator, /has a malformed TTS audio_id "tts_" with no suffix/);
+  });
+
+  it("accepts a tts_ item whose text is blank but whose prompt is synthesizable", () => {
+    // A blank `text` must not shadow a real `prompt`: the predicate uses the
+    // first NON-empty of the two, not the first defined one.
+    const items = JSON.parse(productionItems) as {
+      audio_id?: string;
+      text?: string;
+      prompt?: string;
+    }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    target!.text = "   ";
+    target!.prompt = "say the word";
+    writeItems(items);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
   it("fails when the manifest categories do not exactly match the expected keys", () => {
     const { phonics_skills: _phonicsSkills, ...categoriesWithMissingKey } = validCategories;
 
