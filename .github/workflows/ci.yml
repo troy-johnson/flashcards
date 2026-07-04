@@ -26,6 +26,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm content:validate
+      - run: pnpm audio:manifest:check
       - run: bash scripts/check-sentinel.sh
         env:
           BASE_REF: origin/${{ github.base_ref || 'main' }}

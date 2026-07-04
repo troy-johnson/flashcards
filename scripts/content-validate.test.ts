@@ -79,6 +79,14 @@ const runValidator = () =>
     stdio: ["ignore", "pipe", "pipe"]
   });
 
+const runValidatorWithEnv = (extra: Record<string, string>) =>
+  execFileSync(process.execPath, ["--import", "tsx", "scripts/content-validate.ts"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CONTENT_VALIDATE_CONTENT_ROOT: contentRoot, ...extra },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+
 const writeManifest = (
   categories: Record<string, { v1_target: number; required_now: number }>,
   schemaVersion = 2
@@ -106,6 +114,14 @@ const writeAudioManifest = (audio: Record<string, unknown>[]) => {
 // to check.
 const writePlaybackFile = (relName: string, bytes: string): string => {
   const dir = join(contentRoot, "audio/playback");
+  mkdirSync(dir, { recursive: true });
+  const filePath = join(dir, relName);
+  writeFileSync(filePath, bytes);
+  return computeFileSha256(filePath);
+};
+
+const writeMasterFile = (relName: string, bytes: string): string => {
+  const dir = join(contentRoot, "audio/masters");
   mkdirSync(dir, { recursive: true });
   const filePath = join(dir, relName);
   writeFileSync(filePath, bytes);
@@ -185,6 +201,55 @@ describe("content manifest count gate", () => {
       runValidator,
       /decodable_words requires at least 200, found 199/
     );
+  });
+
+  it("rejects a tts_ audio reference on an item with no text/prompt to synthesize", () => {
+    // Regression for the over-broad tts_ exemption: a tts_* id must have
+    // synthesizable text, not merely the tts_ prefix. Start from passing
+    // production content and strip one tts_ item's text so only this gate fires.
+    const items = JSON.parse(productionItems) as {
+      item_id: string;
+      audio_id?: string;
+      text?: string;
+      prompt?: string;
+    }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    delete target!.text;
+    delete target!.prompt;
+    writeItems(items);
+
+    assert.throws(
+      runValidator,
+      new RegExp(`${target!.item_id} references TTS audio ${target!.audio_id} but has no text/prompt`)
+    );
+  });
+
+  it("rejects a malformed bare \"tts_\" audio_id with no suffix", () => {
+    const items = JSON.parse(productionItems) as { audio_id?: string }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    target!.audio_id = "tts_";
+    writeItems(items);
+
+    assert.throws(runValidator, /has a malformed TTS audio_id "tts_" with no suffix/);
+  });
+
+  it("accepts a tts_ item whose text is blank but whose prompt is synthesizable", () => {
+    // A blank `text` must not shadow a real `prompt`: the predicate uses the
+    // first NON-empty of the two, not the first defined one.
+    const items = JSON.parse(productionItems) as {
+      audio_id?: string;
+      text?: string;
+      prompt?: string;
+    }[];
+    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
+    assert.ok(target, "expected a production item with a tts_ audio_id");
+    target!.text = "   ";
+    target!.prompt = "say the word";
+    writeItems(items);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
   });
 
   it("fails when the manifest categories do not exactly match the expected keys", () => {
@@ -399,6 +464,103 @@ describe("content manifest count gate", () => {
     writeManifest(validCategories);
 
     assert.throws(runValidator, /audio media: sound_short_a playback_url must be a safe path/);
+  });
+
+  it("rejects declared master media when the file does not exist", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "sound_short_a.wav",
+      master_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master file not found/);
+  });
+
+  it("rejects declared master media when the sha256 does not match the file bytes", () => {
+    writeMasterFile("sound_short_a.wav", "real-master-bytes");
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "sound_short_a.wav",
+      master_sha256: "0".repeat(64),
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master_sha256 does not match/);
+  });
+
+  it("rejects a master_path that attempts path traversal", () => {
+    const sound = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      master_path: "../sound_short_a.wav",
+      master_sha256: "deadbeef",
+      reviews: [],
+    };
+    writeFileSync(soundsPath, JSON.stringify([sound], null, 2));
+    writeFileSync(patternsPath, JSON.stringify([], null, 2));
+    writeManifest(validCategories);
+
+    assert.throws(runValidator, /audio media: sound_short_a master_path must be a safe path/);
+  });
+
+  it("byte-verifies master media under a configured RW_AUDIO_MASTER_ROOT", () => {
+    // Master WAVs may live outside the repo; the env override relocates the
+    // byte-verification base. Place the master out-of-tree, attach it to a
+    // production sound, and confirm resolution flips on the env var.
+    const externalMasterRoot = mkdtempSync(join(tmpdir(), "master-root-"));
+    try {
+      const masterFile = join(externalMasterRoot, "sound_short_a.wav");
+      writeFileSync(masterFile, "external-master-bytes");
+      const masterSha = computeFileSha256(masterFile);
+
+      const sounds = JSON.parse(productionSounds) as Record<string, unknown>[];
+      sounds[0]!.master_path = "sound_short_a.wav";
+      sounds[0]!.master_sha256 = masterSha;
+      writeFileSync(soundsPath, JSON.stringify(sounds, null, 2));
+
+      // Without the override the master resolves under content/audio/masters and
+      // is not found; with it, byte-verification passes against the external root.
+      assert.throws(runValidator, /master file not found under the master audio root/);
+      assert.match(
+        runValidatorWithEnv({ RW_AUDIO_MASTER_ROOT: externalMasterRoot }),
+        /\[content-validate\] ok:/
+      );
+    } finally {
+      rmSync(externalMasterRoot, { recursive: true, force: true });
+    }
   });
 
   it("grapheme_pattern_mappings rejects patterns with unresolved sound_ids at schema validation", () => {

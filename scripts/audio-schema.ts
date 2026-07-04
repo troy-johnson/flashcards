@@ -194,17 +194,64 @@ export function checkAudioCardinality(
   return errors;
 }
 
-// Resolves a public playback_url ("/audio/<rel>") to its source-of-truth file
+export const PLAYBACK_URL_PREFIX = "/audio/";
+export const GENERATED_URL_PREFIX = "/audio/generated/";
+
+// Resolves a source playback_url ("/audio/<rel>") to its source-of-truth file
 // under the content audio root (content/audio/playback/<rel>). Returns null if
-// the url does not have the expected public shape OR if it would escape the
+// the url does not have the expected source shape OR if it would escape the
 // playback directory (path traversal, e.g. "/audio/../../etc/passwd").
+//
+// This takes the SOURCE form only. A staged runtime URL ("/audio/generated/…")
+// is a separate concern owned by the staging layer, which derives its own source
+// rel; generatedUrlToPlaybackUrl provides the inverse mapping for any caller that
+// starts from a runtime URL.
 export function resolvePlaybackPath(contentRoot: string, playbackUrl: string): string | null {
-  const prefix = "/audio/";
-  if (!playbackUrl.startsWith(prefix)) return null;
-  const rel = playbackUrl.slice(prefix.length);
+  if (!playbackUrl.startsWith(PLAYBACK_URL_PREFIX)) return null;
+  const rel = playbackUrl.slice(PLAYBACK_URL_PREFIX.length);
   if (rel.length === 0) return null;
   const base = resolve(join(contentRoot, "audio/playback"));
   const resolved = resolve(base, rel);
+  const relFromBase = relative(base, resolved);
+  if (relFromBase === "" || relFromBase.startsWith("..") || isAbsolute(relFromBase)) return null;
+  return resolved;
+}
+
+// Maps a source playback_url ("/audio/<rel>") to its staged runtime URL
+// ("/audio/generated/<rel>") — the single place the generated prefix is
+// introduced. Rejects a url that is already runtime-shaped so a source path can
+// never collapse to "/audio/generated/generated/…". Returns null for non-source
+// shapes.
+export function playbackUrlToGeneratedUrl(playbackUrl: string): string | null {
+  if (!playbackUrl.startsWith(PLAYBACK_URL_PREFIX)) return null;
+  if (playbackUrl.startsWith(GENERATED_URL_PREFIX)) return null;
+  const rel = playbackUrl.slice(PLAYBACK_URL_PREFIX.length);
+  if (rel.length === 0) return null;
+  return `${GENERATED_URL_PREFIX}${rel}`;
+}
+
+// Inverse of playbackUrlToGeneratedUrl: a staged runtime URL
+// ("/audio/generated/<rel>") back to its source playback_url ("/audio/<rel>"),
+// which resolvePlaybackPath then maps to the source file. Returns null for
+// non-runtime shapes.
+export function generatedUrlToPlaybackUrl(generatedUrl: string): string | null {
+  if (!generatedUrl.startsWith(GENERATED_URL_PREFIX)) return null;
+  const rel = generatedUrl.slice(GENERATED_URL_PREFIX.length);
+  if (rel.length === 0) return null;
+  return `${PLAYBACK_URL_PREFIX}${rel}`;
+}
+
+// Resolves a master_path to its source-of-truth file. The master audio root
+// defaults to content/audio/masters but may be relocated (e.g. a protected,
+// out-of-repo store) via the masterRoot override. Returns null on traversal.
+export function resolveMasterPath(
+  contentRoot: string,
+  masterPath: string,
+  masterRoot?: string
+): string | null {
+  if (masterPath.length === 0) return null;
+  const base = resolve(masterRoot ?? join(contentRoot, "audio/masters"));
+  const resolved = resolve(base, masterPath);
   const relFromBase = relative(base, resolved);
   if (relFromBase === "" || relFromBase.startsWith("..") || isAbsolute(relFromBase)) return null;
   return resolved;
