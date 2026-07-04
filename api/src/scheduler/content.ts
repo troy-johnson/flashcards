@@ -36,8 +36,20 @@ export type SchedulerContentSources = {
   items?: RawItem[];
 };
 
-/** A normalized item with a guaranteed non-empty `text`. */
-export type SchedulerItem = Omit<RawItem, "text"> & { text: string };
+/** Instructional drill mode, derived from the skill-id naming convention (002i D1). */
+export type CardKind = "pa" | "phonics" | "heart" | "fluency";
+
+/** A normalized item with a guaranteed non-empty `text` and a derived `kind`. */
+export type SchedulerItem = Omit<RawItem, "text"> & { text: string; kind: CardKind };
+
+const KIND_PREFIXES: readonly CardKind[] = ["pa", "phonics", "heart", "fluency"];
+
+/** Derives the drill mode from a `<kind>_...` skill id; throws on an unknown prefix. */
+function deriveKind(skillId: string): CardKind {
+  const kind = KIND_PREFIXES.find((prefix) => skillId.startsWith(`${prefix}_`));
+  if (!kind) throw new Error(`skill ${skillId} has no known card-kind prefix`);
+  return kind;
+}
 
 export type SchedulerContent = {
   skills: Skill[];
@@ -71,7 +83,11 @@ export function loadSchedulerContent(sources: SchedulerContentSources = {}): Sch
     if (!skillIds.has(raw.skill_id)) {
       throw new Error(`item ${raw.item_id} references unknown skill ${raw.skill_id}`);
     }
-    const item: SchedulerItem = { ...raw, text: raw.text ?? raw.prompt ?? raw.item_id };
+    const item: SchedulerItem = {
+      ...raw,
+      text: raw.text ?? raw.prompt ?? raw.item_id,
+      kind: deriveKind(raw.skill_id)
+    };
     itemsById[item.item_id] = item;
     (itemsBySkill[item.skill_id] ??= []).push(item);
   }
