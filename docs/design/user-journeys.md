@@ -11,6 +11,24 @@ beads that change it, tagged by which pilot wave gates them (family `rw-odv`,
 educator `rw-1ge`). Update this doc when routes or the scheduler contract change;
 `app/src/App.tsx` is the ground truth for paths.
 
+## Two-wave pilot sequencing (decided 2026-07-03)
+
+The pilot runs as two waves with distinct gates, tracked as milestone beads:
+
+- **Family wave** (`rw-odv`, start gated on audio, time-boxed ~Aug 1): recordings
+  in and playing (`rw-ozz` stage 1, owner judgment suffices; `rw-5j6` adult-modeled
+  fallback if the time-box triggers) + audio playback engineering (`rw-1gz.8.2`) +
+  Resend issuer flip on the **shared** sender at workers.dev (`rw-1gz.7.3`) +
+  multi-child verified (`rw-1gz.12`) + drill-surface polish subset (`rw-ir1`).
+  Landing, privacy/terms, domain, SLP sign-off, and the full 002h pass are **not**
+  family-wave gates.
+- **Educator wave** (`rw-1ge`): family wave running + SLP check-off (`rw-ozz`
+  stage 2) + domain purchase & verified Resend sending domain (`rw-840`) +
+  landing (002f) + privacy/terms (002g) + full 002h polish/a11y pass +
+  magic-link rate limiting (`rw-1gz.7.4`).
+- Device posture is **genuinely mixed** — 002h's 375/768/1280 breakpoints all
+  carry equal weight.
+
 ## Journey 1 — Guardian onboarding (first contact → child ready)
 
 ```mermaid

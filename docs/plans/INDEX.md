@@ -29,12 +29,6 @@ All Phase A workstreams are planned. Shipped: 002a/b/c. Drafted, ready to implem
 
 **Recommended implementation order:** 002d (email) + 002e (content) in parallel → **002g (privacy/terms) before/with 002f (landing)** (so the landing footer's `/privacy` `/terms` links resolve, and `support.email` exists) → 002h (polish, last). Pilot for 1st-grade students is gated on 002e Phase 2. Later-phase items (spec OQ1–6) remain intentionally unplanned.
 
-### Two-wave pilot sequencing (decided 2026-07-03)
-
-The pilot runs as two waves with distinct gates (milestone beads `rw-odv` and `rw-1ge`; journey/bead traceability in [docs/design/user-journeys.md](../design/user-journeys.md)):
-
-- **Family wave** (`rw-odv`, target start gated on audio, time-boxed ~Aug 1): recordings in and playing (`rw-ozz` stage 1, owner judgment suffices; `rw-5j6` adult-modeled fallback if the time-box triggers) + audio playback engineering (`rw-1gz.8.2`) + Resend issuer flip on the **shared** sender at workers.dev (`rw-1gz.7.3`) + multi-child verified (`rw-1gz.12`) + drill-surface polish subset (`rw-ir1`). Landing, privacy/terms, domain, SLP sign-off, and the full 002h pass are **not** family-wave gates.
-- **Educator wave** (`rw-1ge`): family wave running + SLP check-off (`rw-ozz` stage 2) + domain purchase & verified Resend sending domain (`rw-840`) + landing (002f) + privacy/terms (002g) + full 002h polish/a11y pass + magic-link rate limiting (`rw-1gz.7.4`).
-- Device posture is **genuinely mixed** — 002h's 375/768/1280 breakpoints all carry equal weight.
+> Pilot rollout runs as two waves (family `rw-odv`, educator `rw-1ge`), decided 2026-07-03 — gates and journey/bead traceability in [docs/design/user-journeys.md](../design/user-journeys.md).
 
 > All five drafted plans (002d–002h) + ADR-002 passed an independent Sonnet adversarial review on 2026-06-07 (`.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`); revisions are folded into each plan's "Review revisions" section.
