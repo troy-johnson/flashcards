@@ -22,6 +22,8 @@ type RawItem = {
   text?: string;
   prompt?: string;
   answer?: string;
+  /** Sole TTS pronunciation override (003a): spoken form when it differs from `text`. */
+  speech_text?: string;
   audio_id?: string;
   regular_parts?: string[];
   irregular_parts?: string[];

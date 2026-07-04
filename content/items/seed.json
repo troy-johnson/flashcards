@@ -9,14 +9,12 @@
     "item_id": "phonics_k_u1_short_a_cat",
     "skill_id": "phonics_k_u1_short_a",
     "text": "mat",
-    "audio_id": "tts_word_mat",
     "deprecated": true
   },
   {
     "item_id": "phonics_k_u1_short_a_mat",
     "skill_id": "phonics_k_u1_short_a",
-    "text": "mat",
-    "audio_id": "tts_word_mat"
+    "text": "mat"
   },
   {
     "item_id": "phonics_k_u1_cvc_a_am",
@@ -247,8 +245,7 @@
     ],
     "irregular_parts": [
       "e"
-    ],
-    "audio_id": "tts_word_the"
+    ]
   },
   {
     "item_id": "heart_k_u1_a",
@@ -460,14 +457,12 @@
     "item_id": "fluency_k_u1_cat_sat",
     "skill_id": "fluency_k_u1_cvc_sentences",
     "text": "Sam sat.",
-    "audio_id": "tts_sentence_sam_sat",
     "deprecated": true
   },
   {
     "item_id": "fluency_k_u1_sam_sat",
     "skill_id": "fluency_k_u1_cvc_sentences",
-    "text": "Sam sat.",
-    "audio_id": "tts_sentence_sam_sat"
+    "text": "Sam sat."
   },
   {
     "item_id": "fluency_k_u1_i_am_sam",
