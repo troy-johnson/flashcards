@@ -1,39 +1,150 @@
-import { loadSchedulerContent, type SchedulerContent } from "./content";
+import { loadSchedulerContent, type CardKind, type SchedulerContent, type SchedulerItem } from "./content";
 import { evaluateReviewSkill, type ReviewAttempt } from "./review";
 
-/** Per-skill / per-item mastery state, defaulting to the schema baseline when absent. */
+/**
+ * Per-skill / per-item mastery state, defaulting to the schema baseline when absent.
+ * `due_at` / `last_seen_at` are ISO strings from the mastery tables; older callers
+ * (and skill rows, which selection doesn't consult) may omit them.
+ */
 export type MasteryState = {
   level: number;
   streak: number;
+  due_at?: string | null;
+  last_seen_at?: string | null;
 };
 
 export type PlannerInput = {
   grade: string;
-  /** Mastery rows keyed by skill_id. Reserved for future ordering; not used by Phase A sequence-first selection. */
+  /** Mastery rows keyed by skill_id. Not consulted by item selection (skill manager is rw-5kd). */
   skillMastery: Record<string, MasteryState>;
-  /** Mastery rows keyed by item_id. Reserved for future ordering; not used by Phase A sequence-first selection. */
+  /** Mastery rows keyed by item_id. Drives bucket selection (002i D2). */
   itemMastery: Record<string, MasteryState>;
   /** Recent scored attempts keyed by skill_id, used only on the grade==="1" review fast-advance path. */
   recentAttempts: Record<string, ReviewAttempt[]>;
+  /** ISO timestamp for "today" — injected so plans are a pure function of (content, mastery, now). */
+  now: string;
 };
 
 export type PlanCard = {
   skill_id: string;
   item_id: string;
   text: string;
+  kind: CardKind;
+  /** PA: expected blended/segmented answer, surfaced to the guardian. */
+  answer?: string;
+  /** Heart words: decodable parts. */
+  regular_parts?: string[];
+  /** Heart words: parts that must be remembered ("the heart"). */
+  irregular_parts?: string[];
 };
 
 export type PracticePlan = {
   cards: PlanCard[];
 };
 
+/** Selection buckets per spec 001 §6 daily-plan composition. */
+type Bucket = "active" | "review" | "missed";
+
+/** Mix ratios from spec 001 §6; mirrored in content/scheduler-config.json. */
+const MIX: Record<Bucket, number> = { active: 0.6, review: 0.25, missed: 0.15 };
+
+/** Spill order when a bucket can't fill its quota (002i D2). */
+const SPILL_ORDER: Bucket[] = ["active", "review", "missed"];
+
+type Candidate = {
+  item: SchedulerItem;
+  mastery: MasteryState | undefined;
+  /** Position in flattened scope-sequence order — the final deterministic tiebreak. */
+  scopeIndex: number;
+};
+
+/** An item is due when never seen, or when its due_at is unset or has arrived. */
+const isDue = (m: MasteryState | undefined, now: string): boolean =>
+  !m || m.due_at == null || m.due_at <= now;
+
 /**
- * Builds a deterministic, sequence-first practice plan.
+ * Classifies a candidate into its (disjoint) bucket, or null when it is not
+ * schedulable today (seen recently and not yet due).
+ */
+function bucketOf(c: Candidate, now: string): Bucket | null {
+  const m = c.mastery;
+  if (!m) return "active"; // never seen
+  if (!isDue(m, now)) return null;
+  if (m.level >= 3) return "review";
+  if (m.streak === 0 && m.last_seen_at != null) return "missed";
+  return "active";
+}
+
+/** due_at asc → level asc → last_seen_at asc → scope order; new items sort after seen ones. */
+function compareCandidates(a: Candidate, b: Candidate): number {
+  if (!a.mastery !== !b.mastery) return a.mastery ? -1 : 1; // seen-and-due before new
+  if (a.mastery && b.mastery) {
+    const dueCmp = (a.mastery.due_at ?? "").localeCompare(b.mastery.due_at ?? "");
+    if (dueCmp !== 0) return dueCmp;
+    if (a.mastery.level !== b.mastery.level) return a.mastery.level - b.mastery.level;
+    const seenCmp = (a.mastery.last_seen_at ?? "").localeCompare(b.mastery.last_seen_at ?? "");
+    if (seenCmp !== 0) return seenCmp;
+  }
+  return a.scopeIndex - b.scopeIndex;
+}
+
+/** planSize * mix per bucket: floor, then hand out remainder by largest fractional part. */
+function bucketQuotas(planSize: number): Record<Bucket, number> {
+  const raw = (Object.keys(MIX) as Bucket[]).map((bucket) => ({
+    bucket,
+    exact: planSize * MIX[bucket]
+  }));
+  const quotas = Object.fromEntries(raw.map((r) => [r.bucket, Math.floor(r.exact)])) as Record<Bucket, number>;
+  let remaining = planSize - raw.reduce((sum, r) => sum + Math.floor(r.exact), 0);
+  const byFraction = [...raw].sort(
+    (a, b) =>
+      b.exact - Math.floor(b.exact) - (a.exact - Math.floor(a.exact)) ||
+      SPILL_ORDER.indexOf(a.bucket) - SPILL_ORDER.indexOf(b.bucket)
+  );
+  for (const r of byFraction) {
+    if (remaining <= 0) break;
+    quotas[r.bucket] += 1;
+    remaining -= 1;
+  }
+  return quotas;
+}
+
+/**
+ * Greedy interleave (spec 001 §6): repeatedly emit the first remaining card whose
+ * skill differs from the previously emitted one; if none differs, emit the first.
+ */
+function interleave(cards: PlanCard[]): PlanCard[] {
+  const pool = [...cards];
+  const out: PlanCard[] = [];
+  while (pool.length > 0) {
+    const prev = out[out.length - 1];
+    const idx = prev ? pool.findIndex((c) => c.skill_id !== prev.skill_id) : 0;
+    out.push(...pool.splice(idx === -1 ? 0 : idx, 1));
+  }
+  return out;
+}
+
+const toCard = (item: SchedulerItem): PlanCard => ({
+  skill_id: item.skill_id,
+  item_id: item.item_id,
+  text: item.text,
+  kind: item.kind,
+  ...(item.answer !== undefined && { answer: item.answer }),
+  ...(item.regular_parts !== undefined && { regular_parts: item.regular_parts }),
+  ...(item.irregular_parts !== undefined && { irregular_parts: item.irregular_parts })
+});
+
+/**
+ * Builds a deterministic, mastery-driven practice plan (002i, spec 001 §6 selection layer).
  *
- * Phase A content is K-only, so both the K and 1st-grade branches source cards
- * from the K skills in scope-sequence order. The `mix` ratios in
- * scheduler-config are intentionally not consulted yet (deterministic selection
- * keeps tests stable until authored 1st-grade content exists).
+ * Selection consumes the 002c bookkeeping (`due_at`/`level`/`streak` on item
+ * mastery) via three disjoint buckets — active (new + practicing-due), review
+ * (mastered-due), missed (streak-0-due) — with quotas from the 60/25/15 mix,
+ * due-date priority inside each bucket, and a greedy interleave so consecutive
+ * cards avoid sharing a skill where possible. Items seen recently but not yet
+ * due are excluded, which is what rotates mastered items out and makes items
+ * beyond the first planSize reachable. The plan is a pure function of
+ * (content, mastery, now); mastery TRANSITIONS are unchanged (full SM-2 is rw-5kd).
  *
  * Grade gating: the `evaluateReviewSkill` review-pass fast-advance path is
  * reachable **only** when `grade === "1"`. The K branch advances through normal
@@ -61,14 +172,35 @@ export function buildPracticePlan(
         )
       : practiceable;
 
-  const cards: PlanCard[] = [];
+  // Classify every eligible item into its bucket (or drop it as not-due).
+  const buckets: Record<Bucket, Candidate[]> = { active: [], review: [], missed: [] };
+  let scopeIndex = 0;
   for (const skillId of selectedSkillIds) {
     for (const item of content.itemsBySkill[skillId] ?? []) {
-      cards.push({ skill_id: item.skill_id, item_id: item.item_id, text: item.text });
+      const candidate: Candidate = { item, mastery: input.itemMastery[item.item_id], scopeIndex };
+      scopeIndex += 1;
+      const bucket = bucketOf(candidate, input.now);
+      if (bucket) buckets[bucket].push(candidate);
     }
   }
+  for (const bucket of SPILL_ORDER) buckets[bucket].sort(compareCandidates);
 
-  return { cards: cards.slice(0, planSize) };
+  // Fill quotas, then spill unused slots in SPILL_ORDER so the plan stays full
+  // whenever enough due/new items exist.
+  const quotas = bucketQuotas(planSize);
+  const taken: Record<Bucket, PlanCard[]> = { active: [], review: [], missed: [] };
+  for (const bucket of SPILL_ORDER) {
+    taken[bucket] = buckets[bucket].splice(0, quotas[bucket]).map((c) => toCard(c.item));
+  }
+  let open = planSize - SPILL_ORDER.reduce((sum, b) => sum + taken[b].length, 0);
+  for (const bucket of SPILL_ORDER) {
+    if (open <= 0) break;
+    const extra = buckets[bucket].splice(0, open).map((c) => toCard(c.item));
+    taken[bucket].push(...extra);
+    open -= extra.length;
+  }
+
+  return { cards: interleave([...taken.active, ...taken.review, ...taken.missed]) };
 }
 
 /** A distinguishable end-state for a start plan that has no cards by design. */
@@ -82,6 +214,8 @@ export type PlanTerminalReason = "review_complete_no_active_content";
  * path, and once every K review skill is review-passed there is no authored
  * 1st-grade active content to schedule (content is K-only — see the plan's
  * content-state note). K never terminates; it advances through normal mastery.
+ * An empty plan because nothing is due today is NOT terminal — surfacing that
+ * "all caught up" state is rw-1gz.5.
  */
 export function planTerminalReason(
   input: PlannerInput,
