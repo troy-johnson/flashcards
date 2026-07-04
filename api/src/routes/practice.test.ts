@@ -70,6 +70,29 @@ describe("practice and diagnostic routes", () => {
     expect(row).toEqual({ scoring_source: "guardian_tap", result: "correct" });
   });
 
+  it("consumes item mastery at start: mastered-not-due rotates out, missed comes back, cards carry kind (002i)", async () => {
+    const now = new Date().toISOString();
+    // Mastered four days ago, due in four days → must NOT appear today.
+    await env.DB.prepare(
+      `INSERT INTO item_mastery (student_id, item_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind("student1", "pa_k_u1_blend_at", "pa_k_u1_blend_two_sound", 3, 5, addDaysIso(now, 4), addDaysIso(now, -1)).run();
+    // Missed yesterday (streak reset, due) → MUST appear via the missed bucket,
+    // even though it sits beyond the first planSize items in scope order.
+    await env.DB.prepare(
+      `INSERT INTO item_mastery (student_id, item_id, skill_id, level, streak, due_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind("student1", "phonics_k_u2_o_dog", "phonics_k_u2_cvc_blend_short_o", 1, 0, addDaysIso(now, -1), addDaysIso(now, -1)).run();
+
+    const session = await startSession();
+    const ids = session.plan.cards.map((card) => card.item_id);
+    expect(ids).not.toContain("pa_k_u1_blend_at");
+    expect(ids).toContain("phonics_k_u2_o_dog");
+    for (const card of session.plan.cards as { kind?: string }[]) {
+      expect(["pa", "phonics", "heart", "fluency"]).toContain(card.kind);
+    }
+  });
+
   it("starts grade-aware plans from scheduler content", async () => {
     const kSession = await startSessionFor("student1");
     const firstGradeSession = await startSessionFor("student2");
