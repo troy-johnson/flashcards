@@ -98,6 +98,29 @@ describe("loadSchedulerContent", () => {
     }
   });
 
+  it("derives card kind from the skill-id prefix (002i D1)", () => {
+    expect(content.itemsById["pa_k_u1_blend_at"]?.kind).toBe("pa");
+    expect(content.itemsById["phonics_k_u1_short_a_mat"]?.kind).toBe("phonics");
+    expect(content.itemsById["heart_k_u1_the"]?.kind).toBe("heart");
+    expect(content.itemsById["fluency_k_u1_sam_sat"]?.kind).toBe("fluency");
+  });
+
+  it("preserves answer and heart-part fields on normalized items", () => {
+    expect(content.itemsById["pa_k_u1_blend_at"]?.answer).toBe("at");
+    expect(content.itemsById["heart_k_u1_the"]?.regular_parts).toEqual(["th"]);
+    expect(content.itemsById["heart_k_u1_the"]?.irregular_parts).toEqual(["e"]);
+  });
+
+  it("throws when a skill id has no known kind prefix", () => {
+    expect(() =>
+      loadSchedulerContent({
+        skills: [{ skill_id: "mystery_k_u1_thing", grade: "K", prerequisites: [] }],
+        units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["mystery_k_u1_thing"] }],
+        items: [{ item_id: "mystery_k_u1_thing_x", skill_id: "mystery_k_u1_thing", text: "x" }]
+      })
+    ).toThrow(/kind/);
+  });
+
   it("excludes deprecated items from itemsById and itemsBySkill (never schedulable)", () => {
     const injected = loadSchedulerContent({
       skills: [{ skill_id: "phonics_k_u1_short_a", grade: "K", prerequisites: [] }],

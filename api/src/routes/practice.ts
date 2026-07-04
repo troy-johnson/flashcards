@@ -12,6 +12,8 @@ type StudentPlanState = {
   skillMastery: Record<string, MasteryState>;
   itemMastery: Record<string, MasteryState>;
   recentAttempts: Record<string, ReviewAttempt[]>;
+  /** ISO "today" injected into the planner so plan selection is due_at-aware (002i). */
+  now: string;
 };
 
 const attemptSchema = z.object({
@@ -77,23 +79,27 @@ const loadStudentPlanState = async (env: Env, guardianId: string, studentId: str
     .bind(studentId, guardianId).first<{ grade: string }>();
   if (!student) return null;
 
-  const { results: skillRows } = await env.DB.prepare("SELECT skill_id, level, streak FROM skill_mastery WHERE student_id = ?")
-    .bind(studentId).all<{ skill_id: string; level: number; streak: number }>();
-  const { results: itemRows } = await env.DB.prepare("SELECT item_id, level, streak FROM item_mastery WHERE student_id = ?")
-    .bind(studentId).all<{ item_id: string; level: number; streak: number }>();
+  const { results: skillRows } = await env.DB.prepare("SELECT skill_id, level, streak, due_at, last_seen_at FROM skill_mastery WHERE student_id = ?")
+    .bind(studentId).all<{ skill_id: string; level: number; streak: number; due_at: string | null; last_seen_at: string | null }>();
+  const { results: itemRows } = await env.DB.prepare("SELECT item_id, level, streak, due_at, last_seen_at FROM item_mastery WHERE student_id = ?")
+    .bind(studentId).all<{ item_id: string; level: number; streak: number; due_at: string | null; last_seen_at: string | null }>();
   const { results: attemptRows } = await env.DB.prepare(
     "SELECT skill_id, result, duration_ms FROM attempt WHERE student_id = ? ORDER BY scored_at DESC"
   ).bind(studentId).all<{ skill_id: string; result: ReviewAttempt["result"]; duration_ms: number }>();
 
-  const skillMastery = Object.fromEntries(skillRows.map((row) => [row.skill_id, { level: row.level, streak: row.streak }]));
-  const itemMastery = Object.fromEntries(itemRows.map((row) => [row.item_id, { level: row.level, streak: row.streak }]));
+  const skillMastery = Object.fromEntries(
+    skillRows.map((row) => [row.skill_id, { level: row.level, streak: row.streak, due_at: row.due_at, last_seen_at: row.last_seen_at }])
+  );
+  const itemMastery = Object.fromEntries(
+    itemRows.map((row) => [row.item_id, { level: row.level, streak: row.streak, due_at: row.due_at, last_seen_at: row.last_seen_at }])
+  );
   const recentAttempts: Record<string, ReviewAttempt[]> = {};
   for (const row of attemptRows) {
     recentAttempts[row.skill_id] ??= [];
     recentAttempts[row.skill_id]!.push({ result: row.result, duration_ms: row.duration_ms });
   }
 
-  return { grade: student.grade, skillMastery, itemMastery, recentAttempts };
+  return { grade: student.grade, skillMastery, itemMastery, recentAttempts, now: new Date().toISOString() };
 };
 
 practiceRoutes.post("/:studentId/start", async (c) => {

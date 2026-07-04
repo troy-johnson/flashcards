@@ -90,6 +90,7 @@ Remaining work in this journey
 
 | Step | Bead | Wave | What changes |
 | --- | --- | --- | --- |
+| Drill card modes | `rw-qjk` | family | Mode-aware cards: PA answer line, heart-part highlighting, fluency copy (plan 002i) |
 | Drill card audio | `rw-1gz.8.2` | family | Gesture playback + TTS words/sentences (003a Tasks 5–11) |
 | Drill card audio assets | `rw-ozz` | family | Recorded 44 sounds through pipeline; SLP check-off later gates educator wave |
 | Sound cards w/o recordings | `rw-5j6` | family (contingency) | Adult-modeled "say it together" card state if Aug 1 slips |
@@ -129,6 +130,8 @@ Remaining work in this journey
 
 | Step | Bead | Wave | What changes |
 | --- | --- | --- | --- |
+| Next-day plan selection | `rw-ncu` | family | Planner consumes mastery/due_at: missed items return, mastered rotate out (plan 002i) |
+| Full SM-2 + skill manager | `rw-5kd` | post-family | Spec 001 §6 fidelity (streak gates, ease, graduation) — back-test with replay after pilot data |
 | Diag report | `rw-1gz.13` | family (exit) | Surface spec 002 exit-marker reads (10+ sessions / 2+ households) directly in the report |
 | Dashboard per-skill list | `rw-1gz.11` (noted) | educator | Human-readable skill names instead of raw `skill_id` codes |
 | Planner input integrity | `rw-brf` | infra | Validate grade field values + grade-ordering test in content-validate |
@@ -154,8 +157,8 @@ Every open/in-progress bead maps to a journey or is deliberately non-journey:
 | Bead | Journey | Notes |
 | --- | --- | --- |
 | rw-1gz.7.3, 7.4, 9.1, 9.2, 840, 1gz.6, 1gz.12 | J1 | onboarding |
-| rw-1gz.8.2, ozz, 5j6, ir1, 1gz.5, 1gz.8.5, gx3 | J2 | practice |
-| rw-1gz.13, brf (+ skill-name note on 1gz.11) | J3 | progress |
+| rw-1gz.8.2, ozz, 5j6, ir1, qjk, 1gz.5, 1gz.8.5, gx3 | J2 | practice |
+| rw-1gz.13, ncu, 5kd, brf (+ skill-name note on 1gz.11) | J3 | progress |
 | rw-1gz.10.1, 10.2, bpb (+ 9.1 shared) | J4 | support |
 | rw-1gz.11, 11.1, 11.2 | J1–J3 sweep | cross-cutting FR34 polish/a11y pass (educator gate) |
 | rw-odv, rw-1ge | — | wave milestones; umbrellas over the rows above |
