@@ -111,6 +111,15 @@ Phase A is a **micro-pilot**, not a beta launch.
 - A few educators at the creator's children's school.
 - Possibly educator families with Kindergarten or 1st-grade readers.
 
+### Waves (amendment 2026-07-03)
+
+Phase A rolls out in two waves with distinct readiness gates (sequencing only; no scope change):
+
+- **Family wave** — creator's household. Starts when recorded instructional audio is in and playing (time-boxed ~Aug 1, with an adult-modeled sound-card fallback if recordings slip), using the shared email sender on the workers.dev origin. Landing, Privacy/Terms, domain, and SLP sign-off do **not** gate this wave.
+- **Educator wave** — educators and their families. Additionally gated on SLP check-off of recordings, a branded domain with verified email sending, the landing page, Privacy/Terms, the full polish/accessibility pass, and operator review of family-wave exit-marker evidence.
+
+Gate detail and journey/bead traceability live in [docs/design/user-journeys.md](../design/user-journeys.md); milestone tracking in beads `rw-odv` / `rw-1ge`.
+
 ### Timing
 
 - Summer-flexible.
