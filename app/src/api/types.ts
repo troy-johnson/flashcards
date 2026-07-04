@@ -15,10 +15,21 @@ export type Student = {
   archived_at: string | null;
 };
 
+/** Instructional drill mode carried on each plan card (002i). */
+export type CardKind = "pa" | "phonics" | "heart" | "fluency";
+
 export type PracticeCard = {
   skill_id: string;
   item_id: string;
   text: string;
+  /** Absent on plans persisted before 002i — render those as phonics. */
+  kind?: CardKind;
+  /** PA: expected blended/segmented answer, surfaced to the guardian. */
+  answer?: string;
+  /** Heart words: decodable parts. */
+  regular_parts?: string[];
+  /** Heart words: parts that must be remembered ("the heart"). */
+  irregular_parts?: string[];
 };
 
 export type PracticeSession = {

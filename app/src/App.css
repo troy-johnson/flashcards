@@ -107,6 +107,30 @@ button,
   margin: var(--space-xl) 0;
 }
 
+/* PA prompt and fluency sentence: instruction-sized, not word-sized. */
+.card-prompt,
+.card-sentence {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: var(--space-xl) 0;
+}
+
+/* Guardian-facing PA answer line — quiet, below the child's prompt. */
+.guardian-answer {
+  color: var(--color-text-muted, #6b5d43);
+  font-size: 1.1rem;
+  margin-bottom: var(--space-lg);
+}
+
+/* The irregular ("heart") part of a heart word. */
+.heart-part {
+  color: var(--color-accent, #b3402e);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
 .tap-controls {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

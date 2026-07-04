@@ -14,7 +14,7 @@ import {
 } from "./api/literacy";
 import type { AttemptResult, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
 import { landing } from "copy";
-import { PhonicsCard } from "./components/cards/PhonicsCard";
+import { DrillCard } from "./components/cards/DrillCard";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
 import "./App.css";
 
@@ -562,7 +562,7 @@ function DrillRoute({ studentId }: { studentId: string }) {
 
   return (
     <main className="page-shell student-mode">
-      <PhonicsCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
+      <DrillCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
       {submitError && <p role="alert">{submitError}</p>}
     </main>
   );
