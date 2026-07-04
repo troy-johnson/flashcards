@@ -29,4 +29,6 @@ All Phase A workstreams are planned. Shipped: 002a/b/c. Drafted, ready to implem
 
 **Recommended implementation order:** 002d (email) + 002e (content) in parallel → **002g (privacy/terms) before/with 002f (landing)** (so the landing footer's `/privacy` `/terms` links resolve, and `support.email` exists) → 002h (polish, last). Pilot for 1st-grade students is gated on 002e Phase 2. Later-phase items (spec OQ1–6) remain intentionally unplanned.
 
+> Pilot rollout runs as two waves (family `rw-odv`, educator `rw-1ge`), decided 2026-07-03 — gates and journey/bead traceability in [docs/design/user-journeys.md](../design/user-journeys.md).
+
 > All five drafted plans (002d–002h) + ADR-002 passed an independent Sonnet adversarial review on 2026-06-07 (`.agents/snapshots/plans-002d-h-adversarial-review-2026-06-07.md`); revisions are folded into each plan's "Review revisions" section.
