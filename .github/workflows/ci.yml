@@ -19,7 +19,7 @@ jobs:
           version: 9.15.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
@@ -42,7 +42,7 @@ jobs:
           version: 9.15.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter api exec wrangler d1 migrations apply literacy_preview --remote
