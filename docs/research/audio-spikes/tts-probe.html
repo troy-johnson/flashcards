@@ -1,0 +1,93 @@
+<!doctype html>
+<!-- Phase 0 TTS device spike probe (plan 003a Task 1).
+     Serve from the repo root:  npx serve docs/research/audio-spikes
+     then open http://<mac-lan-ip>:3000/tts-probe.html in iPad Safari.
+     Every button maps to a scenario row in phase-0-tts-device.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reader's Way — TTS Probe</title>
+<style>
+  body { font-family: -apple-system, sans-serif; margin: 16px; max-width: 720px; }
+  h1 { font-size: 1.2rem; }
+  button { display: block; width: 100%; padding: 14px; margin: 8px 0; font-size: 1rem; border-radius: 10px; border: 1px solid #999; background: #f4f0e8; }
+  #log { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 0.75rem; background: #111; color: #9f9; padding: 10px; border-radius: 8px; min-height: 160px; max-height: 40vh; overflow-y: auto; }
+  .meta { font-size: 0.8rem; background: #eee; padding: 8px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>TTS Device Probe — Phase 0</h1>
+<div class="meta" id="meta">loading…</div>
+
+<button id="a">A — First tap: plain speak("mat")</button>
+<button id="b">B — Speak again mid-speech (cancel + speak long sentence)</button>
+<button id="c">C — cancel() then immediate speak</button>
+<button id="d">D — Speak with a bogus voice name (fallback check)</button>
+<button id="e">E — Voices-retry algorithm (wait ≤250ms for voiceschanged, then speak)</button>
+<button id="copy">Copy log</button>
+<div id="log"></div>
+
+<script>
+  const logEl = document.getElementById("log");
+  const t0 = Date.now();
+  const log = (m) => { logEl.textContent += `+${((Date.now()-t0)/1000).toFixed(2)}s ${m}\n`; logEl.scrollTop = logEl.scrollHeight; };
+
+  const s = window.speechSynthesis;
+  let voiceschangedFired = false;
+  const englishVoices = () => (s ? s.getVoices().filter(v => v.lang.startsWith("en")) : []);
+
+  document.getElementById("meta").textContent =
+    `${navigator.userAgent}\nspeechSynthesis: ${!!s} | voices at load: ${s ? s.getVoices().length : "n/a"} (en: ${englishVoices().length})`;
+
+  if (s) s.addEventListener("voiceschanged", () => {
+    voiceschangedFired = true;
+    log(`voiceschanged fired — voices now: ${s.getVoices().length} (en: ${englishVoices().length})`);
+  });
+
+  const wire = (u, tag) => {
+    u.onstart = () => log(`${tag}: START (voice=${u.voice ? u.voice.name : "default"})`);
+    u.onend = () => log(`${tag}: END`);
+    u.onerror = (e) => log(`${tag}: ERROR ${e.error}`);
+    return u;
+  };
+  const speak = (text, tag, voice) => {
+    const u = wire(new SpeechSynthesisUtterance(text), tag);
+    if (voice) u.voice = voice;
+    log(`${tag}: speak() called — voices visible: ${s.getVoices().length}, pending=${s.pending}, speaking=${s.speaking}`);
+    s.speak(u);
+  };
+
+  document.getElementById("a").onclick = () => speak("mat", "A");
+  document.getElementById("b").onclick = () => { log(`B: speaking=${s.speaking}; cancel+speak`); s.cancel(); speak("Sam sat on the mat and read a very long sentence out loud.", "B"); };
+  document.getElementById("c").onclick = () => { s.cancel(); log("C: cancel() done"); speak("the", "C"); };
+  document.getElementById("d").onclick = () => {
+    const fake = new SpeechSynthesisUtterance("dog");
+    // Deliberately leave voice unset after failing to find a bogus one.
+    const bogus = s.getVoices().find(v => v.name === "No Such Voice 9000");
+    log(`D: bogus voice found=${!!bogus}; speaking with ${bogus ? "bogus" : "browser default"}`);
+    s.speak(wire(fake, "D"));
+  };
+  document.getElementById("e").onclick = () => {
+    const start = () => {
+      const en = englishVoices();
+      speak("cat", "E", en[0]);
+    };
+    if (englishVoices().length > 0) { log("E: voices already available — speaking now"); start(); }
+    else {
+      log("E: no voices yet — waiting ≤250ms for voiceschanged");
+      let done = false;
+      const go = () => { if (!done) { done = true; start(); } };
+      s.addEventListener("voiceschanged", go, { once: true });
+      setTimeout(go, 250);
+    }
+  };
+  document.getElementById("copy").onclick = async () => {
+    await navigator.clipboard.writeText(document.getElementById("meta").textContent + "\n\n" + logEl.textContent);
+    log("(log copied)");
+  };
+
+  log(`loaded — voiceschanged fired yet: ${voiceschangedFired}`);
+</script>
+</body>
+</html>
