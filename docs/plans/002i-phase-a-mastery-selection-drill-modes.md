@@ -33,9 +33,12 @@ eligible = items of selectedSkillIds (the existing grade-1 review-pass filter is
 m = itemMastery[item_id]            // may be absent = never seen
 due     = !m || m.due_at == null || m.due_at <= now
 
-Buckets (disjoint):
-  missed : m && due && m.streak === 0 && m.level <= 2 && m.last_seen_at != null
-  review : m && due && m.level >= 3
+Buckets (disjoint, checked in this order — missed beats review):
+  missed : m && due && m.streak === 0 && m.last_seen_at != null   // ANY level:
+           a mastered item that was just missed (4→3, streak 0) resurfaces via
+           missed rather than waiting out a review interval (spec §6: a miss
+           surfaces tomorrow at any level; same for skips)
+  review : m && due && m.level >= 3   // healthy mastered items (streak > 0)
   active : !m  (new)  OR  (m && due && m.level <= 2 && m.streak > 0)
   (not due → excluded today)
 
@@ -57,7 +60,7 @@ Interleaving (spec 001 §6): greedy pass over the combined selection —
 
 Why this meets `rw-ncu` acceptance: a level ≥ 3 item gets `due_at = now + 4/7d` on scoring, is not `due` tomorrow, and drops out until `due_at` (returns via the review bucket). An incorrect answer sets `streak = 0`, demotes one level, and sets `due_at` 0–2 days out → it lands in the **missed** bucket next session, by rule not coincidence. As early items mature out, later scope-order items fill active slots, so items beyond `planSize` become reachable. Everything is a pure function of `(content, mastery, now)`, and the plan is still committed to `plan_json` at session start.
 
-Note: `skipped` keeps `streak = 0`, so a skipped item also resurfaces via the missed bucket — this matches spec 001 §5's "let's try this one again later" intent.
+Note: `skipped` keeps `streak = 0`, so a skipped item at any level also resurfaces via the missed bucket — this matches spec 001 §5's "let's try this one again later" intent. (Adversarial-review revision 2026-07-04: missed is checked before review so this holds for level ≥ 3 items too; the review-quota test was strengthened to use all-due candidates.)
 
 ### D3 — PlanCard / PracticeCard payload
 

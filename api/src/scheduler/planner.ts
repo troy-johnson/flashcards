@@ -70,8 +70,11 @@ function bucketOf(c: Candidate, now: string): Bucket | null {
   const m = c.mastery;
   if (!m) return "active"; // never seen
   if (!isDue(m, now)) return null;
-  if (m.level >= 3) return "review";
+  // Missed wins over review: a mastered item that was just missed (incorrect
+  // demotes 4→3 with streak 0) must resurface via the missed bucket, not wait
+  // out a review interval (spec 001 §6: a miss surfaces tomorrow at any level).
   if (m.streak === 0 && m.last_seen_at != null) return "missed";
+  if (m.level >= 3) return "review";
   return "active";
 }
 

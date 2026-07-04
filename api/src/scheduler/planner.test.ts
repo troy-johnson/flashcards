@@ -142,6 +142,27 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
     expect(plan.cards.map((c) => c.item_id)).toContain("it_039");
   });
 
+  it("resurfaces a missed MASTERED item via the missed bucket (streak 0 beats level >= 3)", () => {
+    const content = overCapContent(40);
+    const itemMastery: Record<string, MasteryState> = {};
+    // Four healthy review items, due earlier than the target — they alone fill the review quota (4).
+    for (let i = 0; i < 4; i++) {
+      itemMastery[`it_${String(i).padStart(3, "0")}`] = {
+        level: 3,
+        streak: 5,
+        due_at: `2026-07-0${1 + i}T00:00:00.000Z`,
+        last_seen_at: YESTERDAY
+      };
+    }
+    // A mastered item that was just missed: level 3 (demoted from 4), streak 0, due, LATEST due date.
+    // If it were classified "review" it would sort 5th and be cut by the quota;
+    // classified "missed" it must still make the plan.
+    itemMastery["it_020"] = { level: 3, streak: 0, due_at: "2026-07-04T06:00:00.000Z", last_seen_at: YESTERDAY };
+
+    const plan = buildPracticePlan({ grade: "K", ...emptyState, itemMastery }, content);
+    expect(plan.cards.map((c) => c.item_id)).toContain("it_020");
+  });
+
   it("reaches items beyond the first planSize once earlier items mature out", () => {
     const content = overCapContent(40);
     // First 16 items mastered and not due today: the NEXT 16 become the plan.
@@ -157,12 +178,13 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
   it("fills bucket quotas 10/4/2 at K=16 (floor + largest remainder) with due-date priority", () => {
     const content = overCapContent(40);
     const itemMastery: Record<string, MasteryState> = {};
-    // 6 review-eligible items, distinct due dates — only the 4 earliest-due fit the quota.
+    // 6 review-eligible items, ALL due (distinct past due dates) — only the 4
+    // earliest-due fit the quota, so this genuinely exercises the review cap.
     for (let i = 0; i < 6; i++) {
       itemMastery[`it_${String(i).padStart(3, "0")}`] = {
         level: 3,
         streak: 5,
-        due_at: `2026-07-0${1 + i}T00:00:00.000Z`,
+        due_at: `2026-06-2${i}T00:00:00.000Z`,
         last_seen_at: YESTERDAY
       };
     }
