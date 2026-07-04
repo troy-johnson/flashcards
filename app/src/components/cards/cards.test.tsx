@@ -61,6 +61,16 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     expect(container.querySelector(".card-word")?.textContent).toBe("said");
   });
 
+  it("renders the full word when irregular_parts is missing or empty (codex review finding 3 refutation lock)", async () => {
+    await render({
+      skill_id: "heart_k_u1_batch_01",
+      item_id: "heart_k_u1_the",
+      text: "the",
+      kind: "heart"
+    });
+    expect(container.querySelector(".card-word")?.textContent).toBe("the");
+  });
+
   it("falls back to plain text when heart parts do not match the word (bad content never crashes a drill)", async () => {
     await render({
       skill_id: "heart_k_u1_batch_01",

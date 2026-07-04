@@ -168,6 +168,9 @@ export function buildPracticePlan(
     .flatMap((unit) => unit.skill_ids)
     .filter((id) => id in content.itemsBySkill);
 
+  // Grade-1 fast-advance runs BEFORE bucketing and wins over item resurfacing:
+  // a review-passed K skill drops entirely, even if it contains a missed-due
+  // item (spec 002 D6 — "advances quickly"; owner-confirmed 2026-07-04).
   const selectedSkillIds =
     input.grade === "1"
       ? practiceable.filter(

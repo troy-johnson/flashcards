@@ -274,6 +274,20 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
     expect(passed.cards.length).toBe(22);
   });
 
+  it("grade-1 fast-advance beats missed resurfacing: a review-passed skill drops even with a missed-due item (spec 002 D6)", () => {
+    // Deliberate precedence (owner decision 2026-07-04, codex review finding 1):
+    // once a 1st grader proves a K skill at >=90%, the whole skill leaves the
+    // ramp — a single fresh miss inside it does not pull the skill back.
+    const plan = buildPracticePlan({
+      grade: "1",
+      skillMastery: {},
+      itemMastery: { pa_k_u1_blend_at: missed() },
+      recentAttempts: { pa_k_u1_blend_two_sound: fourCorrect },
+      now: NOW
+    });
+    expect(plan.cards.map((c) => c.item_id)).not.toContain("pa_k_u1_blend_at");
+  });
+
   it("never fast-advances a K plan even when review-pass criteria are met", () => {
     const withReviewPassingAttempts = buildPracticePlan({
       grade: "K",

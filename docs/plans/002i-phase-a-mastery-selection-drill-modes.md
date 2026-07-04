@@ -47,11 +47,16 @@ Quotas from scheduler-config mix {active:.6, review:.25, missed:.15}:
   largest fractional part, ties broken active > review > missed.
   Slots a bucket can't fill spill in the order: active, then review, then missed.
 
-Order within missed / review:
-  due_at asc, then last_seen_at asc, then scope-sequence order.
-Order within active:
-  previously-seen items first (due_at asc, level asc, last_seen_at asc,
-  scope order), then never-seen items in scope-sequence order.
+Order within every bucket (seen items):
+  due_at asc, then level asc (shakier items first), then last_seen_at asc,
+  then scope-sequence order. Never-seen items sort after seen ones, in
+  scope-sequence order. (Revision 2026-07-04: level-asc tiebreak made
+  explicit — codex review finding 2.)
+
+Grade-1 precedence: the review-pass fast-advance filter (002c) runs BEFORE
+bucketing, so a review-passed K skill drops entirely — including any
+missed-due item inside it. Deliberate per spec 002 D6 ("advances quickly"),
+owner-confirmed 2026-07-04 (codex review finding 1); locked by test.
 
 Interleaving (spec 001 §6): greedy pass over the combined selection —
   repeatedly emit the first remaining card whose skill_id differs from the
