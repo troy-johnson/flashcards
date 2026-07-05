@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { audioCatalogRoutes } from "./routes/audio-catalog";
 import { authRoutes } from "./routes/auth";
 import { diagRoutes } from "./routes/diag";
 import { practiceRoutes } from "./routes/practice";
@@ -20,6 +21,7 @@ app.use("*", cors({ origin: (_origin, c) => c.env.APP_ORIGIN, credentials: true 
 app.route("/auth", authRoutes);
 app.route("/students", studentRoutes);
 app.route("/practice", practiceRoutes);
+app.route("/guardian/audio-catalog", audioCatalogRoutes);
 app.route("/guardian/diag", diagRoutes);
 
 export default app;
