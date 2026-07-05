@@ -51,6 +51,47 @@ export type AttemptInput = {
   shown_at: string;
 };
 
+/** Protected audio-catalog payload (003a Task 6/8) — admin-only review surface. */
+export type AudioCatalogReview = {
+  kind: "recorder" | "owner" | "slp";
+  reviewer: string;
+  reviewed_at: string;
+  status: "approved" | "changes_requested";
+  subject_sha256: string;
+  notes?: string;
+};
+
+export type AudioCatalogSound = {
+  sound_id: string;
+  instructional_label: string;
+  ipa: string;
+  example_word: string;
+  phonetic_class: string;
+  production_behavior: "clip" | "sustain" | "glide" | "sequence";
+  production_notes: string;
+  dialect_notes: string;
+  recording_guidance: string;
+  processing_profile: string;
+  master_path?: string;
+  master_sha256?: string;
+  playback_url?: string;
+  playback_sha256?: string;
+  reviews: AudioCatalogReview[];
+};
+
+export type AudioCatalogPattern = {
+  mapping_id: string;
+  grapheme: string;
+  sound_ids: string[];
+  example_word: string;
+  note: string;
+};
+
+export type AudioCatalogResponse = {
+  sounds: AudioCatalogSound[];
+  patterns: AudioCatalogPattern[];
+};
+
 export type DiagnosticSummaryRow = {
   student_id: string;
   skill_id: string;
