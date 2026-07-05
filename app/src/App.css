@@ -143,6 +143,32 @@ button,
   }
 }
 
+/* Protected audio-catalog review surface (operator-only). */
+.audio-catalog .catalog-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-lg) 0;
+}
+
+.audio-catalog .catalog-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.audio-catalog .catalog-row-main button[data-play] {
+  display: inline-block;
+  width: auto;
+  margin: 0 0 0 10px;
+  padding: 4px 12px;
+  font-size: 0.9rem;
+}
+
+.audio-catalog .catalog-row-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b5d43);
+  margin-top: 4px;
+}
+
 .guardian-nav {
   display: flex;
   flex-wrap: wrap;

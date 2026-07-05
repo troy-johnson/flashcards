@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptInput, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
+import type { AttemptInput, AudioCatalogResponse, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
 
 export interface SignInResponse {
   /** Present only when the API runs with the dev-log email issuer — never set in production. */
@@ -47,3 +47,6 @@ export const completePractice = (studentId: string, practiceSessionId: string): 
 
 export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }> =>
   apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }>("/guardian/diag");
+
+export const getAudioCatalog = (): Promise<AudioCatalogResponse> =>
+  apiFetch<AudioCatalogResponse>("/guardian/audio-catalog");

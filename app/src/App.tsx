@@ -15,6 +15,7 @@ import {
 import type { AttemptResult, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
 import { landing } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
+import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
 import "./App.css";
 
@@ -46,6 +47,7 @@ function GuardianNav({ guardian }: { guardian: Guardian | null }) {
     <nav className="guardian-nav" aria-label="Guardian navigation">
       <a href="/guardian">Students</a>
       <a href="/guardian/diag">Diagnostics</a>
+      <a href="/guardian/audio-catalog">Audio catalog</a>
       <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
     </nav>
   );
@@ -601,6 +603,7 @@ function App() {
   else if (path === "/guardian") route = <GuardianRoute />;
   else if (path === "/guardian/add-student") route = <AddStudentRoute />;
   else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
+  else if (path === "/guardian/audio-catalog") route = <AudioCatalogRoute />;
   else if (segments[0] === "guardian" && segments[1] && segments[2] === "settings") route = <StudentSettingsRoute studentId={segments[1]} />;
   else if (segments[0] === "guardian" && segments[1]) route = <StudentDashboardRoute studentId={segments[1]} />;
   else if (segments[0] === "play" && segments[1] && segments[2] === "drill") route = <DrillRoute studentId={segments[1]} />;

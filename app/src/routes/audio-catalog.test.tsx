@@ -9,7 +9,7 @@ import type { AudioCatalogResponse, AudioCatalogSound } from "../api/types";
 
 vi.mock("../api/literacy", () => ({ getAudioCatalog: vi.fn() }));
 
-const play = vi.fn(async () => ({ status: "started" as const }));
+const play = vi.fn(async (_request: unknown) => ({ status: "started" as const }));
 vi.mock("../audio/playback", () => ({
   createPlaybackController: () => ({ play: (r: unknown) => play(r), cancel: vi.fn() })
 }));
