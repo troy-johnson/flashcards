@@ -111,6 +111,19 @@ describe("loadSchedulerContent", () => {
     expect(content.itemsById["heart_k_u1_the"]?.irregular_parts).toEqual(["e"]);
   });
 
+  it("preserves item speech_text as the sole TTS pronunciation override (003a Task 5)", () => {
+    const injected = loadSchedulerContent({
+      skills: [{ skill_id: "phonics_test", grade: "K", prerequisites: [] }],
+      units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_test"] }],
+      items: [
+        { item_id: "phonics_test_read", skill_id: "phonics_test", text: "read", speech_text: "reed" },
+        { item_id: "phonics_test_mat", skill_id: "phonics_test", text: "mat" }
+      ]
+    });
+    expect(injected.itemsById["phonics_test_read"]?.speech_text).toBe("reed");
+    expect(injected.itemsById["phonics_test_mat"]?.speech_text).toBeUndefined();
+  });
+
   it("throws when a skill id has no known kind prefix", () => {
     expect(() =>
       loadSchedulerContent({

@@ -30,6 +30,8 @@ export type PracticeCard = {
   regular_parts?: string[];
   /** Heart words: parts that must be remembered ("the heart"). */
   irregular_parts?: string[];
+  /** TTS pronunciation override — spoken form when it differs from `text` (003a). */
+  speech_text?: string;
 };
 
 export type PracticeSession = {

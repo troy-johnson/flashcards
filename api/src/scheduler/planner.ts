@@ -36,6 +36,8 @@ export type PlanCard = {
   regular_parts?: string[];
   /** Heart words: parts that must be remembered ("the heart"). */
   irregular_parts?: string[];
+  /** TTS pronunciation override — spoken form when it differs from `text` (003a). */
+  speech_text?: string;
 };
 
 export type PracticePlan = {
@@ -134,7 +136,8 @@ const toCard = (item: SchedulerItem): PlanCard => ({
   kind: item.kind,
   ...(item.answer !== undefined && { answer: item.answer }),
   ...(item.regular_parts !== undefined && { regular_parts: item.regular_parts }),
-  ...(item.irregular_parts !== undefined && { irregular_parts: item.irregular_parts })
+  ...(item.irregular_parts !== undefined && { irregular_parts: item.irregular_parts }),
+  ...(item.speech_text !== undefined && { speech_text: item.speech_text })
 });
 
 /**

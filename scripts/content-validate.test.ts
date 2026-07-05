@@ -205,16 +205,19 @@ describe("content manifest count gate", () => {
 
   it("rejects a tts_ audio reference on an item with no text/prompt to synthesize", () => {
     // Regression for the over-broad tts_ exemption: a tts_* id must have
-    // synthesizable text, not merely the tts_ prefix. Start from passing
-    // production content and strip one tts_ item's text so only this gate fires.
+    // synthesizable text, not merely the tts_ prefix. Production content no
+    // longer carries tts_ audio_ids (003a Task 5 moved TTS to speech_text),
+    // so inject one onto a production item and strip its text so only this
+    // gate fires.
     const items = JSON.parse(productionItems) as {
       item_id: string;
       audio_id?: string;
       text?: string;
       prompt?: string;
     }[];
-    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
-    assert.ok(target, "expected a production item with a tts_ audio_id");
+    const target = items.find((item) => item.item_id === "phonics_k_u1_short_a_mat");
+    assert.ok(target, "expected the production short-a exemplar item");
+    target!.audio_id = "tts_word_mat";
     delete target!.text;
     delete target!.prompt;
     writeItems(items);
@@ -226,9 +229,9 @@ describe("content manifest count gate", () => {
   });
 
   it("rejects a malformed bare \"tts_\" audio_id with no suffix", () => {
-    const items = JSON.parse(productionItems) as { audio_id?: string }[];
-    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
-    assert.ok(target, "expected a production item with a tts_ audio_id");
+    const items = JSON.parse(productionItems) as { item_id: string; audio_id?: string }[];
+    const target = items.find((item) => item.item_id === "phonics_k_u1_short_a_mat");
+    assert.ok(target, "expected the production short-a exemplar item");
     target!.audio_id = "tts_";
     writeItems(items);
 
@@ -239,12 +242,14 @@ describe("content manifest count gate", () => {
     // A blank `text` must not shadow a real `prompt`: the predicate uses the
     // first NON-empty of the two, not the first defined one.
     const items = JSON.parse(productionItems) as {
+      item_id: string;
       audio_id?: string;
       text?: string;
       prompt?: string;
     }[];
-    const target = items.find((item) => item.audio_id?.startsWith("tts_"));
-    assert.ok(target, "expected a production item with a tts_ audio_id");
+    const target = items.find((item) => item.item_id === "phonics_k_u1_short_a_mat");
+    assert.ok(target, "expected the production short-a exemplar item");
+    target!.audio_id = "tts_word_mat";
     target!.text = "   ";
     target!.prompt = "say the word";
     writeItems(items);
