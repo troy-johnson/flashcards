@@ -33,10 +33,10 @@ describe("protected audio catalog (003a Task 6)", () => {
       headers: { cookie: "session=s_diag" }
     });
     expect(res.status).toBe(200);
-    const body = await res.json<{
+    const body = (await res.json()) as {
       sounds: { sound_id: string; recording_guidance: string; reviews: unknown[] }[];
       patterns: { mapping_id: string; grapheme: string; sound_ids: string[] }[];
-    }>();
+    };
     expect(body.sounds.length).toBe(44);
     expect(body.patterns.length).toBe(12);
     // Protected metadata is present: guidance + the checksum-bound review lane.
