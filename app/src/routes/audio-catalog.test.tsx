@@ -126,6 +126,36 @@ describe("AudioCatalogRoute (003a Task 8)", () => {
     expect(firstMapping.querySelectorAll("button[data-play]").length).toBe(2);
   });
 
+  it("shows a pattern-row playback failure inline in THAT pattern row (review finding 1)", async () => {
+    vi.mocked(getAudioCatalog).mockResolvedValue(makeCatalog());
+    play.mockResolvedValueOnce({ status: "failed", reason: "media error" } as never);
+    await render();
+    const patternRow = container.querySelector('[data-pattern-row="mapping_0"]')!;
+    const soundRow = container.querySelector('[data-sound-row="sound_00"]')!;
+    const btn = patternRow.querySelector<HTMLButtonElement>("button[data-play]")!;
+    await act(async () => {
+      btn.click();
+      await flush();
+    });
+    expect(patternRow.textContent).toMatch(/could not play/i);
+    // The error belongs to the clicked button, not the same sound's row elsewhere.
+    expect(soundRow.textContent).not.toMatch(/could not play/i);
+  });
+
+  it("shows review records even for sounds without playback media (review finding 2)", async () => {
+    const catalog = makeCatalog();
+    // Give an UNRECORDED sound a review record (type permits it).
+    catalog.sounds[5] = {
+      ...catalog.sounds[5]!,
+      reviews: [{ kind: "owner", reviewer: "Owner Person", reviewed_at: "2026-07-02", status: "changes_requested", subject_sha256: "feedbeef" }]
+    };
+    vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
+    await render();
+    const row = container.querySelector('[data-sound-row="sound_05"]')!;
+    expect(row.textContent).toContain("Owner Person");
+    expect(row.textContent).toContain("Not recorded");
+  });
+
   it("keeps a per-row playback failure from breaking other rows", async () => {
     vi.mocked(getAudioCatalog).mockResolvedValue(makeCatalog());
     play.mockResolvedValueOnce({ status: "failed", reason: "media error" } as never);

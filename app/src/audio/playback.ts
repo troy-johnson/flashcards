@@ -15,6 +15,8 @@ export type PlaybackRequest =
 
 export type PlaybackResult =
   | { status: "started" }
+  /** Reserved for the TTS lane (Task 7): utterances resolve on completion.
+      The recorded lane resolves "started" as soon as playback begins. */
   | { status: "completed" }
   | { status: "unavailable"; reason: string }
   | { status: "failed"; reason: string };
@@ -56,6 +58,9 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
     });
     try {
       await element.play();
+      // A newer play() may have superseded this one while start was pending —
+      // don't report a cancelled clip as started (symmetric with the catch).
+      if (current !== element) return { status: "failed", reason: "superseded by a newer play" };
       return { status: "started" };
     } catch (err) {
       if (current === element) current = null;

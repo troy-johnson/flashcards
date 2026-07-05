@@ -22,36 +22,38 @@ const shortSha = (sha?: string) => (sha ? sha.slice(0, 12) : "");
 const slpApproved = (sound: AudioCatalogSound) =>
   sound.reviews.some((r) => r.kind === "slp" && r.status === "approved");
 
-function PlayButton({
-  sound,
-  onResult
-}: {
-  sound: AudioCatalogSound;
-  onResult: (soundId: string, failed: boolean) => void;
-}) {
-  if (!sound.playback_url) return null;
-  const src = sound.playback_url;
-  return (
-    <button
-      type="button"
-      data-play
-      aria-label={`Play ${sound.ipa} as in ${sound.example_word}`}
-      onClick={async () => {
-        const result = await catalogPlayback.play({ kind: "recorded", src });
-        onResult(sound.sound_id, result.status === "failed" || result.status === "unavailable");
-      }}
-    >
-      ▶ {sound.instructional_label}
-    </button>
-  );
-}
-
 /** Module-level controller so the whole page shares one "one clip at a time" lane. */
 const catalogPlayback = createPlaybackController();
 
+/**
+ * Play button that owns its OWN failure state, so an error always renders next
+ * to the button that was clicked — including in the patterns section, where
+ * the same sound can also appear in the sounds list (review finding 1).
+ */
+function PlayButton({ sound }: { sound: AudioCatalogSound }) {
+  const [failed, setFailed] = useState(false);
+  if (!sound.playback_url) return null;
+  const src = sound.playback_url;
+  return (
+    <>
+      <button
+        type="button"
+        data-play
+        aria-label={`Play ${sound.ipa} as in ${sound.example_word}`}
+        onClick={async () => {
+          const result = await catalogPlayback.play({ kind: "recorded", src });
+          setFailed(result.status === "failed" || result.status === "unavailable");
+        }}
+      >
+        ▶ {sound.instructional_label}
+      </button>
+      {failed && <span role="alert"> Could not play this clip.</span>}
+    </>
+  );
+}
+
 export function AudioCatalogRoute() {
   const [state, setState] = useState<LoadState>({ phase: "loading" });
-  const [rowErrors, setRowErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -77,9 +79,6 @@ export function AudioCatalogRoute() {
         : {},
     [state]
   );
-
-  const onPlayResult = (soundId: string, failed: boolean) =>
-    setRowErrors((prev) => ({ ...prev, [soundId]: failed }));
 
   if (state.phase === "loading") {
     return (
@@ -121,23 +120,22 @@ export function AudioCatalogRoute() {
             <li key={sound.sound_id} data-sound-row={sound.sound_id} className="catalog-row">
               <div className="catalog-row-main">
                 <strong>{sound.instructional_label}</strong> {sound.ipa} — as in <em>{sound.example_word}</em>
-                <PlayButton sound={sound} onResult={onPlayResult} />
-                {rowErrors[sound.sound_id] && <span role="alert"> Could not play this clip.</span>}
+                <PlayButton sound={sound} />
               </div>
               <div className="catalog-row-meta">
                 {sound.playback_url ? (
-                  <>
-                    <span>clip {shortSha(sound.playback_sha256)}</span>
-                    {sound.reviews.map((r, i) => (
-                      <span key={i}>
-                        {" "}· {r.kind} {r.status === "approved" ? "approved" : "changes requested"} by {r.reviewer} on {r.reviewed_at}
-                      </span>
-                    ))}
-                    {!slpApproved(sound) && <span> · SLP approval required before learner use</span>}
-                  </>
+                  <span>clip {shortSha(sound.playback_sha256)}</span>
                 ) : (
-                  <span>Not recorded — SLP approval required before learner use</span>
+                  <span>Not recorded</span>
                 )}
+                {/* Review records render regardless of recording state — a
+                    changes-requested review can precede re-recording (finding 2). */}
+                {sound.reviews.map((r) => (
+                  <span key={`${r.kind}-${r.reviewer}-${r.reviewed_at}`}>
+                    {" "}· {r.kind} {r.status === "approved" ? "approved" : "changes requested"} by {r.reviewer} on {r.reviewed_at}
+                  </span>
+                ))}
+                {!slpApproved(sound) && <span> · SLP approval required before learner use</span>}
               </div>
             </li>
           ))}
@@ -151,7 +149,7 @@ export function AudioCatalogRoute() {
                 <strong>{pattern.grapheme}</strong> — as in <em>{pattern.example_word}</em>
                 {pattern.sound_ids.map((soundId) => {
                   const sound = soundsById[soundId];
-                  return sound ? <PlayButton key={soundId} sound={sound} onResult={onPlayResult} /> : null;
+                  return sound ? <PlayButton key={soundId} sound={sound} /> : null;
                 })}
               </div>
               {pattern.note && <div className="catalog-row-meta">{pattern.note}</div>}
