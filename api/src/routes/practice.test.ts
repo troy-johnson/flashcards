@@ -17,11 +17,37 @@ const resetDb = async () => {
 type PracticeSession = { id: string; student_id: string; plan: { cards: { item_id: string; skill_id: string }[] } };
 type MasteryRow = { level: number; streak: number; ease: number; due_at: string; last_seen_at: string };
 
+const K_REVIEW_SKILLS = [
+  "pa_k_u1_isolate_initial_sound",
+  "pa_k_u1_blend_two_sound",
+  "phonics_k_u1_consonants_mstp",
+  "phonics_k_u1_short_a",
+  "phonics_k_u1_cvc_blend_short_a",
+  "heart_k_u1_batch_01",
+  "fluency_k_u1_cvc_sentences",
+  "pa_k_u2_segment_three_sound",
+  "phonics_k_u2_consonants_ncdg",
+  "phonics_k_u2_short_o",
+  "phonics_k_u2_cvc_blend_short_o",
+  "fluency_k_u2_cvc_sentences"
+];
+
 const startSessionFor = async (studentId: string): Promise<PracticeSession> => {
   const start = await SELF.fetch(`https://api.test/practice/${studentId}/start`, { method: "POST", headers: { cookie: "session=s_diag" } });
   expect(start.status).toBe(201);
   const started = await start.json<{ practice_session: PracticeSession }>();
   return started.practice_session;
+};
+
+const createStudentForGuardian = async (displayName: string, grade: "K" | "1") => {
+  const create = await SELF.fetch("https://api.test/students", {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: "session=s_diag" },
+    body: JSON.stringify({ display_name: displayName, grade })
+  });
+  expect(create.status).toBe(201);
+  const body = await create.json<{ student: { id: string; display_name: string; grade: "K" | "1" } }>();
+  return body.student;
 };
 
 const startSession = () => startSessionFor("student1");
@@ -103,6 +129,53 @@ describe("practice and diagnostic routes", () => {
     expect(new Set(firstGradeSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
   });
 
+  it("supports one guardian adding K and 1st-grade siblings and starting grade-correct practice for each", async () => {
+    const kStudent = await createStudentForGuardian("Maya", "K");
+    const firstGradeStudent = await createStudentForGuardian("Noah", "1");
+
+    const list = await SELF.fetch("https://api.test/students", { headers: { cookie: "session=s_diag" } });
+    expect(list.status).toBe(200);
+    const listed = await list.json<{ students: { id: string; display_name: string; grade: "K" | "1" }[] }>();
+    expect(listed.students).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: kStudent.id, display_name: "Maya", grade: "K" }),
+      expect.objectContaining({ id: firstGradeStudent.id, display_name: "Noah", grade: "1" })
+    ]));
+
+    const startedAt = "2026-01-01T00:00:00.000Z";
+    await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
+      .bind("sibling_history_session", firstGradeStudent.id, JSON.stringify({ cards: [] }), startedAt).run();
+    const statements = [];
+    let n = 0;
+    for (const skillId of K_REVIEW_SKILLS) {
+      for (let i = 0; i < 4; i++) {
+        const scoredAt = new Date(Date.parse(startedAt) + n * 1000).toISOString();
+        statements.push(
+          env.DB.prepare(
+            `INSERT INTO attempt (id, practice_session_id, student_id, skill_id, item_id, result, scoring_source, duration_ms, shown_at, scored_at)
+             VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
+          ).bind(`sibling_review_${n}`, "sibling_history_session", firstGradeStudent.id, skillId, `${skillId}_item`, 1000, scoredAt, scoredAt)
+        );
+        n++;
+      }
+    }
+    await env.DB.batch(statements);
+
+    const kSession = await startSessionFor(kStudent.id);
+    const firstGradeSession = await startSessionFor(firstGradeStudent.id);
+
+    expect(kSession.student_id).toBe(kStudent.id);
+    expect(kSession.plan.cards.length).toBeGreaterThan(0);
+    for (const card of kSession.plan.cards) {
+      expect(card.skill_id).toMatch(/^(pa|phonics|heart|fluency)_k_/);
+    }
+    expect(firstGradeSession.student_id).toBe(firstGradeStudent.id);
+    expect(firstGradeSession.plan.cards.length).toBeGreaterThan(0);
+    expect(firstGradeSession.plan.cards[0]?.skill_id).toBe("phonics_1_u1_alphabet_review");
+    for (const card of firstGradeSession.plan.cards) {
+      expect(card.skill_id).toMatch(/^(phonics|heart|fluency)_1_/);
+    }
+  });
+
   it("uses 1st-grade review history when starting and persisting scheduler plans", async () => {
     const startedAt = "2026-01-01T00:00:00.000Z";
     await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
@@ -132,23 +205,9 @@ describe("practice and diagnostic routes", () => {
     const startedAt = "2026-01-01T00:00:00.000Z";
     await env.DB.prepare("INSERT INTO practice_session (id, student_id, plan_json, started_at) VALUES (?, ?, ?, ?)")
       .bind("history_session", "student2", JSON.stringify({ cards: [] }), startedAt).run();
-    const kSkills = [
-      "pa_k_u1_isolate_initial_sound",
-      "pa_k_u1_blend_two_sound",
-      "phonics_k_u1_consonants_mstp",
-      "phonics_k_u1_short_a",
-      "phonics_k_u1_cvc_blend_short_a",
-      "heart_k_u1_batch_01",
-      "fluency_k_u1_cvc_sentences",
-      "pa_k_u2_segment_three_sound",
-      "phonics_k_u2_consonants_ncdg",
-      "phonics_k_u2_short_o",
-      "phonics_k_u2_cvc_blend_short_o",
-      "fluency_k_u2_cvc_sentences"
-    ];
     const statements = [];
     let n = 0;
-    for (const skillId of kSkills) {
+    for (const skillId of K_REVIEW_SKILLS) {
       for (let i = 0; i < 4; i++) {
         const scoredAt = new Date(Date.parse(startedAt) + n * 1000).toISOString();
         statements.push(insertAttemptStatement(`rp_${n}`, "student2", skillId, `${skillId}_item`, scoredAt));
