@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { consumeMagicLink, createStudent, listStudents, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, getStudent, listStudents, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => ({})),
@@ -63,6 +63,54 @@ describe("guardian and sign-in routes", () => {
     expect(container.textContent).toContain("Add a student");
     expect(container.textContent).toContain("Ada");
     expect(container.querySelector('a[href="/guardian/student1"]')).not.toBeNull();
+  });
+
+  it("renders K and 1st-grade siblings as separate selectable students", async () => {
+    const siblings = [
+      { id: "student_k", display_name: "Maya", grade: "K" as const, birth_month: null, prefs_json: {}, created_at: "now", archived_at: null },
+      { id: "student_1", display_name: "Noah", grade: "1" as const, birth_month: null, prefs_json: {}, created_at: "now", archived_at: null }
+    ];
+    (listStudents as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      students: siblings
+    });
+    const findSibling = async (studentId: string) => {
+      const student = siblings.find((candidate) => candidate.id === studentId);
+      if (!student) throw new Error(`unexpected student ${studentId}`);
+      return { student };
+    };
+    (getStudent as unknown as ReturnType<typeof vi.fn>)
+      .mockImplementationOnce(findSibling)
+      .mockImplementationOnce(findSibling);
+    window.history.pushState({}, "", "/guardian");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    const mayaLink = container.querySelector('a[href="/guardian/student_k"]');
+    const noahLink = container.querySelector('a[href="/guardian/student_1"]');
+    expect(mayaLink?.textContent).toBe("Maya");
+    expect(noahLink?.textContent).toBe("Noah");
+    expect(mayaLink?.closest("li")?.textContent).toContain("Grade K");
+    expect(noahLink?.closest("li")?.textContent).toContain("Grade 1");
+
+    await act(async () => {
+      window.history.pushState({}, "", "/guardian/student_k");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      await flush();
+    });
+    expect(getStudent).toHaveBeenCalledWith("student_k");
+    expect(container.textContent).toContain("Maya's progress");
+    expect(container.querySelector('a[href="/play/student_k"]')?.textContent).toBe("Start practice");
+
+    await act(async () => {
+      window.history.pushState({}, "", "/guardian/student_1");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      await flush();
+    });
+    expect(getStudent).toHaveBeenCalledWith("student_1");
+    expect(container.textContent).toContain("Noah's progress");
+    expect(container.querySelector('a[href="/play/student_1"]')?.textContent).toBe("Start practice");
   });
 
   it("creates a student from /guardian/add-student", async () => {
