@@ -428,6 +428,16 @@ describe("deriveBatchEntries", () => {
     );
   });
 
+  it("rejects stems that collide case-insensitively, since the output filesystem may be case-insensitive", () => {
+    // Sound_A.wav and sound_a.wav derive distinct ids, but Sound_A.m4a and
+    // sound_a.m4a are the same path on the typical macOS output volume, so
+    // the later -y encode would silently clobber the earlier one.
+    assert.throws(
+      () => deriveBatchEntries(["Sound_A.wav", "sound_a.wav"]),
+      /Sound_A\.wav.*sound_a\.wav.*overwrite/s
+    );
+  });
+
   it("rejects files whose output paths collide on a case-insensitive filesystem", () => {
     assert.throws(
       () => deriveBatchEntries(["Sound_A.wav", "sound_a.wav"]),
