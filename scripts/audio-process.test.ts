@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import {
   buildProcessInvocation,
   checkBinaries,
+  DEFAULT_PROFILE_VERSION,
   defaultRunCommand,
   getProfile,
   processClip,
@@ -17,6 +18,7 @@ import {
   type ProcessDirectoryResult,
   type RunCommand
 } from "./audio-process.ts";
+import { EXECUTABLE_PROCESSING_PROFILE_VERSIONS } from "./audio-schema.ts";
 
 /** A probe that passes every rw-isolated-sound-v1 gate; tests break one field each. */
 const goodProbe = (): ClipProbe => ({
@@ -44,10 +46,20 @@ describe("getProfile", () => {
     assert.equal(p.minDurationMs, 250);
     assert.equal(p.maxDurationMs, 1500);
     assert.equal(p.maxPeakDb, -3);
+    assert.equal(p.codec, "aac");
+    assert.equal(p.codecExtension, "m4a");
   });
 
   it("rejects an unsupported profile version", () => {
     assert.throws(() => getProfile("rw-isolated-sound-v0"), /unsupported processing profile/);
+  });
+
+  it("shares one profile-version source of truth with the audio schema allowlist", () => {
+    assert.equal(DEFAULT_PROFILE_VERSION, "rw-isolated-sound-v1");
+    assert.ok(EXECUTABLE_PROCESSING_PROFILE_VERSIONS.includes(DEFAULT_PROFILE_VERSION));
+    for (const version of EXECUTABLE_PROCESSING_PROFILE_VERSIONS) {
+      assert.doesNotThrow(() => getProfile(version));
+    }
   });
 });
 
@@ -179,6 +191,33 @@ describe("probeClip", () => {
 
     assert.throws(() => probeClip("raw/bad.m4a", runCommand), /ffprobe failed.*decode error/);
   });
+
+  it("maps a positive-infinity peak to Infinity so the clipping gate rejects it", () => {
+    const runCommand: RunCommand = (command, args) => {
+      if (args[0] === "-version") {
+        return { status: 0, stdout: `${command} version`, stderr: "" };
+      }
+      if (command === "ffprobe") {
+        return {
+          status: 0,
+          stdout: JSON.stringify({
+            streams: [{ channels: 1, sample_rate: "48000", bits_per_sample: 24 }],
+            format: { duration: "0.9" }
+          }),
+          stderr: ""
+        };
+      }
+      if (command === "ffmpeg" && args.includes("volumedetect")) {
+        return { status: 0, stdout: "", stderr: "[Parsed_volumedetect_0] max_volume: inf dB" };
+      }
+      return { status: 0, stdout: "", stderr: "" };
+    };
+
+    const probe = probeClip("raw/hot.wav", runCommand);
+    assert.equal(probe.maxVolumeDb, Number.POSITIVE_INFINITY);
+    const errors = validateClip(probe, profile());
+    assert.ok(errors.some((e) => /peak|headroom/i.test(e)), `expected peak error, got: ${errors}`);
+  });
 });
 
 describe("processClip", () => {
@@ -301,11 +340,37 @@ describe("processDirectory", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("fails fast with install guidance when ffmpeg/ffprobe are missing, instead of per-file validation failures", () => {
+    const root = mkdtempSync(join(tmpdir(), "audio-process-nobin-"));
+    try {
+      const inputDir = join(root, "masters");
+      mkdirSync(inputDir);
+      writeFileSync(join(inputDir, "sound_a.wav"), "");
+
+      const missing: RunCommand = () => ({ status: 1, stdout: "", stderr: "not found" });
+
+      assert.throws(
+        () => processDirectory(inputDir, join(root, "playback"), "rw-isolated-sound-v1", missing),
+        /ffmpeg and ffprobe are required; install them before processing audio/
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("runCli", () => {
   it("requires an input directory", () => {
     assert.throws(() => runCli([]), /missing required --input <directory>/);
+  });
+
+  it("rejects a flag whose value is missing or is another flag", () => {
+    assert.throws(() => runCli(["--input", "--output", "out"]), /missing value for --input/);
+    assert.throws(
+      () => runCli(["--input", "masters", "--profile"], { processDirectoryFn: () => ({ processed: [], failures: [] }) }),
+      /missing value for --profile/
+    );
   });
 
   it("uses the default profile and output directory while reporting processed files", () => {
@@ -400,6 +465,14 @@ describe("buildProcessInvocation — deterministic profile application", () => {
   it("preserves dots in sound ids instead of stripping arbitrary extensions", () => {
     const inv = buildProcessInvocation("raw/take.wav", "sound.th.voiced", "out", profile());
     assert.equal(inv.outputPath, "out/sound.th.voiced.m4a");
+  });
+
+  it("uses the sound id verbatim even when it ends in a known audio extension", () => {
+    // Ids ending in ".opus"/".wav" must not be re-stripped: two distinct ids
+    // ("sound_th" and "sound_th.opus") would otherwise collide on one output
+    // path and -y would silently overwrite the first encode.
+    const inv = buildProcessInvocation("raw/take.wav", "sound_th.opus", "out", profile());
+    assert.equal(inv.outputPath, "out/sound_th.opus.m4a");
   });
 
   it("strips container metadata so byte output is reproducible", () => {
