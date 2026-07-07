@@ -177,8 +177,8 @@ export function validateClip(probe: ClipProbe, profile: ProcessingProfile): stri
 }
 
 export function checkBinaries(runCommand: RunCommand = defaultRunCommand): void {
-  const missing = REQUIRED_BINARIES.some((binary) => runCommand(binary, ["-version"]).status !== 0);
-  if (missing) {
+  const anyMissing = REQUIRED_BINARIES.some((binary) => runCommand(binary, ["-version"]).status !== 0);
+  if (anyMissing) {
     throw new Error(INSTALL_GUIDANCE);
   }
 }
