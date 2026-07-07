@@ -434,7 +434,10 @@ describe("deriveBatchEntries", () => {
     // the later -y encode would silently clobber the earlier one.
     assert.throws(
       () => deriveBatchEntries(["Sound_A.wav", "sound_a.wav"]),
-      /Sound_A\.wav.*sound_a\.wav.*overwrite/s
+      (error: Error) =>
+        /overwrite/.test(error.message) &&
+        error.message.includes("Sound_A.wav") &&
+        error.message.includes("sound_a.wav")
     );
   });
 
