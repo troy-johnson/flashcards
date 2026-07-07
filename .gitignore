@@ -49,6 +49,7 @@ web_modules/
 
 # Optional npm cache directory
 .npm
+.pnpm-store/
 
 # Optional eslint cache
 .eslintcache
@@ -141,6 +142,9 @@ vite.config.ts.timestamp-*
 # Local agent state
 .serena/
 .codex/
+
+# Local scratch artifacts
+scratch/
 
 # Local Cloudflare/Wrangler state
 .wrangler/

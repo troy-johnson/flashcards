@@ -9,6 +9,7 @@
     "test": "pnpm --recursive test && pnpm test:scripts",
     "test:scripts": "node --import tsx --test --test-concurrency=1 scripts/*.test.ts",
     "content:validate": "tsx scripts/content-validate.ts",
+    "audio:process": "tsx scripts/audio-process.ts",
     "audio:manifest": "tsx scripts/audio-manifest.ts",
     "audio:manifest:check": "tsx scripts/audio-manifest.ts --check",
     "audio:stage": "tsx scripts/audio-stage.ts",
