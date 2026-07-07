@@ -482,7 +482,11 @@ describe("buildProcessInvocation — deterministic profile application", () => {
   });
 });
 
-describe("real ffmpeg integration", () => {
+// Requires real ffmpeg/ffprobe; self-skips where they are not installed
+// (CI installs them so this coverage still runs there).
+const ffmpegAvailable = defaultRunCommand("ffmpeg", ["-version"]).status === 0;
+
+describe("real ffmpeg integration", { skip: !ffmpegAvailable && "ffmpeg not installed" }, () => {
   it("processes a compliant generated WAV through the real probe and encode path", () => {
     const root = mkdtempSync(join(tmpdir(), "audio-process-real-"));
     try {
