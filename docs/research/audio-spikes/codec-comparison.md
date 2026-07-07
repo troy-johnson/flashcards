@@ -53,6 +53,7 @@ Automated gates:
 | Source bit depth | 24-bit |
 | Duration | 250-1500 ms |
 | Peak ceiling | `<= -3 dB` |
+| Audibility floor | `>= -20 dB` peak |
 | Leading silence | `<= 250 ms` |
 | Trailing silence | `<= 500 ms` |
 | Runtime codec | AAC in `.m4a` |

@@ -28,6 +28,11 @@ export type ProcessingProfile = {
   minDurationMs: number;
   maxDurationMs: number;
   maxPeakDb: number;
+  // Audibility floor: a structurally valid but near-silent master (e.g. a
+  // -48 dBFS peak, just above the -50 dB silencedetect threshold) is unusable
+  // audio and must be rejected, not encoded. Provisional pending listening QA,
+  // like the other thresholds.
+  minPeakDb: number;
   maxLeadingSilenceMs: number;
   maxTrailingSilenceMs: number;
   // Codec and container extension travel together: an encode profile that
@@ -102,6 +107,7 @@ const PROFILES: Record<string, ProcessingProfile> = {
     minDurationMs: 250,
     maxDurationMs: 1500,
     maxPeakDb: -3,
+    minPeakDb: -20,
     maxLeadingSilenceMs: 250,
     maxTrailingSilenceMs: 500,
     codec: "aac",
@@ -150,6 +156,11 @@ export function validateClip(probe: ClipProbe, profile: ProcessingProfile): stri
   }
   if (probe.maxVolumeDb > profile.maxPeakDb) {
     errors.push(`clip peak ${probe.maxVolumeDb}dB exceeds ${profile.maxPeakDb}dB headroom ceiling`);
+  }
+  if (probe.maxVolumeDb < profile.minPeakDb) {
+    errors.push(
+      `clip peak ${probe.maxVolumeDb}dB is below the ${profile.minPeakDb}dB audibility floor (too quiet)`
+    );
   }
   if (probe.leadingSilenceMs > profile.maxLeadingSilenceMs) {
     errors.push(
@@ -335,31 +346,64 @@ export function processClip(
   return invocation;
 }
 
+// Pure batch planning: filter to WAV masters, sort deterministically, derive
+// sound ids, and reject stem collisions (two files whose derived ids match
+// would both encode to one output path, which -y then silently overwrites).
+export function deriveBatchEntries(
+  fileNames: readonly string[]
+): Array<{ file: string; soundId: string }> {
+  const entries = fileNames
+    .filter((name) => name.toLowerCase().endsWith(".wav"))
+    .sort((a, b) => a.localeCompare(b))
+    .map((file) => ({ file, soundId: basename(file, extname(file)) }));
+
+  const seen = new Map<string, string>();
+  for (const entry of entries) {
+    const prior = seen.get(entry.soundId);
+    if (prior !== undefined) {
+      throw new Error(
+        `[audio-process] sound id "${entry.soundId}" is derived from both ${prior} and ${entry.file}; their outputs would overwrite each other`
+      );
+    }
+    seen.set(entry.soundId, entry.file);
+  }
+
+  return entries;
+}
+
 export function processDirectory(
   inputDir: string,
   outputDir: string,
   profileVersion: string = DEFAULT_PROFILE_VERSION,
   runCommand: RunCommand = defaultRunCommand
 ): ProcessDirectoryResult {
-  // Fail fast, once per run: a missing toolchain must surface as install
-  // guidance, not as a per-file "validation" failure for every master.
+  // Fail fast, once per run: a typo'd profile or missing toolchain must
+  // surface immediately — even for an empty batch — not exit 0 or turn into
+  // a per-file "validation" failure for every master.
+  getProfile(profileVersion);
   checkBinaries(runCommand);
 
   const resolvedInput = resolve(inputDir);
   const resolvedOutput = resolve(outputDir);
-  mkdirSync(resolvedOutput, { recursive: true });
 
-  const files = readdirSync(resolvedInput, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".wav"))
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
+  const entries = deriveBatchEntries(
+    readdirSync(resolvedInput, { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+  );
+  if (entries.length === 0) {
+    throw new Error(
+      `[audio-process] no .wav masters found in ${resolvedInput}; nothing was processed`
+    );
+  }
+
+  mkdirSync(resolvedOutput, { recursive: true });
 
   const processed: ProcessInvocation[] = [];
   const failures: ProcessFailure[] = [];
 
-  for (const file of files) {
+  for (const { file, soundId } of entries) {
     const inputPath = join(resolvedInput, file);
-    const soundId = basename(file, extname(file));
     try {
       processed.push(processClip(inputPath, soundId, resolvedOutput, profileVersion, runCommand));
     } catch (error) {
