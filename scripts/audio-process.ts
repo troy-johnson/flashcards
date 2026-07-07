@@ -17,14 +17,15 @@ export type ProcessingProfile = {
   requiredSourceChannels: number;
   requiredSourceSampleRateHz: number;
   requiredSourceBitDepth: number;
+  outputChannels: number;
   outputSampleRateHz: number;
+  outputBitrateKbps: number;
   minDurationMs: number;
   maxDurationMs: number;
   maxPeakDb: number;
   maxLeadingSilenceMs: number;
   maxTrailingSilenceMs: number;
   codecExtension: "m4a";
-  ffmpegArgs: readonly string[];
 };
 
 export type CommandResult = {
@@ -85,22 +86,15 @@ const PROFILES: Record<string, ProcessingProfile> = {
     requiredSourceChannels: 1,
     requiredSourceSampleRateHz: 48000,
     requiredSourceBitDepth: 24,
+    outputChannels: 1,
     outputSampleRateHz: 44100,
+    outputBitrateKbps: 96,
     minDurationMs: 250,
     maxDurationMs: 1500,
     maxPeakDb: -3,
     maxLeadingSilenceMs: 250,
     maxTrailingSilenceMs: 500,
-    codecExtension: "m4a",
-    ffmpegArgs: [
-      "-ac", "1",
-      "-ar", "44100",
-      "-c:a", "aac",
-      "-b:a", "96k",
-      "-map_metadata", "-1",
-      "-fflags", "+bitexact",
-      "-flags:a", "+bitexact"
-    ]
+    codecExtension: "m4a"
   }
 };
 
@@ -142,7 +136,7 @@ export function validateClip(probe: ClipProbe, profile: ProcessingProfile): stri
     );
   }
   if (probe.maxVolumeDb > profile.maxPeakDb) {
-    errors.push(`clip peak ${probe.maxVolumeDb}dB exceeds ${profile.maxPeakDb}dB ceiling; possible clipping`);
+    errors.push(`clip peak ${probe.maxVolumeDb}dB exceeds ${profile.maxPeakDb}dB headroom ceiling`);
   }
   if (probe.leadingSilenceMs > profile.maxLeadingSilenceMs) {
     errors.push(
@@ -281,13 +275,29 @@ export function buildProcessInvocation(
   outputDir: string,
   profile: ProcessingProfile
 ): ProcessInvocation {
-  const safeSoundId = basename(soundId, extname(soundId));
+  const safeSoundId = stripKnownAudioExtension(basename(soundId));
   const outputPath = join(outputDir, `${safeSoundId}.${profile.codecExtension}`);
   return {
     command: "ffmpeg",
-    args: ["-y", "-i", inputPath, ...profile.ffmpegArgs, outputPath],
+    args: ["-y", "-i", inputPath, ...buildEncodeArgs(profile), outputPath],
     outputPath
   };
+}
+
+function stripKnownAudioExtension(soundId: string): string {
+  return soundId.replace(/\.(?:wav|m4a|mp3|opus)$/i, "");
+}
+
+function buildEncodeArgs(profile: ProcessingProfile): string[] {
+  return [
+    "-ac", String(profile.outputChannels),
+    "-ar", String(profile.outputSampleRateHz),
+    "-c:a", "aac",
+    "-b:a", `${profile.outputBitrateKbps}k`,
+    "-map_metadata", "-1",
+    "-fflags", "+bitexact",
+    "-flags:a", "+bitexact"
+  ];
 }
 
 export function processClip(
@@ -303,6 +313,7 @@ export function processClip(
     throw new Error(`audio validation failed for ${soundId}: ${validationErrors.join("; ")}`);
   }
   const invocation = buildProcessInvocation(inputPath, soundId, outputDir, profile);
+  mkdirSync(outputDir, { recursive: true });
   const result = runCommand(invocation.command, invocation.args);
   if (result.status !== 0) {
     throw new Error(`audio processing failed for ${soundId}: ${result.stderr || result.stdout}`);
@@ -354,7 +365,7 @@ export function runCli(args: string[], options: RunCliOptions = {}): void {
   }
 
   const profileVersion = readCliValue(args, "--profile") ?? "rw-isolated-sound-v1";
-  const outputDir = readCliValue(args, "--output") ?? "content/audio/playback";
+  const outputDir = readCliValue(args, "--output") ?? "scratch/audio-process/playback";
   const log = options.log ?? console.log;
   const processDirectoryFn = options.processDirectoryFn ?? processDirectory;
   const result = processDirectoryFn(inputDir, outputDir, profileVersion);

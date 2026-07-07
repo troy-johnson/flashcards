@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import {
   buildProcessInvocation,
   checkBinaries,
+  defaultRunCommand,
   getProfile,
   processClip,
   processDirectory,
@@ -37,7 +38,9 @@ describe("getProfile", () => {
     assert.equal(p.requiredSourceChannels, 1);
     assert.equal(p.requiredSourceSampleRateHz, 48000);
     assert.equal(p.requiredSourceBitDepth, 24);
+    assert.equal(p.outputChannels, 1);
     assert.equal(p.outputSampleRateHz, 44100);
+    assert.equal(p.outputBitrateKbps, 96);
     assert.equal(p.minDurationMs, 250);
     assert.equal(p.maxDurationMs, 1500);
     assert.equal(p.maxPeakDb, -3);
@@ -68,9 +71,9 @@ describe("validateClip — rw-isolated-sound-v1 gates", () => {
     assert.ok(errors.some((e) => /bit depth/.test(e)), `expected bit-depth error, got: ${errors}`);
   });
 
-  it("fails a clipped clip (peak above the profile ceiling)", () => {
+  it("fails a hot clip with too little peak headroom", () => {
     const errors = validateClip({ ...goodProbe(), maxVolumeDb: -0.05 }, profile());
-    assert.ok(errors.some((e) => /peak|clip/i.test(e)), `expected clipping error, got: ${errors}`);
+    assert.ok(errors.some((e) => /peak|headroom/i.test(e)), `expected peak-headroom error, got: ${errors}`);
   });
 
   it("fails a clip outside the duration window", () => {
@@ -312,7 +315,7 @@ describe("runCli", () => {
         {
           command: "ffmpeg",
           args: [],
-          outputPath: "content/audio/playback/sound_a.m4a"
+          outputPath: "scratch/audio-process/playback/sound_a.m4a"
         }
       ],
       failures: []
@@ -330,11 +333,11 @@ describe("runCli", () => {
     assert.deepEqual(calls, [
       {
         inputDir: "approved-takes",
-        outputDir: "content/audio/playback",
+        outputDir: "scratch/audio-process/playback",
         profileVersion: "rw-isolated-sound-v1"
       }
     ]);
-    assert.deepEqual(logs, ["[audio-process] wrote content/audio/playback/sound_a.m4a"]);
+    assert.deepEqual(logs, ["[audio-process] wrote scratch/audio-process/playback/sound_a.m4a"]);
   });
 
   it("honors explicit output and profile flags", () => {
@@ -394,9 +397,49 @@ describe("buildProcessInvocation — deterministic profile application", () => {
     assert.deepEqual(inv, buildProcessInvocation("raw/take3 short_a FINAL.wav", "sound_short_a", "out", profile()));
   });
 
+  it("preserves dots in sound ids instead of stripping arbitrary extensions", () => {
+    const inv = buildProcessInvocation("raw/take.wav", "sound.th.voiced", "out", profile());
+    assert.equal(inv.outputPath, "out/sound.th.voiced.m4a");
+  });
+
   it("strips container metadata so byte output is reproducible", () => {
     const args = buildProcessInvocation("in.wav", "sound_m", "out", profile()).args.join(" ");
     assert.match(args, /-map_metadata -1/);
     assert.match(args, /-fflags \+bitexact/);
+  });
+});
+
+describe("real ffmpeg integration", () => {
+  it("processes a compliant generated WAV through the real probe and encode path", () => {
+    const root = mkdtempSync(join(tmpdir(), "audio-process-real-"));
+    try {
+      const inputPath = join(root, "sound_integration.wav");
+      const outputDir = join(root, "playback");
+      const synth = defaultRunCommand("ffmpeg", [
+        "-hide_banner",
+        "-loglevel", "error",
+        "-y",
+        "-f", "lavfi",
+        "-i", "sine=frequency=440:duration=0.9:sample_rate=48000",
+        "-ac", "1",
+        "-c:a", "pcm_s24le",
+        inputPath
+      ]);
+
+      assert.equal(synth.status, 0, synth.stderr || synth.stdout);
+
+      const invocation = processClip(
+        inputPath,
+        "sound_integration",
+        outputDir,
+        "rw-isolated-sound-v1"
+      );
+
+      assert.equal(invocation.outputPath, join(outputDir, "sound_integration.m4a"));
+      assert.equal(existsSync(invocation.outputPath), true);
+      assert.ok(statSync(invocation.outputPath).size > 0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

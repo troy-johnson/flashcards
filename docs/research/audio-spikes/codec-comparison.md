@@ -1,6 +1,6 @@
 # Codec Comparison Spike
 
-Status: measured with phone-provided scratch clips; code blockers from adversarial review resolved; manual target-device listening remains before Task 10 bulk recording.
+Status: measured with phone-provided scratch clips; automated processing tooling is implemented; AAC is the provisional tooling profile pending manual target-device listening before Task 9 can be treated as complete.
 
 ## Inputs
 
@@ -67,15 +67,17 @@ Processing arguments:
 
 The peak gate is `-3 dB`, not `-1 dB`, because the hot stop clip measured at `-1.2 dB` as source audio but decoded to `0.0 dB` after AAC encoding. Final recording should leave headroom before lossy encoding instead of relying on the encoder not to overshoot.
 
-The profile separates source validation from runtime encoding: Task 10 masters must be 48 kHz, 24-bit mono WAV, while runtime playback is currently encoded to 44.1 kHz AAC for broad Apple/browser playback.
+The profile separates source validation from runtime encoding: Task 10 masters must be 48 kHz, 24-bit mono WAV, while runtime playback tooling currently encodes to 44.1 kHz AAC for broad Apple/browser playback.
 
 Executable entrypoint:
 
 ```bash
-pnpm audio:process --input <approved-takes-directory> --profile rw-isolated-sound-v1
+pnpm audio:process --input <approved-takes-directory> --profile rw-isolated-sound-v1 --output <review-output-directory>
 ```
 
-The entrypoint processes `.wav` files in deterministic filename order, validates each source master before encoding, and reports a per-sound failure list. Smoke test against the generated scratch WAV comparison files failed as expected because those files are 44.1 kHz, 16-bit, too long, and often too hot for the source-master profile.
+The entrypoint processes `.wav` files in deterministic filename order, validates each source master before encoding, and reports a per-sound failure list. The default output path is `scratch/audio-process/playback` so accidental local runs do not write review assets into tracked content. Smoke test against the generated scratch WAV comparison files failed as expected because those files are 44.1 kHz, 16-bit, too long, and often too hot for the source-master profile.
+
+Automated real-ffmpeg smoke coverage now synthesizes a compliant 48 kHz, 24-bit mono WAV, probes it through `ffprobe`/`ffmpeg`, and verifies an AAC `.m4a` output is written. This proves the happy path for the processing script, but not learner-facing recording quality.
 
 ## Codec Comparison Matrix
 
@@ -96,10 +98,10 @@ Codec arguments:
 | Opus | `-ac 1 -ar 48000 -c:a libopus -b:a 48k -application voip -map_metadata -1` |
 | MP3 | `-ac 1 -ar 44100 -c:a libmp3lame -b:a 96k -map_metadata -1` |
 
-| Codec | Browser support | Start latency | Padding/clicks | Intelligibility | Size | Peak/clipping | Silence behavior | Decision |
+| Codec | Browser support | Start latency | Padding/clicks | Intelligibility | Size | Peak/headroom | Silence behavior | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | WAV | Broad LPCM WAV support in browsers; no codec loss. | Not device-measured; lowest decode complexity expected. | No audible device check yet; local trailing edge measured 20-32 ms. | Preserves source; no lossy artifacts. | 1,401,596 bytes total; 280,319 avg. | Max -0.9 dB from hot source. | Max leading 55 ms; max trailing 32 ms. | Reject for runtime: too large for repeated drill playback. Keep masters as WAV where needed. |
-| AAC (`.m4a`) | MP4/AAC is broadly supported for web playback; Firefox can depend on platform AAC support. Good fit for the iPadOS Safari target. | Not device-measured; codec latency range is acceptable for UI-triggered sound playback but must be heard on target devices. | Local trailing edge measured 19-34 ms. Hot source produced a decoded 0.0 dB peak, which drove the `-3 dB` source gate. | Pending target-device listening; expected acceptable at 96k mono for isolated speech sounds. | 199,663 bytes total; 39,933 avg. | Max 0.0 dB with hot source; profile now rejects that source headroom. | Max leading 55 ms; max trailing 34 ms. | Select as executable profile codec, contingent on manual iPadOS Safari/mobile Safari/Chrome listening before Task 10 assets are approved. |
+| AAC (`.m4a`) | MP4/AAC is broadly supported for web playback; Firefox can depend on platform AAC support. Good fit for the iPadOS Safari target. | Not device-measured; codec latency range is acceptable for UI-triggered sound playback but must be heard on target devices. | Local trailing edge measured 19-34 ms. Hot source produced a decoded 0.0 dB peak, which drove the `-3 dB` source gate. | Pending target-device listening; expected acceptable at 96k mono for isolated speech sounds. | 199,663 bytes total; 39,933 avg. | Max 0.0 dB with hot source; profile now rejects that source headroom. | Max leading 55 ms; max trailing 34 ms. | Use as the provisional executable tooling codec; final Task 9 acceptance still requires manual iPadOS Safari/mobile Safari/Chrome listening. |
 | Opus (`.opus`) | Small and speech-efficient, but Safari container behavior is version-sensitive; WebKit added more Ogg Opus support in Safari 18.4. | Low codec latency, but target-device startup still unmeasured. | Local trailing edge measured 0-51 ms. | Pending listening; likely intelligible, but target compatibility risk outweighs size win. | 93,967 bytes total; 18,793 avg. | Max -0.9 dB from hot source. | Max leading 55 ms; max trailing 51 ms. | Reject as primary codec for this app because iPad Safari compatibility is the controlling risk. |
 | MP3 | Broadest browser/device compatibility. | MP3 codec latency is documented as at least 100 ms; target-device startup still unmeasured. | Local trailing edge measured 20-35 ms; MP3 encoder delay is a concern for very short phoneme clips. | Pending listening; likely intelligible. | 194,574 bytes total; 38,915 avg. | Max -1.2 dB, no local decoded clipping in this sample. | Max leading 55 ms; max trailing 35 ms. | Keep as fallback candidate only; no clear advantage over AAC for the Apple-first target. |
 
@@ -132,11 +134,11 @@ Clipping note: current automated validation gates sample peak headroom using `vo
 
 ## Sources
 
-- [MDN Web audio codec guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs) for codec/container support, codec latency ranges, and AAC/MP3/Opus notes.
-- [MDN Media container formats](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers) for WAV/LPCM container support and general audio-only container guidance.
-- [WebKit: New WebKit Features in Safari 15](https://webkit.org/blog/11989/new-webkit-features-in-safari-15/) for Safari WebM/Opus media support history.
-- [WebKit: WebKit Features in Safari 18.4](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/) for current Ogg Opus/Vorbis support on Apple platforms.
+- `MDN-AUDIO-CODECS` for codec/container support, codec latency ranges, and AAC/MP3/Opus notes.
+- `MDN-MEDIA-CONTAINERS` for WAV/LPCM container support and general audio-only container guidance.
+- `WEBKIT-SAFARI-15-MEDIA` for Safari WebM/Opus media support history.
+- `WEBKIT-SAFARI-18-4-MEDIA` for current Ogg Opus/Vorbis support on Apple platforms.
 
 ## Remaining Manual Check
 
-Before Task 10 records the 44 learner-facing assets, play a short AAC review set on iPadOS Safari, mobile Safari, desktop Safari, and Chrome. Confirm no audible click, clipped burst, excessive startup delay, or confusing speech distortion. If AAC fails this listening check, rerun the comparison with MP3 as the fallback candidate.
+Task 9 remains open until a short AAC review set is played on iPadOS Safari, mobile Safari, desktop Safari, and Chrome. Confirm no audible click, clipped burst, excessive startup delay, or confusing speech distortion. If AAC fails this listening check, rerun the comparison with MP3 as the fallback candidate before Task 10 assets are approved.
