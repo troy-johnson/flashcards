@@ -8,6 +8,7 @@ import {
   checkBinaries,
   DEFAULT_PROFILE_VERSION,
   defaultRunCommand,
+  deriveBatchEntries,
   getProfile,
   processClip,
   processDirectory,
@@ -46,6 +47,7 @@ describe("getProfile", () => {
     assert.equal(p.minDurationMs, 250);
     assert.equal(p.maxDurationMs, 1500);
     assert.equal(p.maxPeakDb, -3);
+    assert.equal(p.minPeakDb, -20);
     assert.equal(p.codec, "aac");
     assert.equal(p.codecExtension, "m4a");
   });
@@ -86,6 +88,19 @@ describe("validateClip — rw-isolated-sound-v1 gates", () => {
   it("fails a hot clip with too little peak headroom", () => {
     const errors = validateClip({ ...goodProbe(), maxVolumeDb: -0.05 }, profile());
     assert.ok(errors.some((e) => /peak|headroom/i.test(e)), `expected peak-headroom error, got: ${errors}`);
+  });
+
+  it("fails an inaudibly quiet clip below the audibility floor", () => {
+    // A structurally valid master peaking at -48.5 dBFS is unusable audio;
+    // the ceiling-only gate used to pass it (silencedetect at -50 dB sees no
+    // edge silence just above its threshold).
+    const errors = validateClip({ ...goodProbe(), maxVolumeDb: -48.5 }, profile());
+    assert.ok(errors.some((e) => /quiet|audib|floor/i.test(e)), `expected audibility-floor error, got: ${errors}`);
+  });
+
+  it("fails a fully silent clip (-inf peak) at the audibility floor", () => {
+    const errors = validateClip({ ...goodProbe(), maxVolumeDb: Number.NEGATIVE_INFINITY }, profile());
+    assert.ok(errors.some((e) => /quiet|audib|floor/i.test(e)), `expected audibility-floor error, got: ${errors}`);
   });
 
   it("fails a clip outside the duration window", () => {
@@ -341,6 +356,42 @@ describe("processDirectory", () => {
     }
   });
 
+  it("rejects an empty or WAV-free input directory instead of succeeding as a no-op", () => {
+    const root = mkdtempSync(join(tmpdir(), "audio-process-empty-"));
+    try {
+      const inputDir = join(root, "masters");
+      mkdirSync(inputDir);
+      writeFileSync(join(inputDir, "phone-clip.m4a"), "");
+
+      const present: RunCommand = () => ({ status: 0, stdout: "ok", stderr: "" });
+
+      assert.throws(
+        () => processDirectory(inputDir, join(root, "playback"), "rw-isolated-sound-v1", present),
+        /no \.wav masters found/
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an unsupported profile before touching the input directory", () => {
+    const root = mkdtempSync(join(tmpdir(), "audio-process-badprofile-"));
+    try {
+      const inputDir = join(root, "masters");
+      mkdirSync(inputDir);
+
+      const present: RunCommand = () => ({ status: 0, stdout: "ok", stderr: "" });
+
+      // Even with an empty batch, a typo'd profile must fail, not exit clean.
+      assert.throws(
+        () => processDirectory(inputDir, join(root, "playback"), "not-a-profile", present),
+        /unsupported processing profile/
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails fast with install guidance when ffmpeg/ffprobe are missing, instead of per-file validation failures", () => {
     const root = mkdtempSync(join(tmpdir(), "audio-process-nobin-"));
     try {
@@ -357,6 +408,24 @@ describe("processDirectory", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("deriveBatchEntries", () => {
+  it("filters to WAV files, sorts deterministically, and derives sound ids", () => {
+    assert.deepEqual(deriveBatchEntries(["sound_z.wav", "ignore.txt", "sound_a.WAV"]), [
+      { file: "sound_a.WAV", soundId: "sound_a" },
+      { file: "sound_z.wav", soundId: "sound_z" }
+    ]);
+  });
+
+  it("rejects files whose stems collide on one output path", () => {
+    // On a case-sensitive filesystem sound_a.wav and sound_a.WAV coexist and
+    // would both encode to sound_a.m4a, with -y silently overwriting.
+    assert.throws(
+      () => deriveBatchEntries(["sound_a.WAV", "sound_a.wav"]),
+      /sound_a.*overwrite/s
+    );
   });
 });
 
