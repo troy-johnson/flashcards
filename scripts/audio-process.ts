@@ -1,6 +1,11 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readdirSync } from "node:fs";
 import { basename, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  EXECUTABLE_PROCESSING_PROFILE_VERSIONS,
+  type ExecutableProcessingProfileVersion
+} from "./audio-schema.ts";
 
 export type ClipProbe = {
   channels: number;
@@ -13,7 +18,7 @@ export type ClipProbe = {
 };
 
 export type ProcessingProfile = {
-  version: "rw-isolated-sound-v1";
+  version: ExecutableProcessingProfileVersion;
   requiredSourceChannels: number;
   requiredSourceSampleRateHz: number;
   requiredSourceBitDepth: number;
@@ -25,6 +30,9 @@ export type ProcessingProfile = {
   maxPeakDb: number;
   maxLeadingSilenceMs: number;
   maxTrailingSilenceMs: number;
+  // Codec and container extension travel together: an encode profile that
+  // changes one must change the other (e.g. an MP3 fallback profile).
+  codec: "aac";
   codecExtension: "m4a";
 };
 
@@ -80,9 +88,11 @@ type FfprobeMetadata = {
   };
 };
 
+export const DEFAULT_PROFILE_VERSION = EXECUTABLE_PROCESSING_PROFILE_VERSIONS[0];
+
 const PROFILES: Record<string, ProcessingProfile> = {
-  "rw-isolated-sound-v1": {
-    version: "rw-isolated-sound-v1",
+  [DEFAULT_PROFILE_VERSION]: {
+    version: DEFAULT_PROFILE_VERSION,
     requiredSourceChannels: 1,
     requiredSourceSampleRateHz: 48000,
     requiredSourceBitDepth: 24,
@@ -94,6 +104,7 @@ const PROFILES: Record<string, ProcessingProfile> = {
     maxPeakDb: -3,
     maxLeadingSilenceMs: 250,
     maxTrailingSilenceMs: 500,
+    codec: "aac",
     codecExtension: "m4a"
   }
 };
@@ -103,7 +114,9 @@ export const defaultRunCommand: RunCommand = (command, args) => {
   return {
     status: result.status,
     stdout: result.stdout ?? "",
-    stderr: result.stderr ?? ""
+    // A spawn failure (e.g. binary missing) leaves stderr null with the cause
+    // on result.error; surface it so callers get more than an empty message.
+    stderr: result.stderr ?? result.error?.message ?? ""
   };
 };
 
@@ -201,7 +214,10 @@ function parseMaxVolumeDb(stderr: string, inputPath: string): number {
   if (!match) {
     throw new Error(`[audio-process] ffmpeg volumedetect output missing max_volume for ${inputPath}`);
   }
-  return match[1] === "-inf" ? Number.NEGATIVE_INFINITY : Number(match[1]);
+  if (match[1] === "-inf") return Number.NEGATIVE_INFINITY;
+  // Number("inf") is NaN, and NaN would silently pass the peak gate.
+  if (match[1] === "inf") return Number.POSITIVE_INFINITY;
+  return Number(match[1]);
 }
 
 function parseSilenceEdgesMs(stderr: string, durationMs: number): Pick<ClipProbe, "leadingSilenceMs" | "trailingSilenceMs"> {
@@ -243,9 +259,9 @@ function parseSilenceEdgesMs(stderr: string, durationMs: number): Pick<ClipProbe
   };
 }
 
+// Precondition: ffmpeg/ffprobe are installed. Batch entrypoints verify this
+// once via checkBinaries; probing does not re-check per clip.
 export function probeClip(inputPath: string, runCommand: RunCommand = defaultRunCommand): ClipProbe {
-  checkBinaries(runCommand);
-
   const metadata = runCommand("ffprobe", [
     "-v", "error",
     "-select_streams", "a:0",
@@ -275,8 +291,10 @@ export function buildProcessInvocation(
   outputDir: string,
   profile: ProcessingProfile
 ): ProcessInvocation {
-  const safeSoundId = stripKnownAudioExtension(basename(soundId));
-  const outputPath = join(outputDir, `${safeSoundId}.${profile.codecExtension}`);
+  // soundId is a clean identifier (processDirectory derives it from the
+  // filename); it is used verbatim so ids that happen to end in an audio
+  // extension cannot collide after a second strip.
+  const outputPath = join(outputDir, `${soundId}.${profile.codecExtension}`);
   return {
     command: "ffmpeg",
     args: ["-y", "-i", inputPath, ...buildEncodeArgs(profile), outputPath],
@@ -284,15 +302,11 @@ export function buildProcessInvocation(
   };
 }
 
-function stripKnownAudioExtension(soundId: string): string {
-  return soundId.replace(/\.(?:wav|m4a|mp3|opus)$/i, "");
-}
-
 function buildEncodeArgs(profile: ProcessingProfile): string[] {
   return [
     "-ac", String(profile.outputChannels),
     "-ar", String(profile.outputSampleRateHz),
-    "-c:a", "aac",
+    "-c:a", profile.codec,
     "-b:a", `${profile.outputBitrateKbps}k`,
     "-map_metadata", "-1",
     "-fflags", "+bitexact",
@@ -304,7 +318,7 @@ export function processClip(
   inputPath: string,
   soundId: string,
   outputDir: string,
-  profileVersion = "rw-isolated-sound-v1",
+  profileVersion: string = DEFAULT_PROFILE_VERSION,
   runCommand: RunCommand = defaultRunCommand
 ): ProcessInvocation {
   const profile = getProfile(profileVersion);
@@ -324,9 +338,13 @@ export function processClip(
 export function processDirectory(
   inputDir: string,
   outputDir: string,
-  profileVersion = "rw-isolated-sound-v1",
+  profileVersion: string = DEFAULT_PROFILE_VERSION,
   runCommand: RunCommand = defaultRunCommand
 ): ProcessDirectoryResult {
+  // Fail fast, once per run: a missing toolchain must surface as install
+  // guidance, not as a per-file "validation" failure for every master.
+  checkBinaries(runCommand);
+
   const resolvedInput = resolve(inputDir);
   const resolvedOutput = resolve(outputDir);
   mkdirSync(resolvedOutput, { recursive: true });
@@ -355,7 +373,11 @@ export function processDirectory(
 function readCliValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   if (index === -1) return undefined;
-  return args[index + 1];
+  const value = args[index + 1];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(`[audio-process] missing value for ${flag}`);
+  }
+  return value;
 }
 
 export function runCli(args: string[], options: RunCliOptions = {}): void {
@@ -364,7 +386,7 @@ export function runCli(args: string[], options: RunCliOptions = {}): void {
     throw new Error("[audio-process] missing required --input <directory>");
   }
 
-  const profileVersion = readCliValue(args, "--profile") ?? "rw-isolated-sound-v1";
+  const profileVersion = readCliValue(args, "--profile") ?? DEFAULT_PROFILE_VERSION;
   const outputDir = readCliValue(args, "--output") ?? "scratch/audio-process/playback";
   const log = options.log ?? console.log;
   const processDirectoryFn = options.processDirectoryFn ?? processDirectory;
@@ -382,7 +404,10 @@ export function runCli(args: string[], options: RunCliOptions = {}): void {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Path comparison (not string-built URLs): import.meta.url percent-encodes
+// characters like spaces, so a hand-built `file://${argv[1]}` never matches
+// from such paths and the CLI would silently no-op with exit code 0.
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   try {
     runCli(process.argv.slice(2));
   } catch (error) {

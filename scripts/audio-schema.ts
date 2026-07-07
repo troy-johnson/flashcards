@@ -54,16 +54,28 @@ export function loadAudioSources(root: string): AudioSources {
 const VALID_BEHAVIORS = new Set<string>(["clip", "sustain", "glide", "sequence"]);
 
 // Source-capture guidance profiles are used in content/audio/sounds.json for
-// checksum-bound SLP review subjects. The executable runtime encode profile
-// (`rw-isolated-sound-v1`) lives in scripts/audio-process.ts and may appear once
-// an approved take has been normalized for playback.
-const VALID_PROCESSING_PROFILES = new Set<string>([
+// checksum-bound SLP review subjects.
+const SOURCE_CAPTURE_PROCESSING_PROFILES = [
   "standard_vowel",
   "standard_consonant",
   "stop_clip",
   "affricate_clip",
-  "glide_consonant",
-  "rw-isolated-sound-v1"
+  "glide_consonant"
+] as const;
+
+// Executable runtime encode profile versions — the single source of truth for
+// these strings. scripts/audio-process.ts keys its profile registry off this
+// list (not the other way round: this module must stay importable without
+// node:child_process), so the schema allowlist and the encoder cannot drift.
+// A version may appear in sounds.json once an approved take has been
+// normalized for playback.
+export const EXECUTABLE_PROCESSING_PROFILE_VERSIONS = ["rw-isolated-sound-v1"] as const;
+export type ExecutableProcessingProfileVersion =
+  (typeof EXECUTABLE_PROCESSING_PROFILE_VERSIONS)[number];
+
+const VALID_PROCESSING_PROFILES = new Set<string>([
+  ...SOURCE_CAPTURE_PROCESSING_PROFILES,
+  ...EXECUTABLE_PROCESSING_PROFILE_VERSIONS
 ]);
 
 // The 12 canonical grapheme patterns Reader's Way teaches. A mapping whose

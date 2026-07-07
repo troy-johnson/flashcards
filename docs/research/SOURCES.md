@@ -225,6 +225,7 @@ Every added source must include:
 
 - **Tier/type:** C — web platform implementation reference
 - **Organization:** MDN Web Docs
+- **Published:** Living reference, continuously revised (undated; content current as of the last-verified date below)
 - **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs
 - **Last verified:** 2026-07-07
 - **Population/scope:** Browser audio codec support, codec characteristics, and implementation caveats.
@@ -237,6 +238,7 @@ Every added source must include:
 
 - **Tier/type:** C — web platform implementation reference
 - **Organization:** MDN Web Docs
+- **Published:** Living reference, continuously revised (undated; content current as of the last-verified date below)
 - **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers
 - **Last verified:** 2026-07-07
 - **Population/scope:** Browser media container support and audio-only container behavior.
@@ -249,6 +251,7 @@ Every added source must include:
 
 - **Tier/type:** C — browser-engine release notes
 - **Organization:** WebKit
+- **Published:** 2021 (Safari 15 release notes)
 - **Canonical URL:** https://webkit.org/blog/11989/new-webkit-features-in-safari-15/
 - **Last verified:** 2026-07-07
 - **Population/scope:** Safari 15 media feature history.
@@ -261,6 +264,7 @@ Every added source must include:
 
 - **Tier/type:** C — browser-engine release notes
 - **Organization:** WebKit
+- **Published:** 2025 (Safari 18.4 release notes)
 - **Canonical URL:** https://webkit.org/blog/16574/webkit-features-in-safari-18-4/
 - **Last verified:** 2026-07-07
 - **Population/scope:** Safari 18.4 media feature updates.
