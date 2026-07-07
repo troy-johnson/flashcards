@@ -427,6 +427,13 @@ describe("deriveBatchEntries", () => {
       /sound_a.*overwrite/s
     );
   });
+
+  it("rejects files whose output paths collide on a case-insensitive filesystem", () => {
+    assert.throws(
+      () => deriveBatchEntries(["Sound_A.wav", "sound_a.wav"]),
+      /Sound_A.*sound_a.*overwrite/s
+    );
+  });
 });
 
 describe("runCli", () => {

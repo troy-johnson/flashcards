@@ -348,7 +348,8 @@ export function processClip(
 
 // Pure batch planning: filter to WAV masters, sort deterministically, derive
 // sound ids, and reject stem collisions (two files whose derived ids match
-// would both encode to one output path, which -y then silently overwrites).
+// case-insensitively would both encode to one output path on common output
+// filesystems, which -y then silently overwrites).
 export function deriveBatchEntries(
   fileNames: readonly string[]
 ): Array<{ file: string; soundId: string }> {
@@ -359,13 +360,14 @@ export function deriveBatchEntries(
 
   const seen = new Map<string, string>();
   for (const entry of entries) {
-    const prior = seen.get(entry.soundId);
+    const outputKey = entry.soundId.toLowerCase();
+    const prior = seen.get(outputKey);
     if (prior !== undefined) {
       throw new Error(
         `[audio-process] sound id "${entry.soundId}" is derived from both ${prior} and ${entry.file}; their outputs would overwrite each other`
       );
     }
-    seen.set(entry.soundId, entry.file);
+    seen.set(outputKey, entry.file);
   }
 
   return entries;
