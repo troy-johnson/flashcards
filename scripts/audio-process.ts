@@ -305,6 +305,17 @@ export function buildProcessInvocation(
   // soundId is a clean identifier (processDirectory derives it from the
   // filename); it is used verbatim so ids that happen to end in an audio
   // extension cannot collide after a second strip.
+  if (
+    soundId === "" ||
+    soundId === "." ||
+    soundId === ".." ||
+    soundId.includes("/") ||
+    soundId.includes("\\")
+  ) {
+    throw new Error(
+      `soundId must be a plain filename component, got: ${JSON.stringify(soundId)}`
+    );
+  }
   const outputPath = join(outputDir, `${soundId}.${profile.codecExtension}`);
   return {
     command: "ffmpeg",

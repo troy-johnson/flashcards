@@ -45,10 +45,9 @@ Modify `.github/workflows/ci.yml` to install the binaries before the test step, 
 
 ```yaml
       - run: pnpm install --frozen-lockfile
-      # Required by scripts/audio-process.test.ts real-ffmpeg integration test
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: ffmpeg -version
-      - run: ffprobe -version
+      # scripts/audio-process.test.ts exercises the real ffmpeg encode path;
+      # without ffmpeg those tests self-skip and CI loses that coverage.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

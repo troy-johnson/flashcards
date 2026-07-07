@@ -225,7 +225,7 @@ Every added source must include:
 
 - **Tier/type:** C — web platform implementation reference
 - **Organization:** MDN Web Docs
-- **Published:** Living reference, continuously revised (undated; content current as of the last-verified date below)
+- **Published:** Living reference, continuously revised (effective publication: 2026-07-07)
 - **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs
 - **Last verified:** 2026-07-07
 - **Population/scope:** Browser audio codec support, codec characteristics, and implementation caveats.
@@ -238,7 +238,7 @@ Every added source must include:
 
 - **Tier/type:** C — web platform implementation reference
 - **Organization:** MDN Web Docs
-- **Published:** Living reference, continuously revised (undated; content current as of the last-verified date below)
+- **Published:** Living reference, continuously revised (effective publication: 2026-07-07)
 - **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers
 - **Last verified:** 2026-07-07
 - **Population/scope:** Browser media container support and audio-only container behavior.

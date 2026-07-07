@@ -569,6 +569,15 @@ describe("buildProcessInvocation — deterministic profile application", () => {
     assert.match(args, /-map_metadata -1/);
     assert.match(args, /-fflags \+bitexact/);
   });
+
+  it("rejects soundIds that could escape the output directory", () => {
+    for (const badId of ["../sound", "a/b", "a\\b", "", ".", ".."]) {
+      assert.throws(
+        () => buildProcessInvocation("in.wav", badId, "out", profile()),
+        /soundId must be a plain filename component/
+      );
+    }
+  });
 });
 
 // Requires real ffmpeg/ffprobe; self-skips where they are not installed
