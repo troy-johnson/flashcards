@@ -7,6 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 APP_ORIGIN = "http://localhost:5173"
 DIAG_GUARDIAN_EMAIL = "local-guardian@example.com"
 AUTH_EMAIL_ISSUER = "dev-log"
+# Placeholder sender identity. Replace with the Resend-verified address before
+# flipping AUTH_EMAIL_ISSUER to "resend".
+EMAIL_FROM = "Reader's Way <signin@example.com>"
 
 [[d1_databases]]
 binding = "DB"
@@ -20,6 +23,9 @@ name = "api-flashcards-preview"
 APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
 DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "dev-log"
+# Placeholder sender identity. Replace with the Resend-verified address before
+# flipping AUTH_EMAIL_ISSUER to "resend".
+EMAIL_FROM = "Reader's Way <signin@example.com>"
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -35,6 +41,9 @@ name = "api-flashcards"
 APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
 DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "dev-log"
+# Placeholder sender identity. Replace with the Resend-verified address before
+# flipping AUTH_EMAIL_ISSUER to "resend".
+EMAIL_FROM = "Reader's Way <signin@example.com>"
 
 [[env.production.d1_databases]]
 binding = "DB"
