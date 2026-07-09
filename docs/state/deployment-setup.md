@@ -49,6 +49,32 @@ Dashboard → Workers & Pages → `api-flashcards` → Settings → Build → ed
 - Environment variables:
   - `NODE_VERSION = 24`
 
+## 4. Resend transactional email setup
+
+Real magic-link email is behind the `AUTH_EMAIL_ISSUER` env var. Keep it as
+`dev-log` until Resend is verified and the secret is in place.
+
+1. Sign up / sign in at https://resend.com and add a verified domain
+   (e.g. `mail.readersway.app`). Resend requires a domain you own; the
+   `*.workers.dev` origin cannot be a sender identity.
+2. Note the verified sender address, e.g.
+   `Reader's Way <signin@mail.readersway.app>`.
+3. In `api/wrangler.toml`, replace every placeholder `EMAIL_FROM` value with the
+   verified address.
+4. Set the Resend API key as a Cloudflare Worker secret for **each environment**
+   that will send real email:
+   - Default / local: `pnpm --filter api exec wrangler secret put RESEND_API_KEY`
+   - Preview: `pnpm --filter api exec wrangler secret put RESEND_API_KEY --env preview`
+   - Production: `pnpm --filter api exec wrangler secret put RESEND_API_KEY --env production`
+5. Do **one** operational test send before flipping the issuer:
+   - Temporarily set `AUTH_EMAIL_ISSUER = "resend"` in the target environment
+     vars (e.g. `env.preview.vars`), commit, and deploy.
+   - Request a magic link to the operator's email address and confirm delivery.
+   - Revert to `AUTH_EMAIL_ISSUER = "dev-log"` after the test.
+6. Only after the test send succeeds, leave `AUTH_EMAIL_ISSUER = "resend"` in
+   the pilot/production environment. Keep `dev-log` out of public production
+   except for deliberate internal testing windows.
+
 ## Current naming
 
 - Frontend Worker name: `flashcards`.
