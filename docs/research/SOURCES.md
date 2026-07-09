@@ -221,6 +221,58 @@ Every added source must include:
 - **Limitations:** Published in 2016; exact current behavior must be recorded through device QA.
 - **Consumed by:** ADR-002 and audio device-spike requirements.
 
+### `MDN-AUDIO-CODECS`
+
+- **Tier/type:** C — web platform implementation reference
+- **Organization:** MDN Web Docs
+- **Published:** Living reference, continuously revised (effective publication: 2026-07-07)
+- **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs
+- **Last verified:** 2026-07-07
+- **Population/scope:** Browser audio codec support, codec characteristics, and implementation caveats.
+- **Supports:** Codec/container support considerations for AAC, MP3, Opus, and WAV; codec-latency caveats used in the codec comparison spike.
+- **Does not support:** Actual Reader's Way target-device playback quality, final codec approval, or speech-sound intelligibility for children.
+- **Limitations:** Browser support tables and implementation notes are not a substitute for iPadOS Safari, mobile Safari, desktop Safari, and Chrome listening checks.
+- **Consumed by:** `docs/research/audio-spikes/codec-comparison.md`.
+
+### `MDN-MEDIA-CONTAINERS`
+
+- **Tier/type:** C — web platform implementation reference
+- **Organization:** MDN Web Docs
+- **Published:** Living reference, continuously revised (effective publication: 2026-07-07)
+- **Canonical URL:** https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers
+- **Last verified:** 2026-07-07
+- **Population/scope:** Browser media container support and audio-only container behavior.
+- **Supports:** WAV/LPCM container-support discussion and general container-selection tradeoffs in the codec comparison spike.
+- **Does not support:** Final Reader's Way runtime asset approval or target-device latency/quality claims.
+- **Limitations:** General platform documentation; exact app behavior depends on device, browser, OS, network, and playback implementation.
+- **Consumed by:** `docs/research/audio-spikes/codec-comparison.md`.
+
+### `WEBKIT-SAFARI-15-MEDIA`
+
+- **Tier/type:** C — browser-engine release notes
+- **Organization:** WebKit
+- **Published:** 2021 (Safari 15 release notes)
+- **Canonical URL:** https://webkit.org/blog/11989/new-webkit-features-in-safari-15/
+- **Last verified:** 2026-07-07
+- **Population/scope:** Safari 15 media feature history.
+- **Supports:** Historical context for Safari WebM/Opus media support used when comparing Opus compatibility risk.
+- **Does not support:** Current iPadOS Safari Ogg Opus parity or Reader's Way final codec approval.
+- **Limitations:** Release-note evidence is version-specific and does not replace current target-device QA.
+- **Consumed by:** `docs/research/audio-spikes/codec-comparison.md`.
+
+### `WEBKIT-SAFARI-18-4-MEDIA`
+
+- **Tier/type:** C — browser-engine release notes
+- **Organization:** WebKit
+- **Published:** 2025 (Safari 18.4 release notes)
+- **Canonical URL:** https://webkit.org/blog/16574/webkit-features-in-safari-18-4/
+- **Last verified:** 2026-07-07
+- **Population/scope:** Safari 18.4 media feature updates.
+- **Supports:** Current WebKit Ogg Opus/Vorbis support context used when comparing Opus compatibility risk.
+- **Does not support:** Reader's Way target-device playback quality, older Safari support, or final codec approval.
+- **Limitations:** Release-note evidence is implementation-specific; Reader's Way still needs manual checks on named target devices and browsers.
+- **Consumed by:** `docs/research/audio-spikes/codec-comparison.md`.
+
 ## Future automatic speech scoring
 
 ### `AUTOMATED-SSD-SLR-2022`

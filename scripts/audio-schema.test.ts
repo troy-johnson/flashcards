@@ -107,6 +107,22 @@ describe("validateAudioSources", () => {
     assert.ok(errors.some((e) => e.includes("production_behavior")));
   });
 
+  it("rejects a sound with an unknown processing_profile", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const bad: AudioSources = {
+      sounds: [
+        {
+          ...sources.sounds[0]!,
+          sound_id: "sound_fake_profile",
+          processing_profile: "mystery_profile",
+        },
+      ],
+      patterns: [],
+    };
+    const errors = validateAudioSources(bad);
+    assert.ok(errors.some((e) => e.includes("processing_profile")));
+  });
+
   it("rejects a sound missing dialect_notes", () => {
     const sources = loadAudioSources(join(root, "content"));
     const bad: AudioSources = {
