@@ -5,6 +5,8 @@ Dated brainstorming, literature reviews, and exploratory notes that informed spe
 | Date | Slug | Summary |
 |------|------|---------|
 | Living | [Research Source Registry](SOURCES.md) | Governed starting set for literacy, speech-language, dialect, learning-science, and browser-audio evidence; records supported and unsupported claims, limitations, and consuming artifacts. |
+| 2026-07-10 | [D1 preview/production split research](2026-07-10-d1-preview-production-split-research.md) | Traces the shared-D1 migration hazard, environment/config surface, current access constraints, and D1 recovery semantics for `rw-bpb`. |
+| 2026-07-10 | [D1 preview/production split brainstorm](2026-07-10-d1-preview-production-split-brainstorm.md) | Compares migration-promotion approaches and recommends automatic preview migrations plus guarded, explicit production promotion and a disposable Time Travel drill. |
 | 2026-06-21 | [Audio inventory and architecture research](2026-06-21-audio-inventory-and-architecture-research.md) | Defines the research and repository constraints for the 44-target sound inventory, 12 grapheme-pattern mappings, TTS playback, and protected review catalog. |
 | 2026-06-21 | [Audio inventory SLP review packet](2026-06-21-audio-inventory-slp-review-packet.md) | Compact professional-review request covering inventory, dialect decisions, production guidance, mappings, and approval options. |
 | 2026-05-22 | [Magic-link email options — low-cost pilot path](2026-05-22-magic-link-email-options.md) | Compares dev-log, Cloudflare email features, Resend, and MailChannels-style sending; recommends provider-pluggable email with Resend as the first real sender. |

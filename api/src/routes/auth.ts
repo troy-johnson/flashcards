@@ -9,6 +9,16 @@ import type { Env } from "../types";
 const startSchema = z.object({ email: z.string().email() });
 const tokenTtlMs = 15 * 60 * 1000;
 
+const guardianEmailIsAllowed = (env: Env, email: string): boolean => {
+  if (env.AUTH_ACCESS_MODE === "open") return true;
+  if (env.AUTH_ACCESS_MODE !== "allowlist") return false;
+  const allowedEmails = (env.GUARDIAN_EMAIL_ALLOWLIST ?? "")
+    .split(/[\s,]+/)
+    .map((candidate) => candidate.trim().toLowerCase())
+    .filter(Boolean);
+  return allowedEmails.includes(email);
+};
+
 const randomToken = (): string => {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -26,6 +36,7 @@ authRoutes.post("/start", async (c) => {
   const parsed = startSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.text("invalid email", 400);
   const email = parsed.data.email.trim().toLowerCase();
+  if (!guardianEmailIsAllowed(c.env, email)) return c.body(null, 204);
   const now = new Date().toISOString();
   let guardian = await c.env.DB.prepare("SELECT id, email FROM guardian WHERE email = ?").bind(email).first<{ id: string; email: string }>();
   if (!guardian) {
@@ -37,8 +48,22 @@ authRoutes.post("/start", async (c) => {
   const hash = await sha256Hex(token);
   const expiresAt = new Date(Date.now() + tokenTtlMs).toISOString();
   await c.env.DB.prepare("INSERT INTO auth_token (token_hash, guardian_id, expires_at) VALUES (?, ?, ?)").bind(hash, guardian.id, expiresAt).run();
-  const issued = await issueMagicLink(c.env, email, token);
-  if (issued.echoable) return json({ devMagicLink: issued.url });
+  let issued;
+  try {
+    issued = await issueMagicLink(c.env, email, token);
+  } catch (error) {
+    console.error(`[magic-link] delivery failed for guardian ${guardian.id}`, error);
+    try {
+      await c.env.DB.prepare("DELETE FROM auth_token WHERE token_hash = ?").bind(hash).run();
+    } catch (cleanupError) {
+      console.error(`[magic-link] token cleanup failed for guardian ${guardian.id}`, cleanupError);
+    }
+    if (c.env.AUTH_ACCESS_MODE === "allowlist") return c.body(null, 204);
+    throw error;
+  }
+  if (issued.echoable && c.env.AUTH_ACCESS_MODE === "open") {
+    return json({ devMagicLink: issued.url });
+  }
   return c.body(null, 204);
 });
 

@@ -75,8 +75,61 @@ Real magic-link email is behind the `AUTH_EMAIL_ISSUER` env var. Keep it as
    the pilot/production environment. Keep `dev-log` out of public production
    except for deliberate internal testing windows.
 
+## 5. Configure the production guardian allowlist
+
+Production uses `AUTH_ACCESS_MODE = "allowlist"`. If its allowlist secret is absent
+or empty, `/auth/start` returns without creating a guardian or auth token. Local and
+preview remain `open` for internal development.
+
+Before setting even the owner-household list, complete the Resend test-send procedure
+and leave production configured with `AUTH_EMAIL_ISSUER = "resend"`, a valid
+`RESEND_API_KEY`, and the verified `EMAIL_FROM`. Then set the production Worker
+allowlist secret. Use normalized, comma-separated email addresses and never commit
+the value:
+
+```bash
+pnpm --filter api exec wrangler secret put GUARDIAN_EMAIL_ALLOWLIST --env production
+```
+
+Before the first non-household guardian receives access:
+
+1. Verify `literacy_prod`, the production Worker binding, and the rollback drill.
+2. Confirm production is still using the verified Resend configuration.
+3. Set the GitHub Actions variable `EXTERNAL_GUARDIAN_PILOT` to `true`.
+4. Replace `GUARDIAN_EMAIL_ALLOWLIST` with the complete owner + invited-guardian
+   list.
+5. Confirm an unlisted address creates no guardian/auth-token rows and an invited
+   address completes the intended magic-link flow.
+
+Keep pilot access allowlisted; open public enrollment is outside `rw-bpb`.
+In allowlist mode the API always returns an empty `204` for valid requests; it never
+echoes a development magic link to the caller.
+
+## 6. Verify the production-D1 GitHub gate
+
+The `production-d1` GitHub environment must exist and allow deployments only from
+protected branches. This single-owner repository currently has no required reviewer;
+the workflow compensates with the external-pilot variable, exact database
+confirmation, remote UUID verification, and bookmark capture.
+
+The repository variable must remain false before the external-guardian trigger:
+
+```text
+EXTERNAL_GUARDIAN_PILOT=false
+```
+
+After the workflow lands on `main`, verify in GitHub Settings → Environments →
+`production-d1` that protected branches are enabled. Also verify the repository
+Actions variable is still `false`; do not rely only on the checked-in workflow text.
+
 ## Current naming
 
 - Frontend Worker name: `flashcards`.
 - Backend API Worker name: `api-flashcards` (`api-flashcards-preview` for preview env deploys).
-- Production and preview share the `literacy_preview` D1. Split before real users exist; add `[[env.production.d1_databases]]` pointing at a new `literacy_prod` DB and run migrations against it.
+- Preview uses D1 UUID `e3884eb3-fb85-4b29-9940-9c241bbc67ef`; the
+  configured name is `literacy_preview`, while Cloudflare currently reports the
+  remote resource name as `flashcards`.
+- Production uses the distinct `literacy_prod` D1, UUID
+  `e6b236d6-e3ae-4ff8-9a7e-4874c8419c96`.
+- Production migration and recovery procedure:
+  [D1 Production Migrations and Recovery](d1-production-migrations.md).

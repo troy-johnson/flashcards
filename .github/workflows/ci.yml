@@ -48,7 +48,7 @@ jobs:
           node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter api exec wrangler d1 migrations apply literacy_preview --remote
+      - run: pnpm --filter api exec wrangler d1 migrations apply literacy_preview --env preview --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
