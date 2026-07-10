@@ -505,7 +505,7 @@ function PlayStartRoute({ studentId }: { studentId: string }) {
         <h1>Today: {practice?.session.plan.cards.length ?? 0} things</h1>
         <p>Read each word. Your guardian taps how it went.</p>
         {status === "loading" && <p>Getting today&apos;s cards…</p>}
-        {status === "error" && <p role="alert">Could not start practice. <a href={`/guardian/${studentId}`}>Back</a></p>}
+        {status === "error" && <p className="drill-alert" role="alert">Could not start practice. <a href={`/guardian/${studentId}`}>Back</a></p>}
         {status === "ready" && practice && practice.session.plan.cards.length === 0 && (
           <p className="empty">No cards available for today.</p>
         )}
@@ -565,7 +565,7 @@ function DrillRoute({ studentId }: { studentId: string }) {
   return (
     <main className="page-shell student-mode">
       <DrillCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
-      {submitError && <p role="alert">{submitError}</p>}
+      {submitError && <p className="drill-alert" role="alert">{submitError}</p>}
     </main>
   );
 }
@@ -573,7 +573,7 @@ function DrillRoute({ studentId }: { studentId: string }) {
 function DoneRoute({ studentId }: { studentId: string }) {
   return (
     <main className="page-shell student-mode">
-      <section className="panel hero-panel">
+      <section className="panel hero-panel done-panel">
         <h1>You’re done</h1>
         <p>Nice reading today. You can do a calm bonus round if your guardian says yes.</p>
         <a className="primary-link" href={`/guardian/${studentId}`}>Back to progress</a>
