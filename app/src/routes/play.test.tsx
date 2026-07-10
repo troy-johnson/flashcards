@@ -105,6 +105,10 @@ describe("play and drill routes", () => {
 
     expect(container.textContent).toContain("Could not save that tap");
     expect(container.textContent).toContain("cat");
+    // The save-failure message is a visually distinct alert, not plain body
+    // text, so a guardian mid-drill notices the tap didn't land (rw-ir1).
+    const saveAlert = container.querySelector('[role="alert"]');
+    expect(saveAlert?.className).toContain("drill-alert");
 
     await act(async () => {
       container.querySelector('button[data-result="correct"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -113,6 +117,24 @@ describe("play and drill routes", () => {
 
     expect(scoreAttempt).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("mat");
+  });
+
+  it("surfaces a distinct alert when practice fails to start", async () => {
+    (startPractice as unknown as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error("start endpoint down"));
+
+    window.history.pushState({}, "", "/play/student1");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    // jsdom can't compute color, so we assert the styling hook (.drill-alert)
+    // alongside role/text — a distinct alert, not plain body copy (rw-ir1).
+    const startAlert = container.querySelector('[role="alert"]');
+    expect(startAlert).not.toBeNull();
+    expect(startAlert?.className).toContain("drill-alert");
+    expect(startAlert?.textContent).toContain("Could not start practice");
   });
 
   it("still reaches the finish screen when completion telemetry fails (best-effort)", async () => {

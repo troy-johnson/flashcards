@@ -143,6 +143,56 @@ button,
   }
 }
 
+/* Color-coded guardian scoring controls so a fast tap is less likely to miss
+   (rw-ir1). Correct = sage, Try again = slate, Skip = low-emphasis outline. */
+.tap-controls button[data-result="correct"] {
+  background: var(--color-accent-mastered);
+  color: var(--color-text-on-accent);
+}
+
+.tap-controls button[data-result="incorrect"] {
+  /* Slate (accent-active) + white label = 5.76:1, clears WCAG AA and pairs
+     cleanly with the sage Correct button. */
+  background: var(--color-accent-active);
+  color: var(--color-text-on-accent);
+}
+
+.tap-controls button[data-result="skipped"] {
+  /* border-box so the 2px border doesn't make Skip 4px taller than its
+     border-0 siblings when the controls stack to one column below 640px. */
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-text-primary);
+}
+
+/* Drill-loop failure notice: a visible alert, not plain body text, so a
+   guardian mid-session notices a start/save failure (rw-ir1). */
+.drill-alert {
+  margin-top: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-heart);
+  border: 2px solid var(--color-accent-heart);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.drill-alert a {
+  /* Ink (not rose) so the recovery link clears WCAG AA text contrast on the
+     rose-light alert (rose-on-rose-light is 3.89:1 — fine for the border, but
+     below 4.5:1 for text). The underline keeps it recognizably a link. */
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+/* Completion screen: breathing room between the closing message and the
+   "Back to progress" CTA (rw-ir1). */
+.done-panel .primary-link {
+  margin-top: var(--space-lg);
+}
+
 /* Protected audio-catalog review surface (operator-only). */
 .audio-catalog .catalog-list {
   list-style: none;
