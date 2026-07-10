@@ -158,6 +158,9 @@ button,
 }
 
 .tap-controls button[data-result="skipped"] {
+  /* border-box so the 2px border doesn't make Skip 4px taller than its
+     border-0 siblings when the controls stack to one column below 640px. */
+  box-sizing: border-box;
   background: transparent;
   color: var(--color-text-primary);
   border: 2px solid var(--color-text-primary);
@@ -177,7 +180,11 @@ button,
 }
 
 .drill-alert a {
-  color: var(--color-accent-heart);
+  /* Ink (not rose) so the recovery link clears WCAG AA text contrast on the
+     rose-light alert (rose-on-rose-light is 3.89:1 — fine for the border, but
+     below 4.5:1 for text). The underline keeps it recognizably a link. */
+  color: var(--color-text-primary);
+  text-decoration: underline;
 }
 
 /* Completion screen: breathing room between the closing message and the

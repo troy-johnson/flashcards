@@ -129,6 +129,8 @@ describe("play and drill routes", () => {
       await flush();
     });
 
+    // jsdom can't compute color, so we assert the styling hook (.drill-alert)
+    // alongside role/text — a distinct alert, not plain body copy (rw-ir1).
     const startAlert = container.querySelector('[role="alert"]');
     expect(startAlert).not.toBeNull();
     expect(startAlert?.className).toContain("drill-alert");
