@@ -16,4 +16,5 @@ test("production sends magic links through a configured email provider", () => {
   assert.match(productionVars, /AUTH_EMAIL_ISSUER = "resend"/);
   assert.match(productionVars, /EMAIL_FROM = "[^"]+"/);
   assert.doesNotMatch(productionVars, /EMAIL_FROM = "[^"]*@example\.com>"/);
+  assert.doesNotMatch(productionVars, /EMAIL_FROM = "[^"]*@resend\.dev>"/);
 });
