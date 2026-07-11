@@ -26,7 +26,11 @@ export const issueMagicLink = async (
     const email = buildMagicLinkEmail(url);
     const res = await fetchImpl("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "content-type": "application/json",
+        "User-Agent": "readers-way-api/1.0"
+      },
       body: JSON.stringify({ from: env.EMAIL_FROM, to: [recipient], subject: email.subject, text: email.text })
     });
     if (!res.ok) throw new Error(`resend send failed: ${res.status}`);
