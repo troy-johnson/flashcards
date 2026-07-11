@@ -44,9 +44,8 @@ APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
 DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "resend"
 AUTH_ACCESS_MODE = "allowlist"
-# Owner-only smoke-test sender. Resend restricts this sender to the account
-# owner's email; replace it with a verified domain before expanding the allowlist.
-EMAIL_FROM = "Reader's Way <onboarding@resend.dev>"
+# Resend-verified sender identity for production magic links.
+EMAIL_FROM = "Reader's Way <readersway@troyjohnson.com>"
 
 [[env.production.d1_databases]]
 binding = "DB"
