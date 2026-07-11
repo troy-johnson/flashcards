@@ -14,7 +14,7 @@ const productionVars = wranglerConfig.match(
 test("production sends magic links through a configured email provider", () => {
   assert.ok(productionVars, "api/wrangler.toml must define env.production.vars");
   assert.match(productionVars, /AUTH_EMAIL_ISSUER = "resend"/);
-  assert.match(productionVars, /EMAIL_FROM = "[^"]+"/);
+  assert.match(productionVars, /EMAIL_FROM = "[^"]*@troyjohnson\.dev>"/);
   assert.doesNotMatch(productionVars, /EMAIL_FROM = "[^"]*@example\.com>"/);
   assert.doesNotMatch(productionVars, /EMAIL_FROM = "[^"]*@resend\.dev>"/);
 });
