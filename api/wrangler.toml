@@ -45,7 +45,7 @@ DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "resend"
 AUTH_ACCESS_MODE = "allowlist"
 # Resend-verified sender identity for production magic links.
-EMAIL_FROM = "Reader's Way <readersway@troyjohnson.com>"
+EMAIL_FROM = "Reader's Way <readersway@troyjohnson.dev>"
 
 [[env.production.d1_databases]]
 binding = "DB"
