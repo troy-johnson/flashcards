@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { env, SELF } from "cloudflare:test";
 import { resetFoundationDb } from "../test/reset-db";
+import { authRoutes } from "./auth";
+import type { Env } from "../types";
 
 const resetDb = async () => {
   await resetFoundationDb();
@@ -16,6 +18,115 @@ const extractToken = (logs: string[]): string => {
 
 describe("auth routes", () => {
   beforeEach(resetDb);
+
+  it("fails closed before creating data for an email outside the pilot allowlist", async () => {
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "allowlist",
+      GUARDIAN_EMAIL_ALLOWLIST: "owner@example.com"
+    } as Env;
+
+    const start = await authRoutes.request("https://api.test/start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "outside@example.com" })
+    }, bindings);
+
+    expect(start.status).toBe(204);
+    expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+      .bind("outside@example.com").first()).toBeNull();
+    expect(await env.DB.prepare("SELECT token_hash FROM auth_token").first()).toBeNull();
+  });
+
+  it("fails closed in allowlist mode when the allowlist secret is absent", async () => {
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "allowlist"
+    } as Env;
+
+    const start = await authRoutes.request("https://api.test/start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "owner@example.com" })
+    }, bindings);
+
+    expect(start.status).toBe(204);
+    expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+      .bind("owner@example.com").first()).toBeNull();
+  });
+
+  it("issues a token without echoing it for a normalized email in the pilot allowlist", async () => {
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "allowlist",
+      GUARDIAN_EMAIL_ALLOWLIST: "first@example.com, Owner@Example.com\nthird@example.com"
+    } as Env;
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const start = await authRoutes.request("https://api.test/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "Owner@Example.com" })
+      }, bindings);
+
+      expect(start.status).toBe(204);
+      expect(await start.text()).toBe("");
+      const guardian = await env.DB.prepare("SELECT id, email FROM guardian WHERE email = ?")
+        .bind("owner@example.com").first<{ id: string; email: string }>();
+      expect(guardian?.email).toBe("owner@example.com");
+      expect(await env.DB.prepare("SELECT token_hash FROM auth_token WHERE guardian_id = ?")
+        .bind(guardian!.id).first()).not.toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it.each([undefined, "allow-list"])(
+    "fails closed when AUTH_ACCESS_MODE is %s",
+    async (accessMode) => {
+      const bindings = {
+        ...env,
+        AUTH_ACCESS_MODE: accessMode,
+        GUARDIAN_EMAIL_ALLOWLIST: "owner@example.com"
+      } as unknown as Env;
+
+      const start = await authRoutes.request("https://api.test/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "owner@example.com" })
+      }, bindings);
+
+      expect(start.status).toBe(204);
+      expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+        .bind("owner@example.com").first()).toBeNull();
+    }
+  );
+
+  it("does not enumerate an allowed address when email delivery fails", async () => {
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "allowlist",
+      GUARDIAN_EMAIL_ALLOWLIST: "owner@example.com",
+      AUTH_EMAIL_ISSUER: "resend"
+    } as Env;
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const start = await authRoutes.request("https://api.test/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "owner@example.com" })
+      }, bindings);
+
+      expect(start.status).toBe(204);
+      expect(await start.text()).toBe("");
+      expect(await env.DB.prepare("SELECT token_hash FROM auth_token").first()).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 
   it("issues a magic link and consumes it exactly once", async () => {
     const logs: string[] = [];
