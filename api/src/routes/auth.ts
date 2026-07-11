@@ -8,6 +8,7 @@ import type { Env } from "../types";
 
 const startSchema = z.object({ email: z.string().email() });
 const tokenTtlMs = 15 * 60 * 1000;
+const maxMagicLinkAttemptsPerTtl = 3;
 
 const guardianEmailIsAllowed = (env: Env, email: string): boolean => {
   if (env.AUTH_ACCESS_MODE === "open") return true;
@@ -37,26 +38,47 @@ authRoutes.post("/start", async (c) => {
   if (!parsed.success) return c.text("invalid email", 400);
   const email = parsed.data.email.trim().toLowerCase();
   if (!guardianEmailIsAllowed(c.env, email)) return c.body(null, 204);
+  if (c.env.AUTH_ACCESS_MODE === "open" && c.env.AUTH_EMAIL_ISSUER === "resend") {
+    const sourceIp = c.req.header("cf-connecting-ip");
+    if (!sourceIp || !c.env.AUTH_RATE_LIMITER) return c.body(null, 204);
+    const sourceKey = await sha256Hex(`magic-link-ip:${sourceIp}`);
+    const { success } = await c.env.AUTH_RATE_LIMITER.limit({ key: sourceKey });
+    if (!success) return c.body(null, 204);
+  }
   const now = new Date().toISOString();
   let guardian = await c.env.DB.prepare("SELECT id, email FROM guardian WHERE email = ?").bind(email).first<{ id: string; email: string }>();
   if (!guardian) {
     const id = ulid();
-    await c.env.DB.prepare("INSERT INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)").bind(id, email, now).run();
-    guardian = { id, email };
+    await c.env.DB.prepare("INSERT OR IGNORE INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)").bind(id, email, now).run();
+    guardian = await c.env.DB.prepare("SELECT id, email FROM guardian WHERE email = ?").bind(email).first<{ id: string; email: string }>();
+    if (!guardian) throw new Error("guardian creation failed");
   }
   const token = randomToken();
   const hash = await sha256Hex(token);
   const expiresAt = new Date(Date.now() + tokenTtlMs).toISOString();
-  await c.env.DB.prepare("INSERT INTO auth_token (token_hash, guardian_id, expires_at) VALUES (?, ?, ?)").bind(hash, guardian.id, expiresAt).run();
+  // Unexpired token rows also form the rolling request-attempt ledger. Keeping the
+  // check and insert in one statement makes the cap hold under concurrent bursts.
+  const inserted = await c.env.DB.prepare(`
+    INSERT INTO auth_token (token_hash, guardian_id, expires_at)
+    SELECT ?, ?, ?
+    WHERE (
+      SELECT COUNT(*) FROM auth_token
+      WHERE guardian_id = ? AND expires_at > ?
+    ) < ?
+  `).bind(hash, guardian.id, expiresAt, guardian.id, now, maxMagicLinkAttemptsPerTtl).run();
+  if (inserted.meta.changes !== 1) return c.body(null, 204);
   let issued;
   try {
     issued = await issueMagicLink(c.env, email, token);
   } catch (error) {
     console.error(`[magic-link] delivery failed for guardian ${guardian.id}`, error);
     try {
-      await c.env.DB.prepare("DELETE FROM auth_token WHERE token_hash = ?").bind(hash).run();
+      // Preserve a consumed tombstone until expiry so provider failures still count
+      // toward the rate limit without leaving a usable token behind.
+      await c.env.DB.prepare("UPDATE auth_token SET consumed_at = ? WHERE token_hash = ? AND consumed_at IS NULL")
+        .bind(new Date().toISOString(), hash).run();
     } catch (cleanupError) {
-      console.error(`[magic-link] token cleanup failed for guardian ${guardian.id}`, cleanupError);
+      console.error(`[magic-link] token invalidation failed for guardian ${guardian.id}`, cleanupError);
     }
     if (c.env.AUTH_ACCESS_MODE === "allowlist") return c.body(null, 204);
     throw error;

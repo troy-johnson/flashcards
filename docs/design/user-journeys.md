@@ -55,7 +55,7 @@ Remaining work in this journey
 | Step | Bead | Wave | What changes |
 | --- | --- | --- | --- |
 | Check-email → magic link | `rw-1gz.7.3` | family | Real Resend issuer flip (shared sender) so pilot emails actually send |
-| Magic-link request | `rw-1gz.7.4` | educator | Rate limiting before non-household users can request links |
+| Magic-link request | `rw-1gz.7.4` | educator | Exact three-per-email/15-minute cap plus a production 10-per-IP/minute abuse backstop; throttling remains non-enumerating |
 | Landing entry | `rw-1gz.9.1` → `rw-1gz.9.2` | educator | Real landing copy + LandingRoute build-out (FR25, AC13) |
 | Landing/email URL + sender | `rw-840` | educator | Domain purchase + verified Resend sending domain |
 | Add student | `rw-1gz.6` | family (polish) | Render onboarding copy constants in AddStudentRoute |

@@ -4,6 +4,7 @@ export type Env = {
   DIAG_GUARDIAN_EMAIL: string;
   AUTH_EMAIL_ISSUER: "dev-log" | "resend";
   AUTH_ACCESS_MODE: "open" | "allowlist";
+  AUTH_RATE_LIMITER?: RateLimit;
   GUARDIAN_EMAIL_ALLOWLIST?: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;

@@ -59,3 +59,12 @@ Guardrails:
 - Add environment typings for `RESEND_API_KEY` and `EMAIL_FROM`.
 - Add unit tests for `dev-log`, successful Resend send, and Resend failure.
 - Configure Cloudflare secret for `api-flashcards` before switching production `AUTH_EMAIL_ISSUER` to `resend`.
+- Limit each normalized guardian email to three magic-link attempts per rolling
+  15-minute token TTL. Enforce the cap atomically using unexpired `auth_token` rows,
+  keep failed-delivery rows consumed until expiry, and return an empty `204` when
+  throttled so the public response does not disclose allowlist membership.
+- Before `AUTH_ACCESS_MODE=open` and `AUTH_EMAIL_ISSUER=resend` can operate together,
+  require Cloudflare's source-IP header and the production `AUTH_RATE_LIMITER`
+  binding. Use the binding as a defense-in-depth cap of 10 requests per IP per
+  minute; it is permissive and location-local, so the D1 email limit remains the
+  exact control. Missing configuration fails closed with the same empty `204`.
