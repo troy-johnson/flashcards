@@ -34,6 +34,7 @@ describe("issueMagicLink", () => {
     expect(init.method).toBe("POST");
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer rk_test");
+    expect(headers["User-Agent"]).toBe("readers-way-api/1.0");
     const body = JSON.parse(init.body as string);
     expect(body.from).toBe("Reader's Way <signin@mail.test>");
     expect(body.to).toEqual(["g@example.com"]);
