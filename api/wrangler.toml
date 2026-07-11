@@ -52,3 +52,13 @@ EMAIL_FROM = "Reader's Way <signin@example.com>"
 binding = "DB"
 database_name = "literacy_prod"
 database_id = "e6b236d6-e3ae-4ff8-9a7e-4874c8419c96"
+
+# Defense-in-depth for broad/public Resend access. The exact per-email cap remains
+# D1-backed; this permissive per-location limiter constrains multi-address spray.
+[[env.production.ratelimits]]
+name = "AUTH_RATE_LIMITER"
+namespace_id = "917403"
+
+[env.production.ratelimits.simple]
+limit = 10
+period = 60

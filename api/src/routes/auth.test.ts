@@ -103,6 +103,76 @@ describe("auth routes", () => {
     }
   );
 
+  it("fails closed in public Resend mode when the IP limiter is not configured", async () => {
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "open",
+      AUTH_EMAIL_ISSUER: "resend"
+    } as Env;
+
+    const start = await authRoutes.request("https://api.test/start", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cf-connecting-ip": "203.0.113.10"
+      },
+      body: JSON.stringify({ email: "public@example.com" })
+    }, bindings);
+
+    expect(start.status).toBe(204);
+    expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+      .bind("public@example.com").first()).toBeNull();
+  });
+
+  it("fails closed in public Resend mode without Cloudflare's source IP header", async () => {
+    const limit = vi.fn(async () => ({ success: true }));
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "open",
+      AUTH_EMAIL_ISSUER: "resend",
+      AUTH_RATE_LIMITER: { limit }
+    } as unknown as Env;
+
+    const start = await authRoutes.request("https://api.test/start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "missing-ip@example.com" })
+    }, bindings);
+
+    expect(start.status).toBe(204);
+    expect(limit).not.toHaveBeenCalled();
+    expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+      .bind("missing-ip@example.com").first()).toBeNull();
+  });
+
+  it("stops a rate-limited public IP before creating guardian or token data", async () => {
+    const limit = vi.fn(async (_input: { key: string }) => ({ success: false }));
+    const bindings = {
+      ...env,
+      AUTH_ACCESS_MODE: "open",
+      AUTH_EMAIL_ISSUER: "resend",
+      AUTH_RATE_LIMITER: { limit }
+    } as unknown as Env;
+
+    const start = await authRoutes.request("https://api.test/start", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "cf-connecting-ip": "203.0.113.11"
+      },
+      body: JSON.stringify({ email: "limited-ip@example.com" })
+    }, bindings);
+
+    expect(start.status).toBe(204);
+    expect(limit).toHaveBeenCalledTimes(1);
+    const key = limit.mock.calls[0]?.[0]?.key;
+    expect(key).toMatch(/^[a-f0-9]{64}$/);
+    expect(key).not.toContain("203.0.113.11");
+    expect(await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+      .bind("limited-ip@example.com").first()).toBeNull();
+    expect(await env.DB.prepare("SELECT token_hash FROM auth_token").first()).toBeNull();
+  });
+
   it("does not enumerate an allowed address when email delivery fails", async () => {
     const bindings = {
       ...env,
@@ -113,18 +183,78 @@ describe("auth routes", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     try {
-      const start = await authRoutes.request("https://api.test/start", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: "owner@example.com" })
-      }, bindings);
+      for (let request = 0; request < 4; request += 1) {
+        const start = await authRoutes.request("https://api.test/start", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: "owner@example.com" })
+        }, bindings);
+        expect(start.status).toBe(204);
+        expect(await start.text()).toBe("");
+      }
 
-      expect(start.status).toBe(204);
-      expect(await start.text()).toBe("");
-      expect(await env.DB.prepare("SELECT token_hash FROM auth_token").first()).toBeNull();
-      expect(errorSpy).toHaveBeenCalled();
+      const failedAttempts = await env.DB.prepare("SELECT token_hash, consumed_at FROM auth_token")
+        .all<{ token_hash: string; consumed_at: string | null }>();
+      expect(failedAttempts.results).toHaveLength(3);
+      expect(failedAttempts.results.every((attempt) => attempt.consumed_at !== null)).toBe(true);
+      expect(errorSpy).toHaveBeenCalledTimes(3);
     } finally {
       errorSpy.mockRestore();
+    }
+  });
+
+  it("rate-limits repeated magic-link requests without creating another token", async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, "log").mockImplementation((...args) => {
+      logs.push(args.join(" "));
+    });
+
+    try {
+      const responses: Response[] = await Promise.all(Array.from({ length: 4 }, () =>
+        SELF.fetch("https://api.test/auth/start", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: "Repeated@Example.com" })
+        })
+      ));
+
+      expect(responses.map((response) => response.status).sort()).toEqual([200, 200, 200, 204]);
+      expect(await responses.find((response) => response.status === 204)!.text()).toBe("");
+      expect(logs.filter((line) => line.startsWith("[magic-link] "))).toHaveLength(3);
+      const guardian = await env.DB.prepare("SELECT id FROM guardian WHERE email = ?")
+        .bind("repeated@example.com").first<{ id: string }>();
+      const tokenCount = await env.DB.prepare("SELECT COUNT(*) AS count FROM auth_token WHERE guardian_id = ?")
+        .bind(guardian!.id).first<{ count: number }>();
+      expect(tokenCount?.count).toBe(3);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("allows another request after the prior attempts expire", async () => {
+    await env.DB.prepare("INSERT INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)")
+      .bind("g_rate_expired", "rate-expired@example.com", new Date().toISOString()).run();
+    const expiredAt = new Date(Date.now() - 1).toISOString();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await env.DB.prepare("INSERT INTO auth_token (token_hash, guardian_id, expires_at) VALUES (?, ?, ?)")
+        .bind(`expired_rate_${attempt}`, "g_rate_expired", expiredAt).run();
+    }
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      const start = await SELF.fetch("https://api.test/auth/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "rate-expired@example.com" })
+      });
+
+      expect(start.status).toBe(200);
+      const activeAttempts = await env.DB.prepare(
+        "SELECT COUNT(*) AS count FROM auth_token WHERE guardian_id = ? AND expires_at > ?"
+      ).bind("g_rate_expired", new Date().toISOString()).first<{ count: number }>();
+      expect(activeAttempts?.count).toBe(1);
+    } finally {
+      spy.mockRestore();
     }
   });
 

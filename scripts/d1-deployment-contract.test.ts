@@ -48,6 +48,13 @@ test("production enrollment is allowlisted while local and preview stay open", (
   );
 });
 
+test("production config includes the public magic-link abuse limiter", () => {
+  assert.match(
+    wranglerConfig,
+    /\[\[env\.production\.ratelimits\]\][\s\S]*?name\s*=\s*"AUTH_RATE_LIMITER"[\s\S]*?namespace_id\s*=\s*"917403"[\s\S]*?\[env\.production\.ratelimits\.simple\][\s\S]*?limit\s*=\s*10[\s\S]*?period\s*=\s*60/,
+  );
+});
+
 test("the automatic main-branch migration path explicitly targets preview only", () => {
   assert.match(
     ciWorkflow,
