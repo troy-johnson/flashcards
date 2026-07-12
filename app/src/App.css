@@ -9,6 +9,8 @@
 
 .panel {
   width: min(760px, 100%);
+  min-width: 0;
+  box-sizing: border-box;
   border-radius: 28px;
   background: var(--color-bg-surface);
   box-shadow: 0 18px 48px rgb(63 47 20 / 14%);
@@ -219,32 +221,122 @@ button,
   margin-top: 4px;
 }
 
-.guardian-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  padding: 12px var(--space-lg);
+.guardian-layout {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--color-bg-app);
+}
+
+.guardian-layout > .page-shell {
+  min-height: 0;
+  place-items: start center;
+}
+
+.guardian-header {
+  position: relative;
+  z-index: 1;
   background: var(--color-bg-surface);
   border-bottom: 2px solid var(--color-border-default);
 }
 
-.guardian-nav a {
+.guardian-header-inner {
+  width: min(1200px, 100%);
+  min-height: 68px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  box-sizing: border-box;
+  padding: 10px var(--space-lg);
+}
+
+.guardian-brand,
+.guardian-nav-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   color: var(--color-text-primary);
   text-decoration: none;
   font-weight: 700;
 }
 
-.guardian-nav form {
-  margin-left: auto;
+.guardian-brand {
+  flex: 0 1 auto;
+  font-size: 1.15rem;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
-.guardian-nav button {
-  min-height: 36px;
+.guardian-nav {
+  min-width: 0;
+}
+
+.guardian-menu-button {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0 14px;
   background: transparent;
   color: var(--color-text-primary);
   border: 2px solid var(--color-text-primary);
+}
+
+.guardian-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.guardian-nav-actions form {
+  margin: 0;
+}
+
+.guardian-nav-actions button {
+  min-height: 44px;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-text-primary);
+}
+
+@media (max-width: 700px) {
+  .guardian-header-inner {
+    min-height: 64px;
+    padding: 8px var(--space-md);
+  }
+
+  .guardian-menu-button {
+    display: inline-grid;
+  }
+
+  .guardian-nav-actions {
+    position: absolute;
+    top: 100%;
+    right: var(--space-md);
+    display: none;
+    width: min(18rem, calc(100vw - (2 * var(--space-md))));
+    box-sizing: border-box;
+    padding: var(--space-sm);
+    border: 2px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-surface);
+    box-shadow: 0 12px 30px rgb(63 47 20 / 18%);
+  }
+
+  .guardian-nav-actions.is-open {
+    display: grid;
+  }
+
+  .guardian-nav-actions a,
+  .guardian-nav-actions button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .guardian-layout > .page-shell {
+    padding: var(--space-md);
+  }
 }
 
 .muted {
