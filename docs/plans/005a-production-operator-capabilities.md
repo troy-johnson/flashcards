@@ -88,10 +88,20 @@ Create a pure operator-policy module. It receives the trusted authenticated guar
 - [ ] Document this value-free procedure:
 
   ```bash
-  pnpm --filter api exec wrangler secret put DIAG_GUARDIAN_EMAIL --env production
-  pnpm --filter api exec wrangler secret list --env production
+  pnpm --filter api exec wrangler versions upload --env production --message "Stage operator secret update"
+  pnpm --filter api exec wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production --message "Add production operator designation"
+  pnpm --filter api exec wrangler versions view <version-id> --env production --json
+  pnpm --filter api exec wrangler deployments status --env production --json
   ```
 
+- [ ] Upload the reviewed production code/configuration before changing the secret;
+      `versions secret put` clones the latest uploaded version and can otherwise carry
+      stale preview bindings into the candidate.
+- [ ] Use the version ID returned by the secret command for `versions view`; do not
+      inspect or deploy an assumed "latest" version.
+- [ ] Inspect only the candidate's binding names and non-secret production bindings.
+      Never deploy a candidate with the preview D1, open access, dev-log issuer, or a
+      placeholder sender. Confirm production traffic remains on the prior version.
 - [ ] The value is entered interactively and never appears in commands, docs, fixtures, logs, screenshots, or review output.
 - [ ] Run script, API, app, and typecheck gates; inspect the diff and search for the real address before deployment.
 
@@ -100,7 +110,7 @@ Create a pure operator-policy module. It receives the trusted authenticated guar
 **Specialist:** independent operations verifier; not the Task 4 implementer
 
 - [ ] Require explicit deployment authority. This plan never grants merge authority.
-- [ ] Confirm the production secret list contains the binding name without exposing its value.
+- [ ] Confirm the reviewed candidate version contains the secret binding name without exposing its value.
 - [ ] Deploy only after green gates and security approval.
 - [ ] Verify an operator gets `/auth/me` true and both tools load.
 - [ ] Verify a separate guardian gets false, no entry points, and 403 from both APIs.

@@ -112,12 +112,25 @@ Enter the designated guardian email interactively; never place the value in a
 command, committed file, documentation, fixture, log, screenshot, or review output:
 
 ```bash
-pnpm --filter api exec wrangler secret put DIAG_GUARDIAN_EMAIL --env production
-pnpm --filter api exec wrangler secret list --env production
+pnpm --filter api exec wrangler versions upload --env production --message "Stage operator secret update"
+pnpm --filter api exec wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production --message "Add production operator designation"
+pnpm --filter api exec wrangler versions view <version-id> --env production --json
+pnpm --filter api exec wrangler deployments status --env production --json
 ```
 
-The list command is only for confirming that the `DIAG_GUARDIAN_EMAIL` binding name
-exists. Never copy or expose the secret value while configuring or verifying it.
+This Worker uses versioned deployments. Upload the reviewed code and production
+configuration first; otherwise `versions secret put` can clone a stale uploaded
+version with preview bindings. Use the version ID returned by the secret command for
+the `versions view` check. The candidate must show the production D1 database,
+allowlist mode, Resend issuer, verified sender, rate limiter, and the
+`DIAG_GUARDIAN_EMAIL`, `GUARDIAN_EMAIL_ALLOWLIST`, and `RESEND_API_KEY` binding names.
+Secret values are not returned. If any non-secret binding is wrong, never deploy that
+version; upload the reviewed configuration again before retrying.
+
+Both commands create undeployed versions. Confirm `deployments status` still points
+100% of production traffic at the prior version. Deploying the candidate is a later,
+separately authorized step. Never copy or expose a secret value while configuring or
+verifying it.
 
 ## 7. Verify the production-D1 GitHub gate
 
