@@ -87,15 +87,23 @@ test("production operator secret instructions use the versioned Worker workflow"
   for (const instructions of [deploymentSetup, operatorPlan]) {
     assert.match(
       instructions,
-      /wrangler versions upload --env production/,
+      /wrangler versions upload --env production[\s\S]*wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production[\s\S]*wrangler versions view <version-id> --env production --json[\s\S]*wrangler deployments status --env production --json/,
     );
     assert.match(
       instructions,
-      /wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production/,
+      /version ID returned by (?:the )?secret command/i,
     );
     assert.match(
       instructions,
-      /wrangler versions view <version-id> --env production --json/,
+      /stale[\s\S]{0,100}preview bindings/i,
+    );
+    assert.match(
+      instructions,
+      /never deploy/i,
+    );
+    assert.match(
+      instructions,
+      /(?:production traffic remains|100% of production traffic)/i,
     );
     assert.doesNotMatch(
       instructions,
