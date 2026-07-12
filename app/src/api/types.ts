@@ -4,6 +4,15 @@ export type Guardian = {
   display_name: string | null;
 };
 
+export type GuardianCapabilities = {
+  operator_tools: boolean;
+};
+
+export type AuthMeResponse = {
+  guardian: Guardian;
+  capabilities: GuardianCapabilities;
+};
+
 export type Student = {
   id: string;
   guardian_id?: string;

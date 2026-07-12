@@ -105,7 +105,34 @@ Keep pilot access allowlisted; open public enrollment is outside `rw-bpb`.
 In allowlist mode the API always returns an empty `204` for valid requests; it never
 echoes a development magic link to the caller.
 
-## 6. Verify the production-D1 GitHub gate
+## 6. Configure the production operator designation
+
+Production operator access is fail-closed and uses a Cloudflare Worker secret.
+Enter the lowercased, trimmed guardian email interactively; never place the value in
+a command, committed file, documentation, fixture, log, screenshot, or review output:
+
+```bash
+pnpm --filter api exec wrangler versions upload --env production --message "Stage operator secret update"
+pnpm --filter api exec wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production --message "Add production operator designation"
+pnpm --filter api exec wrangler versions view <version-id> --env production --json
+pnpm --filter api exec wrangler deployments status --env production --json
+```
+
+This Worker uses versioned deployments. Upload the reviewed code and production
+configuration first; otherwise `versions secret put` can clone a stale uploaded
+version with preview bindings. Use the version ID returned by the secret command for
+the `versions view` check. The candidate must show the production D1 database,
+allowlist mode, Resend issuer, verified sender, rate limiter, and the
+`DIAG_GUARDIAN_EMAIL`, `GUARDIAN_EMAIL_ALLOWLIST`, and `RESEND_API_KEY` binding names.
+Secret values are not returned. If any non-secret binding is wrong, never deploy that
+version; upload the reviewed configuration again before retrying.
+
+Both commands create undeployed versions. Confirm `deployments status` still points
+100% of production traffic at the prior version. Deploying the candidate is a later,
+separately authorized step. Never copy or expose a secret value while configuring or
+verifying it.
+
+## 7. Verify the production-D1 GitHub gate
 
 The `production-d1` GitHub environment must exist and allow deployments only from
 protected branches. This single-owner repository currently has no required reviewer;

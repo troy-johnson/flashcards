@@ -4,6 +4,7 @@ import { ulid } from "ulid";
 import { json } from "../db/client";
 import { clearSessionCookie, createSession, deleteSession, getAuthenticatedGuardian, parseSessionCookie, setSessionCookie } from "../db/session";
 import { issueMagicLink } from "../email/magic-link";
+import { guardianCapabilities } from "../auth/operator-policy";
 import type { Env } from "../types";
 
 const startSchema = z.object({ email: z.string().email() });
@@ -107,7 +108,7 @@ authRoutes.get("/consume", async (c) => {
 authRoutes.get("/me", async (c) => {
   const guardian = await getAuthenticatedGuardian(c);
   if (!guardian) return c.text("unauthorized", 401);
-  return json({ guardian });
+  return json({ guardian, capabilities: guardianCapabilities(c.env, guardian) });
 });
 
 authRoutes.post("/logout", async (c) => {
