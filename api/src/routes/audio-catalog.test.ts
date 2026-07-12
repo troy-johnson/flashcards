@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { env, SELF } from "cloudflare:test";
 import { resetFoundationDb } from "../test/reset-db";
 import publicManifest from "../../../content/audio/manifest.json";
+import { audioCatalogRoutes } from "./audio-catalog";
+import type { Env } from "../types";
 
 const seed = async () => {
   await resetFoundationDb();
@@ -11,6 +13,20 @@ const seed = async () => {
   await env.DB.prepare("INSERT INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)").bind("g_other", "other@example.com", now).run();
   await env.DB.prepare("INSERT INTO session (id, guardian_id, expires_at, created_at) VALUES (?, ?, ?, ?)").bind("s_diag", "g_diag", future, now).run();
   await env.DB.prepare("INSERT INTO session (id, guardian_id, expires_at, created_at) VALUES (?, ?, ?, ?)").bind("s_other", "g_other", future, now).run();
+};
+
+const catalogRequest = (configuredEmail: string | undefined, cookie?: string) => {
+  const bindings = { ...env } as Env;
+  if (configuredEmail === undefined) {
+    delete (bindings as Partial<Env>).DIAG_GUARDIAN_EMAIL;
+  } else {
+    bindings.DIAG_GUARDIAN_EMAIL = configuredEmail;
+  }
+  return audioCatalogRoutes.request(
+    "https://api.test/",
+    cookie ? { headers: { cookie } } : undefined,
+    bindings
+  );
 };
 
 describe("protected audio catalog (003a Task 6)", () => {
@@ -26,6 +42,17 @@ describe("protected audio catalog (003a Task 6)", () => {
       headers: { cookie: "session=s_other" }
     });
     expect(res.status).toBe(403);
+  });
+
+  it.each([
+    { label: "matching", configuredEmail: "local-guardian@example.com", cookie: "session=s_diag", expected: 200 },
+    { label: "non-matching", configuredEmail: "other@example.com", cookie: "session=s_diag", expected: 403 },
+    { label: "missing", configuredEmail: undefined, cookie: "session=s_diag", expected: 403 },
+    { label: "blank", configuredEmail: "   ", cookie: "session=s_diag", expected: 403 },
+    { label: "no session", configuredEmail: "local-guardian@example.com", cookie: undefined, expected: 401 }
+  ])("returns $expected for $label operator configuration", async ({ configuredEmail, cookie, expected }) => {
+    const response = await catalogRequest(configuredEmail, cookie);
+    expect(response.status).toBe(expected);
   });
 
   it("serves the full 44/12 inventory with review metadata to the diag guardian", async () => {

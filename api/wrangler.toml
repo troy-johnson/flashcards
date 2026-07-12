@@ -41,7 +41,6 @@ name = "api-flashcards"
 
 [env.production.vars]
 APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
-DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
 AUTH_EMAIL_ISSUER = "resend"
 AUTH_ACCESS_MODE = "allowlist"
 # Resend-verified sender identity for production magic links.

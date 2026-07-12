@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { json } from "../db/client";
 import { getAuthenticatedGuardian } from "../db/session";
+import { canUseOperatorTools } from "../auth/operator-policy";
 import type { Env } from "../types";
 import soundsJson from "../../../content/audio/sounds.json";
 import patternsJson from "../../../content/audio/patterns.json";
@@ -56,7 +57,7 @@ export const audioCatalogRoutes = new Hono<{ Bindings: Env }>();
 audioCatalogRoutes.get("/", async (c) => {
   const guardian = await getAuthenticatedGuardian(c);
   if (!guardian) return c.text("unauthorized", 401);
-  if (guardian.email !== c.env.DIAG_GUARDIAN_EMAIL) return c.text("forbidden", 403);
+  if (!canUseOperatorTools(c.env, guardian)) return c.text("forbidden", 403);
 
   return json({
     sounds: soundsJson as ProtectedSoundView[],

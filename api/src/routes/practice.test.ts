@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { env, SELF } from "cloudflare:test";
 import { resetFoundationDb } from "../test/reset-db";
+import { diagRoutes } from "./diag";
+import type { Env } from "../types";
 
 const resetDb = async () => {
   await resetFoundationDb();
@@ -76,8 +78,33 @@ const insertAttemptStatement = (id: string, studentId: string, skillId: string, 
      VALUES (?, ?, ?, ?, ?, 'correct', 'guardian_tap', ?, ?, ?)`
   ).bind(id, "history_session", studentId, skillId, itemId, 1000, scoredAt, scoredAt);
 
+const diagnosticsRequest = (configuredEmail: string | undefined, cookie?: string) => {
+  const bindings = { ...env } as Env;
+  if (configuredEmail === undefined) {
+    delete (bindings as Partial<Env>).DIAG_GUARDIAN_EMAIL;
+  } else {
+    bindings.DIAG_GUARDIAN_EMAIL = configuredEmail;
+  }
+  return diagRoutes.request(
+    "https://api.test/",
+    cookie ? { headers: { cookie } } : undefined,
+    bindings
+  );
+};
+
 describe("practice and diagnostic routes", () => {
   beforeEach(resetDb);
+
+  it.each([
+    { label: "matching", configuredEmail: "local-guardian@example.com", cookie: "session=s_diag", expected: 200 },
+    { label: "non-matching", configuredEmail: "other@example.com", cookie: "session=s_diag", expected: 403 },
+    { label: "missing", configuredEmail: undefined, cookie: "session=s_diag", expected: 403 },
+    { label: "blank", configuredEmail: "   ", cookie: "session=s_diag", expected: 403 },
+    { label: "no session", configuredEmail: "local-guardian@example.com", cookie: undefined, expected: 401 }
+  ])("diagnostics returns $expected for $label operator configuration", async ({ configuredEmail, cookie, expected }) => {
+    const response = await diagnosticsRequest(configuredEmail, cookie);
+    expect(response.status).toBe(expected);
+  });
 
   it("creates a practice session and persists guardian-tap attempts", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });

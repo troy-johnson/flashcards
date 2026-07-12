@@ -7,6 +7,16 @@ const root = resolve(import.meta.dirname, "..");
 const wranglerConfig = readFileSync(resolve(root, "api/wrangler.toml"), "utf8");
 const ciWorkflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8");
 
+const tomlSection = (section: string) => {
+  const header = `[${section}]`;
+  const start = wranglerConfig.indexOf(header);
+  assert.notEqual(start, -1, `missing ${header}`);
+
+  const remainder = wranglerConfig.slice(start + header.length);
+  const nextSection = remainder.search(/^\s*\[{1,2}[^\n]+\]{1,2}\s*$/m);
+  return nextSection === -1 ? remainder : remainder.slice(0, nextSection);
+};
+
 const environmentDatabase = (environment: "preview" | "production") => {
   const marker = `[[env.${environment}.d1_databases]]`;
   const start = wranglerConfig.indexOf(marker);
@@ -46,6 +56,29 @@ test("production enrollment is allowlisted while local and preview stay open", (
     wranglerConfig,
     /\[env\.production\.vars\][\s\S]*?AUTH_ACCESS_MODE\s*=\s*"allowlist"[\s\S]*?\[\[env\.production\.d1_databases\]\]/,
   );
+});
+
+test("production operator designation is secret-backed without committing a real address", () => {
+  assert.match(
+    tomlSection("vars"),
+    /^DIAG_GUARDIAN_EMAIL\s*=\s*"local-guardian@example\.com"\s*$/m,
+  );
+  assert.match(
+    tomlSection("env.preview.vars"),
+    /^DIAG_GUARDIAN_EMAIL\s*=\s*"pilot-guardian@example\.com"\s*$/m,
+  );
+  assert.doesNotMatch(
+    tomlSection("env.production.vars"),
+    /^DIAG_GUARDIAN_EMAIL\s*=/m,
+  );
+
+  const committedDesignations = [
+    ...wranglerConfig.matchAll(/^DIAG_GUARDIAN_EMAIL\s*=\s*"([^"]+)"\s*$/gm),
+  ].map((match) => match[1]);
+  assert.deepEqual(committedDesignations, [
+    "local-guardian@example.com",
+    "pilot-guardian@example.com",
+  ]);
 });
 
 test("production config includes the public magic-link abuse limiter", () => {

@@ -12,7 +12,7 @@ import {
   signIn,
   startPractice
 } from "./api/literacy";
-import type { AttemptResult, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
+import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
 import { landing } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
@@ -36,7 +36,7 @@ function usePath(): string {
   return path;
 }
 
-function GuardianNav({ guardian }: { guardian: Guardian | null }) {
+function GuardianNav({ guardian, operatorTools }: { guardian: Guardian | null; operatorTools: boolean }) {
   const onLogout = async (event: FormEvent) => {
     event.preventDefault();
     try { await logout(); } catch { /* ignore */ }
@@ -46,8 +46,8 @@ function GuardianNav({ guardian }: { guardian: Guardian | null }) {
   return (
     <nav className="guardian-nav" aria-label="Guardian navigation">
       <a href="/guardian">Students</a>
-      <a href="/guardian/diag">Diagnostics</a>
-      <a href="/guardian/audio-catalog">Audio catalog</a>
+      {operatorTools && <a href="/guardian/diag">Diagnostics</a>}
+      {operatorTools && <a href="/guardian/audio-catalog">Audio catalog</a>}
       <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
     </nav>
   );
@@ -185,7 +185,7 @@ function AuthConsumeRoute() {
   );
 }
 
-function GuardianRoute() {
+function GuardianRoute({ operatorTools }: { operatorTools: boolean }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [status, setStatus] = useState<FetchStatus>("loading");
 
@@ -210,7 +210,7 @@ function GuardianRoute() {
         <p className="muted">Students you&apos;ve added show up here. Open one to start practice or view progress.</p>
         <div className="actions">
           <a className="primary-link" href="/guardian/add-student">Add a student</a>
-          <a href="/guardian/diag">View diagnostics</a>
+          {operatorTools && <a href="/guardian/diag">View diagnostics</a>}
         </div>
         {status === "loading" && <p>Loading students…</p>}
         {status === "error" && <p role="alert">Could not load students. Try refreshing.</p>}
@@ -585,13 +585,13 @@ function DoneRoute({ studentId }: { studentId: string }) {
 function App() {
   const path = usePath();
   const segments = useMemo(() => path.split("/").filter(Boolean), [path]);
-  const [guardian, setGuardian] = useState<Guardian | null>(null);
+  const [auth, setAuth] = useState<AuthMeResponse | null>(null);
 
   useEffect(() => {
     let active = true;
     getCurrentGuardian()
-      .then(({ guardian }) => active && setGuardian(guardian))
-      .catch(() => active && setGuardian(null));
+      .then((response) => active && setAuth(response))
+      .catch(() => active && setAuth(null));
     return () => {
       active = false;
     };
@@ -600,7 +600,7 @@ function App() {
   let route;
   if (path === "/signin") route = <SignInRoute />;
   else if (path === "/auth/consume") route = <AuthConsumeRoute />;
-  else if (path === "/guardian") route = <GuardianRoute />;
+  else if (path === "/guardian") route = <GuardianRoute operatorTools={auth?.capabilities?.operator_tools === true} />;
   else if (path === "/guardian/add-student") route = <AddStudentRoute />;
   else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
   else if (path === "/guardian/audio-catalog") route = <AudioCatalogRoute />;
@@ -617,9 +617,11 @@ function App() {
   const isStudentMode = segments[0] === "play";
   const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume";
   const showNav = !isStudentMode && !isPublicRoute;
+  const guardian = auth?.guardian ?? null;
+  const operatorTools = auth?.capabilities?.operator_tools === true;
   return (
     <>
-      {showNav && <GuardianNav guardian={guardian} />}
+      {showNav && <GuardianNav guardian={guardian} operatorTools={operatorTools} />}
       {route}
     </>
   );

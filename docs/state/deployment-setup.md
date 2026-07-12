@@ -105,7 +105,21 @@ Keep pilot access allowlisted; open public enrollment is outside `rw-bpb`.
 In allowlist mode the API always returns an empty `204` for valid requests; it never
 echoes a development magic link to the caller.
 
-## 6. Verify the production-D1 GitHub gate
+## 6. Configure the production operator designation
+
+Production operator access is fail-closed and uses a Cloudflare Worker secret.
+Enter the designated guardian email interactively; never place the value in a
+command, committed file, documentation, fixture, log, screenshot, or review output:
+
+```bash
+pnpm --filter api exec wrangler secret put DIAG_GUARDIAN_EMAIL --env production
+pnpm --filter api exec wrangler secret list --env production
+```
+
+The list command is only for confirming that the `DIAG_GUARDIAN_EMAIL` binding name
+exists. Never copy or expose the secret value while configuring or verifying it.
+
+## 7. Verify the production-D1 GitHub gate
 
 The `production-d1` GitHub environment must exist and allow deployments only from
 protected branches. This single-owner repository currently has no required reviewer;

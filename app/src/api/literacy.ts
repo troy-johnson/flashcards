@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptInput, AudioCatalogResponse, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
+import type { AttemptInput, AudioCatalogResponse, AuthMeResponse, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
 
 export interface SignInResponse {
   /** Present only when the API runs with the dev-log email issuer — never set in production. */
@@ -15,8 +15,8 @@ export const signIn = (email: string): Promise<SignInResponse> =>
 export const consumeMagicLink = (token: string): Promise<void> =>
   apiFetch<void>(`/auth/consume?token=${encodeURIComponent(token)}`);
 
-export const getCurrentGuardian = (): Promise<{ guardian: Guardian }> =>
-  apiFetch<{ guardian: Guardian }>("/auth/me");
+export const getCurrentGuardian = (): Promise<AuthMeResponse> =>
+  apiFetch<AuthMeResponse>("/auth/me");
 
 export const logout = (): Promise<void> =>
   apiFetch<void>("/auth/logout", { method: "POST" });
