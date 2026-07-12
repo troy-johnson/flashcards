@@ -87,6 +87,10 @@ test("production operator secret instructions use the versioned Worker workflow"
   for (const instructions of [deploymentSetup, operatorPlan]) {
     assert.match(
       instructions,
+      /Enter the lowercased, trimmed guardian email interactively/,
+    );
+    assert.match(
+      instructions,
       /wrangler versions upload --env production[\s\S]*wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production[\s\S]*wrangler versions view <version-id> --env production --json[\s\S]*wrangler deployments status --env production --json/,
     );
     assert.match(
