@@ -6,6 +6,8 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const wranglerConfig = readFileSync(resolve(root, "api/wrangler.toml"), "utf8");
 const ciWorkflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8");
+const deploymentSetup = readFileSync(resolve(root, "docs/state/deployment-setup.md"), "utf8");
+const operatorPlan = readFileSync(resolve(root, "docs/plans/005a-production-operator-capabilities.md"), "utf8");
 
 const tomlSection = (section: string) => {
   const header = `[${section}]`;
@@ -79,6 +81,27 @@ test("production operator designation is secret-backed without committing a real
     "local-guardian@example.com",
     "pilot-guardian@example.com",
   ]);
+});
+
+test("production operator secret instructions use the versioned Worker workflow", () => {
+  for (const instructions of [deploymentSetup, operatorPlan]) {
+    assert.match(
+      instructions,
+      /wrangler versions upload --env production/,
+    );
+    assert.match(
+      instructions,
+      /wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production/,
+    );
+    assert.match(
+      instructions,
+      /wrangler versions view <version-id> --env production --json/,
+    );
+    assert.doesNotMatch(
+      instructions,
+      /wrangler secret put DIAG_GUARDIAN_EMAIL --env production/,
+    );
+  }
 });
 
 test("production config includes the public magic-link abuse limiter", () => {
