@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   completePractice,
   consumeMagicLink,
@@ -13,7 +13,7 @@ import {
   startPractice
 } from "./api/literacy";
 import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
-import { landing } from "copy";
+import { landing, productName } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
@@ -37,19 +37,67 @@ function usePath(): string {
 }
 
 function GuardianNav({ guardian, operatorTools }: { guardian: Guardian | null; operatorTools: boolean }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const firstActionRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    firstActionRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
+  const toggleMenu = () => {
+    if (menuOpen) {
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+      return;
+    }
+    setMenuOpen(true);
+  };
+
+  const closeForNavigation = () => setMenuOpen(false);
+
   const onLogout = async (event: FormEvent) => {
     event.preventDefault();
+    setMenuOpen(false);
     try { await logout(); } catch { /* ignore */ }
     navigate("/");
   };
   if (!guardian) return null;
   return (
-    <nav className="guardian-nav" aria-label="Guardian navigation">
-      <a href="/guardian">Students</a>
-      {operatorTools && <a href="/guardian/diag">Diagnostics</a>}
-      {operatorTools && <a href="/guardian/audio-catalog">Audio catalog</a>}
-      <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
-    </nav>
+    <header className="guardian-header">
+      <div className="guardian-header-inner">
+        <a className="guardian-brand" href="/guardian">{productName}</a>
+        <nav className="guardian-nav" aria-label="Guardian navigation">
+          <button
+            ref={menuButtonRef}
+            className="guardian-menu-button"
+            type="button"
+            aria-controls="guardian-nav-actions"
+            aria-expanded={menuOpen}
+            onClick={toggleMenu}
+          >
+            Menu
+          </button>
+          <div
+            id="guardian-nav-actions"
+            className={`guardian-nav-actions${menuOpen ? " is-open" : ""}`}
+          >
+            <a ref={firstActionRef} href="/guardian" onClick={closeForNavigation}>Students</a>
+            {operatorTools && <a href="/guardian/diag" onClick={closeForNavigation}>Diagnostics</a>}
+            {operatorTools && <a href="/guardian/audio-catalog" onClick={closeForNavigation}>Audio catalog</a>}
+            <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
+          </div>
+        </nav>
+      </div>
+    </header>
   );
 }
 
@@ -620,10 +668,12 @@ function App() {
   const guardian = auth?.guardian ?? null;
   const operatorTools = auth?.capabilities?.operator_tools === true;
   return (
-    <>
-      {showNav && <GuardianNav guardian={guardian} operatorTools={operatorTools} />}
-      {route}
-    </>
+    showNav ? (
+      <div className="guardian-layout">
+        <GuardianNav guardian={guardian} operatorTools={operatorTools} />
+        {route}
+      </div>
+    ) : route
   );
 }
 

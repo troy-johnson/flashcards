@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { consumeMagicLink, createStudent, getCurrentGuardian, getStudent, listStudents, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, getCurrentGuardian, getStudent, listStudents, logout, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => ({})),
@@ -63,6 +63,87 @@ describe("guardian and sign-in routes", () => {
     expect(container.textContent).toContain("Add a student");
     expect(container.textContent).toContain("Ada");
     expect(container.querySelector('a[href="/guardian/student1"]')).not.toBeNull();
+  });
+
+  it("renders a branded semantic guardian shell with a controlled menu", async () => {
+    window.history.pushState({}, "", "/guardian");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    const header = container.querySelector("header.guardian-header");
+    const layout = container.querySelector(".guardian-layout");
+    const brand = header?.querySelector('.guardian-brand[href="/guardian"]');
+    const nav = header?.querySelector('nav[aria-label="Guardian navigation"]');
+    const menuButton = header?.querySelector<HTMLButtonElement>("button.guardian-menu-button");
+    const menuActions = header?.querySelector(".guardian-nav-actions");
+
+    expect(layout?.querySelector(":scope > header")).toBe(header);
+    expect(layout?.querySelector(":scope > main.page-shell")).not.toBeNull();
+    expect(brand?.textContent).toBe("Reader's Way");
+    expect(nav).not.toBeNull();
+    expect(menuButton?.textContent).toBe("Menu");
+    expect(menuButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(menuActions).not.toBeNull();
+
+    await act(async () => menuButton?.click());
+
+    expect(menuButton?.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).toBe(header?.querySelector('a[href="/guardian"]:not(.guardian-brand)'));
+  });
+
+  it("closes the guardian menu with Escape or a repeated toggle and restores Menu focus", async () => {
+    window.history.pushState({}, "", "/guardian");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+    const menuButton = container.querySelector<HTMLButtonElement>(".guardian-menu-button");
+
+    await act(async () => menuButton?.click());
+    await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(menuButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(menuButton);
+
+    await act(async () => menuButton?.click());
+    await act(async () => menuButton?.click());
+    expect(menuButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(menuButton);
+  });
+
+  it("closes the guardian menu when an action is selected", async () => {
+    window.history.pushState({}, "", "/guardian");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+    const menuButton = container.querySelector<HTMLButtonElement>(".guardian-menu-button");
+    const studentsLink = container.querySelector<HTMLAnchorElement>('.guardian-nav-actions a[href="/guardian"]');
+    studentsLink?.addEventListener("click", (event) => event.preventDefault());
+
+    await act(async () => menuButton?.click());
+    await act(async () => studentsLink?.click());
+
+    expect(menuButton?.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("signs out from the guardian menu", async () => {
+    window.history.pushState({}, "", "/guardian");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLFormElement>(".guardian-nav-actions form")?.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true })
+      );
+      await flush();
+    });
+
+    expect(logout).toHaveBeenCalledOnce();
+    expect(window.location.pathname).toBe("/");
   });
 
   it("shows operator navigation and dashboard links when operator_tools is true", async () => {
