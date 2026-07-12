@@ -409,6 +409,35 @@ describe("auth routes", () => {
     expect(audioCatalog.status).toBe(expected.audioCatalog);
   });
 
+  it("ignores client-supplied operator identity and capability claims", async () => {
+    await seedOperatorSession();
+    const bindings = operatorBindings("designated@example.com");
+    const headers = {
+      cookie: "session=s_operator_matrix",
+      "x-guardian-email": "designated@example.com",
+      "x-operator-tools": "true",
+      "x-guardian-capabilities": JSON.stringify({ operator_tools: true })
+    };
+    const spoofedQuery = "?guardian_email=designated%40example.com&operator_tools=true";
+    const request = (path: string) => operatorSurfaceApp.request(
+      `https://api.test${path}${spoofedQuery}`,
+      { headers },
+      bindings
+    );
+
+    const [me, diagnostics, audioCatalog] = await Promise.all([
+      request("/auth/me"),
+      request("/guardian/diag"),
+      request("/guardian/audio-catalog")
+    ]);
+
+    expect(me.status).toBe(200);
+    const body = await me.json<{ capabilities: { operator_tools: boolean } }>();
+    expect(body.capabilities.operator_tools).toBe(false);
+    expect(diagnostics.status).toBe(403);
+    expect(audioCatalog.status).toBe(403);
+  });
+
   it("/auth/logout clears the cookie and removes the session row", async () => {
     await env.DB.prepare("INSERT INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)")
       .bind("g_out", "out@example.com", new Date().toISOString()).run();
