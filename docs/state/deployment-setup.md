@@ -2,7 +2,7 @@
 
 These steps must be completed once in the Cloudflare and GitHub dashboards to make the new deploy pipeline work. Code changes are already on this branch.
 
-## 1. Create the frontend Worker with Static Assets
+## 1. Create the Frontend Worker with Static Assets
 
 Cloudflare Pages was deleted because the dashboard-created project had no Git
 connection and could not be retrofitted. The frontend now deploys as a Worker
@@ -12,8 +12,10 @@ with Static Assets from `app/wrangler.toml`.
 2. Project name: `flashcards`.
 3. Pick `troy-johnson/flashcards`, production branch `main`.
 4. Build settings:
-   - Build command: `pnpm install --frozen-lockfile && pnpm --filter app build`
-   - Deploy command: `pnpm --filter app exec wrangler deploy`
+   - Build command: `pnpm install --frozen-lockfile`
+   - Non-production branch deploy command:
+     `pnpm --filter app exec wrangler versions upload`
+   - Production branch deploy command: `pnpm deploy:production:frontend`
    - Root directory: leave empty (monorepo)
 5. Environment variables (Production + Preview):
    - `VITE_API_ORIGIN = https://api-flashcards.troyjohnson.workers.dev`
@@ -21,6 +23,11 @@ with Static Assets from `app/wrangler.toml`.
 
 Production deploys land at `https://flashcards.troyjohnson.workers.dev/`.
 The API `APP_ORIGIN` for preview and production must match that URL.
+
+The production command builds the SPA, uploads it with the explicit
+`app/wrangler.toml` config, and inspects the candidate metadata. It deploys the
+exact candidate only after confirming Static Assets use SPA fallback and no API
+or D1 binding is present. A failed candidate never reaches production traffic.
 
 ## 2. Add CLOUDFLARE_API_TOKEN secret to GitHub
 
@@ -44,10 +51,20 @@ Dashboard → Workers & Pages → `api-flashcards` → Settings → Build → ed
 - Non-production branch deploy command:
   `pnpm --filter api exec wrangler versions upload --env preview`
 - Production branch deploy command:
-  `pnpm --filter api exec wrangler deploy --env production`
+  `pnpm deploy:production:api`
 - Root directory: leave empty (monorepo)
 - Environment variables:
   - `NODE_VERSION = 24`
+  - `DIAG_GUARDIAN_EMAIL = <lowercased designated operator email>` — Encrypt
+    this value in Cloudflare Builds and never print it in build logs.
+
+The production command writes the encrypted operator value to a mode-`0600`
+temporary secrets file, uploads a candidate with the explicit
+`api/wrangler.toml` production config, and deletes the temporary file. Before
+moving production traffic, it validates the candidate has the production D1,
+rate limiter, `DIAG_GUARDIAN_EMAIL`, `GUARDIAN_EMAIL_ALLOWLIST`, and
+`RESEND_API_KEY` binding names. If validation fails, production traffic remains
+on the previous version.
 
 ## 4. Resend transactional email setup
 
