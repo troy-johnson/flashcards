@@ -8,6 +8,9 @@ const wranglerConfig = readFileSync(resolve(root, "api/wrangler.toml"), "utf8");
 const ciWorkflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8");
 const deploymentSetup = readFileSync(resolve(root, "docs/state/deployment-setup.md"), "utf8");
 const operatorPlan = readFileSync(resolve(root, "docs/plans/005a-production-operator-capabilities.md"), "utf8");
+const rootPackage = JSON.parse(
+  readFileSync(resolve(root, "package.json"), "utf8"),
+) as { scripts?: Record<string, string> };
 
 const tomlSection = (section: string) => {
   const header = `[${section}]`;
@@ -114,6 +117,33 @@ test("production operator secret instructions use the versioned Worker workflow"
       /wrangler secret put DIAG_GUARDIAN_EMAIL --env production/,
     );
   }
+});
+
+test("Cloudflare Git Builds use validated, target-specific production deploy commands", () => {
+  assert.equal(
+    rootPackage.scripts?.["deploy:production:frontend"],
+    "tsx scripts/cloudflare-production-deploy.ts frontend",
+  );
+  assert.equal(
+    rootPackage.scripts?.["deploy:production:api"],
+    "tsx scripts/cloudflare-production-deploy.ts api",
+  );
+  assert.match(
+    deploymentSetup,
+    /Frontend Worker[\s\S]*Production branch deploy command:\s*`pnpm deploy:production:frontend`/,
+  );
+  assert.match(
+    deploymentSetup,
+    /backend API Worker[\s\S]*Production branch deploy command:\s*`pnpm deploy:production:api`/,
+  );
+  assert.match(
+    deploymentSetup,
+    /DIAG_GUARDIAN_EMAIL[\s\S]*Encrypt/,
+  );
+  assert.match(
+    deploymentSetup,
+    /validates the candidate[\s\S]*production traffic/i,
+  );
 });
 
 test("production config includes the public magic-link abuse limiter", () => {

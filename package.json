@@ -14,6 +14,8 @@
     "audio:manifest:check": "tsx scripts/audio-manifest.ts --check",
     "audio:stage": "tsx scripts/audio-stage.ts",
     "replay:attempts": "tsx scripts/replay-attempts.ts",
+    "deploy:production:frontend": "tsx scripts/cloudflare-production-deploy.ts frontend",
+    "deploy:production:api": "tsx scripts/cloudflare-production-deploy.ts api",
     "db:migrations:list": "wrangler d1 migrations list literacy_preview --config api/wrangler.toml"
   },
   "devDependencies": {
