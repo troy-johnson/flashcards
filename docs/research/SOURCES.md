@@ -195,6 +195,73 @@ Every added source must include:
 - **Limitations:** Broad learning-science framework; individual product features require more specific evidence.
 - **Consumed by:** UI engagement research and guardian/student co-engagement design.
 
+## Accessibility, interaction, and operational access
+
+### `W3C-WCAG-2.2`
+
+- **Tier/type:** C — W3C Recommendation and normative web accessibility standard
+- **Organization:** World Wide Web Consortium, Web Accessibility Initiative
+- **Published:** 2023-10-05
+- **Canonical URL:** https://www.w3.org/TR/WCAG22/
+- **Last verified:** 2026-07-11
+- **Population/scope:** Web content and applications used by people with disabilities across input and assistive technologies.
+- **Supports:** Reflow without loss of information or functionality at 320 CSS px; minimum pointer-target sizing; consistent navigation and component identification; descriptive labels/instructions; programmatic status-message communication.
+- **Does not support:** One required mobile header layout, a hamburger menu, a particular Reader's Way breakpoint, or automatic navigation after student creation.
+- **Limitations:** Conformance criteria establish accessibility outcomes, not a complete product interaction design; Reader's Way still needs real-device and assistive-technology checks.
+- **Consumed by:** Family-device QA research; Specs 004 and 006; downstream responsive-shell and onboarding plans.
+
+### `W3C-FORM-NOTIFICATIONS`
+
+- **Tier/type:** C — W3C accessibility implementation tutorial
+- **Organization:** World Wide Web Consortium, Web Accessibility Initiative
+- **Canonical URL:** https://www.w3.org/WAI/tutorials/forms/notifications/
+- **Last verified:** 2026-07-11
+- **Population/scope:** Success and error feedback for server- and client-processed web forms.
+- **Supports:** Clear, concise success/error feedback after submission; using prominent headings, page titles, or programmatically identified status/alert messages so completion is not easy to miss.
+- **Does not support:** A mandatory redirect destination or a specific toast/snackbar implementation.
+- **Limitations:** Technique guidance must be adapted to a client-routed React application and verified with focus/screen-reader behavior.
+- **Consumed by:** Family-device QA research; Spec 004 post-create transition requirements.
+
+### `APPLE-HIG-BUTTONS`
+
+- **Tier/type:** C — platform human-interface guidance
+- **Organization:** Apple
+- **Canonical URL:** https://developer.apple.com/design/human-interface-guidelines/buttons
+- **Last verified:** 2026-07-11
+- **Population/scope:** Button design and interaction across Apple platforms, including iPhone and iPad touch input.
+- **Supports:** Clear button purpose, adequate visual separation, interaction feedback, and a general 44-by-44-point hit-region target.
+- **Does not support:** Treating 44 points as a web conformance rule, enlarging all visual chrome, or one required navigation component.
+- **Limitations:** Native-platform guidance rather than a web standard; CSS-pixel behavior and browser chrome require direct Safari testing.
+- **Consumed by:** Family-device QA research; Spec 004 mobile navigation and practice-exit requirements.
+
+### `NIST-800-53-AC6`
+
+- **Tier/type:** C — U.S. government security-control standard
+- **Organization:** National Institute of Standards and Technology
+- **Published:** 2020; Revision 5.1 update 2025
+- **Canonical URL:** https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final
+- **Last verified:** 2026-07-11
+- **Population/scope:** Security and privacy controls for information systems and organizations.
+- **Supports:** Least privilege: only authorized users or processes receive the access necessary for assigned tasks.
+- **Does not support:** Reader's Way's exact email-based operator gate, a general role system, or storing a specific operator email in source control.
+- **Limitations:** Broad organizational control guidance; the trusted micro-pilot uses a deliberately smaller authorization model.
+- **Consumed by:** Family-device QA research; Spec 005 operator-access preservation requirements.
+
+## Caregiver-supported foundational instruction
+
+### `UFLI-PHONEMIC-AWARENESS`
+
+- **Tier/type:** C — university literacy institute implementation resource and scripted routine
+- **Organization:** University of Florida Literacy Institute
+- **Canonical URL:** https://ufli.education.ufl.edu/resources/teaching-resources/instructional-activities/phonemic-awareness/
+- **Companion procedure:** https://ufli.education.ufl.edu/wp-content/uploads/2024/09/UFLI-foundations-pocket-reference.pdf
+- **Last verified:** 2026-07-11
+- **Population/scope:** Explicit phoneme blending and segmenting routines for beginning readers.
+- **Supports:** Scripted instruction that distinguishes the adult-presented phonemes from the student's blending response; modeling a word one sound at a time before asking for the whole word.
+- **Does not support:** Reader's Way's exact caregiver copy, clinical speech treatment, requiring IPA knowledge, or replacing curriculum/SLP review.
+- **Limitations:** Curriculum implementation guidance rather than an effectiveness trial; the source addresses educators, so Reader's Way must translate the routine into non-specialist caregiver language.
+- **Consumed by:** Family-device QA research; Spec 006 caregiver-ready phonemic-awareness instructions.
+
 ## Audio and browser standards
 
 ### `WEB-SPEECH-SPEC`
