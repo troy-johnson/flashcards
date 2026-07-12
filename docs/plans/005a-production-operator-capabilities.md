@@ -87,6 +87,8 @@ Create a pure operator-policy module. It receives the trusted authenticated guar
 - [ ] Remove the production placeholder from `api/wrangler.toml`.
 - [ ] Document this value-free procedure:
 
+  Enter the lowercased, trimmed guardian email interactively.
+
   ```bash
   pnpm --filter api exec wrangler versions upload --env production --message "Stage operator secret update"
   pnpm --filter api exec wrangler versions secret put DIAG_GUARDIAN_EMAIL --env production --message "Add production operator designation"

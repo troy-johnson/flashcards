@@ -108,8 +108,8 @@ echoes a development magic link to the caller.
 ## 6. Configure the production operator designation
 
 Production operator access is fail-closed and uses a Cloudflare Worker secret.
-Enter the designated guardian email interactively; never place the value in a
-command, committed file, documentation, fixture, log, screenshot, or review output:
+Enter the lowercased, trimmed guardian email interactively; never place the value in
+a command, committed file, documentation, fixture, log, screenshot, or review output:
 
 ```bash
 pnpm --filter api exec wrangler versions upload --env production --message "Stage operator secret update"
