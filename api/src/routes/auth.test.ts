@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { env, SELF } from "cloudflare:test";
+import { Hono } from "hono";
 import { resetFoundationDb } from "../test/reset-db";
+import { audioCatalogRoutes } from "./audio-catalog";
 import { authRoutes } from "./auth";
+import { diagRoutes } from "./diag";
 import type { Env } from "../types";
 
 const resetDb = async () => {
@@ -14,6 +17,30 @@ const extractToken = (logs: string[]): string => {
   const match = entry.match(/https?:\/\/\S*\/auth\/consume\?token=\S+/);
   if (!match) throw new Error("no magic link url logged");
   return new URL(match[0]).searchParams.get("token")!;
+};
+
+const operatorSurfaceApp = new Hono<{ Bindings: Env }>()
+  .route("/auth", authRoutes)
+  .route("/guardian/diag", diagRoutes)
+  .route("/guardian/audio-catalog", audioCatalogRoutes);
+
+const operatorBindings = (configuredEmail?: string): Env => {
+  const bindings = { ...env } as Env;
+  if (configuredEmail === undefined) {
+    delete (bindings as Partial<Env>).DIAG_GUARDIAN_EMAIL;
+  } else {
+    bindings.DIAG_GUARDIAN_EMAIL = configuredEmail;
+  }
+  return bindings;
+};
+
+const seedOperatorSession = async () => {
+  const now = new Date().toISOString();
+  const future = new Date(Date.now() + 60_000).toISOString();
+  await env.DB.prepare("INSERT INTO guardian (id, email, role, created_at) VALUES (?, ?, 'guardian', ?)")
+    .bind("g_operator_matrix", "operator@example.com", now).run();
+  await env.DB.prepare("INSERT INTO session (id, guardian_id, expires_at, created_at) VALUES (?, ?, ?, ?)")
+    .bind("s_operator_matrix", "g_operator_matrix", future, now).run();
 };
 
 describe("auth routes", () => {
@@ -313,8 +340,102 @@ describe("auth routes", () => {
       .bind("sess_me", "g_me", future, new Date().toISOString()).run();
     const me = await SELF.fetch("https://api.test/auth/me", { headers: { cookie: "session=sess_me" } });
     expect(me.status).toBe(200);
-    const body = await me.json<{ guardian: { email: string } }>();
+    const body = await me.json<{ guardian: { email: string }; capabilities: { operator_tools: boolean } }>();
     expect(body.guardian.email).toBe("me@example.com");
+    expect(body.capabilities.operator_tools).toBe(false);
+  });
+
+  it.each([
+    { label: "matching", configuredEmail: "operator@example.com", expected: true },
+    { label: "non-matching", configuredEmail: "someone-else@example.com", expected: false },
+    { label: "missing", configuredEmail: undefined, expected: false },
+    { label: "blank", configuredEmail: "   ", expected: false }
+  ])("/auth/me reports operator_tools=$expected for $label configuration", async ({ configuredEmail, expected }) => {
+    await seedOperatorSession();
+    const response = await authRoutes.request("https://api.test/me", {
+      headers: { cookie: "session=s_operator_matrix" }
+    }, operatorBindings(configuredEmail));
+
+    expect(response.status).toBe(200);
+    const body = await response.json<{ capabilities: { operator_tools: boolean } }>();
+    expect(body.capabilities.operator_tools).toBe(expected);
+  });
+
+  it("/auth/me preserves 401 without a session when capability configuration is missing", async () => {
+    const response = await authRoutes.request("https://api.test/me", undefined, operatorBindings());
+    expect(response.status).toBe(401);
+  });
+
+  it.each([
+    {
+      label: "matching",
+      configuredEmail: "operator@example.com",
+      cookie: "session=s_operator_matrix",
+      expected: { me: 200, capability: true, diagnostics: 200, audioCatalog: 200 }
+    },
+    {
+      label: "non-matching",
+      configuredEmail: "someone-else@example.com",
+      cookie: "session=s_operator_matrix",
+      expected: { me: 200, capability: false, diagnostics: 403, audioCatalog: 403 }
+    },
+    {
+      label: "no session",
+      configuredEmail: "operator@example.com",
+      cookie: undefined,
+      expected: { me: 401, capability: undefined, diagnostics: 401, audioCatalog: 401 }
+    }
+  ])("keeps operator authorization consistent across routes for $label", async ({ configuredEmail, cookie, expected }) => {
+    await seedOperatorSession();
+    const bindings = operatorBindings(configuredEmail);
+    const request = (path: string) => operatorSurfaceApp.request(
+      `https://api.test${path}`,
+      cookie ? { headers: { cookie } } : undefined,
+      bindings
+    );
+
+    const [me, diagnostics, audioCatalog] = await Promise.all([
+      request("/auth/me"),
+      request("/guardian/diag"),
+      request("/guardian/audio-catalog")
+    ]);
+
+    expect(me.status).toBe(expected.me);
+    if (expected.capability !== undefined) {
+      const body = await me.json<{ capabilities: { operator_tools: boolean } }>();
+      expect(body.capabilities.operator_tools).toBe(expected.capability);
+    }
+    expect(diagnostics.status).toBe(expected.diagnostics);
+    expect(audioCatalog.status).toBe(expected.audioCatalog);
+  });
+
+  it("ignores client-supplied operator identity and capability claims", async () => {
+    await seedOperatorSession();
+    const bindings = operatorBindings("designated@example.com");
+    const headers = {
+      cookie: "session=s_operator_matrix",
+      "x-guardian-email": "designated@example.com",
+      "x-operator-tools": "true",
+      "x-guardian-capabilities": JSON.stringify({ operator_tools: true })
+    };
+    const spoofedQuery = "?guardian_email=designated%40example.com&operator_tools=true";
+    const request = (path: string) => operatorSurfaceApp.request(
+      `https://api.test${path}${spoofedQuery}`,
+      { headers },
+      bindings
+    );
+
+    const [me, diagnostics, audioCatalog] = await Promise.all([
+      request("/auth/me"),
+      request("/guardian/diag"),
+      request("/guardian/audio-catalog")
+    ]);
+
+    expect(me.status).toBe(200);
+    const body = await me.json<{ capabilities: { operator_tools: boolean } }>();
+    expect(body.capabilities.operator_tools).toBe(false);
+    expect(diagnostics.status).toBe(403);
+    expect(audioCatalog.status).toBe(403);
   });
 
   it("/auth/logout clears the cookie and removes the session row", async () => {

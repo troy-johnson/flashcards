@@ -41,12 +41,10 @@ name = "api-flashcards"
 
 [env.production.vars]
 APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
-DIAG_GUARDIAN_EMAIL = "pilot-guardian@example.com"
-AUTH_EMAIL_ISSUER = "dev-log"
+AUTH_EMAIL_ISSUER = "resend"
 AUTH_ACCESS_MODE = "allowlist"
-# Placeholder sender identity. Replace with the Resend-verified address before
-# flipping AUTH_EMAIL_ISSUER to "resend".
-EMAIL_FROM = "Reader's Way <signin@example.com>"
+# Resend-verified sender identity for production magic links.
+EMAIL_FROM = "Reader's Way <readersway@troyjohnson.dev>"
 
 [[env.production.d1_databases]]
 binding = "DB"

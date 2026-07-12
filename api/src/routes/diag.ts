@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { json } from "../db/client";
 import { getAuthenticatedGuardian } from "../db/session";
+import { canUseOperatorTools } from "../auth/operator-policy";
 import type { Env } from "../types";
 
 export const diagRoutes = new Hono<{ Bindings: Env }>();
@@ -8,7 +9,7 @@ export const diagRoutes = new Hono<{ Bindings: Env }>();
 diagRoutes.get("/", async (c) => {
   const guardian = await getAuthenticatedGuardian(c);
   if (!guardian) return c.text("unauthorized", 401);
-  if (guardian.email !== c.env.DIAG_GUARDIAN_EMAIL) return c.text("forbidden", 403);
+  if (!canUseOperatorTools(c.env, guardian)) return c.text("forbidden", 403);
   const [{ results: summary }, { results: sessions }, { results: friction }] = await Promise.all([
     c.env.DB.prepare(
       `SELECT a.student_id, a.skill_id, a.item_id, a.result, COUNT(*) AS attempts

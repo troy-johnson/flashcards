@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { consumeMagicLink, createStudent, getStudent, listStudents, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, getCurrentGuardian, getStudent, listStudents, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => ({})),
@@ -63,6 +63,69 @@ describe("guardian and sign-in routes", () => {
     expect(container.textContent).toContain("Add a student");
     expect(container.textContent).toContain("Ada");
     expect(container.querySelector('a[href="/guardian/student1"]')).not.toBeNull();
+  });
+
+  it("shows operator navigation and dashboard links when operator_tools is true", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      guardian: { id: "g1", email: "g@example.com", display_name: null },
+      capabilities: { operator_tools: true }
+    });
+    window.history.pushState({}, "", "/guardian");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.querySelectorAll('a[href="/guardian/diag"]')).toHaveLength(2);
+    expect(container.querySelector('a[href="/guardian/audio-catalog"]')).not.toBeNull();
+  });
+
+  it("hides operator navigation and dashboard links when operator_tools is false", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      guardian: { id: "g1", email: "g@example.com", display_name: null },
+      capabilities: { operator_tools: false }
+    });
+    window.history.pushState({}, "", "/guardian");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.querySelector('a[href="/guardian/diag"]')).toBeNull();
+    expect(container.querySelector('a[href="/guardian/audio-catalog"]')).toBeNull();
+  });
+
+  it("hides operator navigation and dashboard links when capabilities are missing", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      guardian: { id: "g1", email: "g@example.com", display_name: null }
+    });
+    window.history.pushState({}, "", "/guardian");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.querySelector('a[href="/guardian/diag"]')).toBeNull();
+    expect(container.querySelector('a[href="/guardian/audio-catalog"]')).toBeNull();
+  });
+
+  it("hides operator navigation and dashboard links when operator_tools is malformed", async () => {
+    (getCurrentGuardian as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      guardian: { id: "g1", email: "g@example.com", display_name: null },
+      capabilities: { operator_tools: "true" }
+    });
+    window.history.pushState({}, "", "/guardian");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.querySelector('a[href="/guardian/diag"]')).toBeNull();
+    expect(container.querySelector('a[href="/guardian/audio-catalog"]')).toBeNull();
   });
 
   it("renders K and 1st-grade siblings as separate selectable students", async () => {
