@@ -16,7 +16,18 @@ const resetDb = async () => {
   await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)").bind("student2", "g_diag", "Grace", "1", now).run();
 };
 
-type PracticeSession = { id: string; student_id: string; plan: { cards: { item_id: string; skill_id: string }[] } };
+type PracticeSession = {
+  id: string;
+  student_id: string;
+  plan: {
+    cards: {
+      item_id: string;
+      skill_id: string;
+      guardian_script?: string;
+      student_task?: string;
+    }[];
+  };
+};
 type MasteryRow = { level: number; streak: number; ease: number; due_at: string; last_seen_at: string };
 
 const K_REVIEW_SKILLS = [
@@ -151,6 +162,12 @@ describe("practice and diagnostic routes", () => {
     const firstGradeSession = await startSessionFor("student2");
 
     expect(kSession.plan.cards[0]?.skill_id).toBe("pa_k_u1_blend_two_sound");
+    expect(kSession.plan.cards[0]?.guardian_script).toBe(
+      "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it."
+    );
+    expect(kSession.plan.cards[0]?.student_task).toBe(
+      "Your child puts the sounds together and says the word."
+    );
     expect(firstGradeSession.plan.cards[0]?.skill_id).toBe("pa_k_u1_blend_two_sound");
     expect(new Set(kSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);
     expect(new Set(firstGradeSession.plan.cards.map((card) => card.skill_id)).size).toBeGreaterThan(1);

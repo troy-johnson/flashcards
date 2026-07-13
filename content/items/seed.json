@@ -3,7 +3,9 @@
     "item_id": "pa_k_u1_blend_at",
     "skill_id": "pa_k_u1_blend_two_sound",
     "prompt": "Blend /a/ and /t/.",
-    "answer": "at"
+    "answer": "at",
+    "guardian_script": "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it.",
+    "student_task": "Your child puts the sounds together and says the word."
   },
   {
     "item_id": "phonics_k_u1_short_a_cat",

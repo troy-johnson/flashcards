@@ -32,6 +32,10 @@ export type PlanCard = {
   kind: CardKind;
   /** PA: expected blended/segmented answer, surfaced to the guardian. */
   answer?: string;
+  /** PA: exact adult-facing instruction authored in content. */
+  guardian_script?: string;
+  /** PA: exact child-facing task authored in content. */
+  student_task?: string;
   /** Heart words: decodable parts. */
   regular_parts?: string[];
   /** Heart words: parts that must be remembered ("the heart"). */
@@ -135,6 +139,8 @@ const toCard = (item: SchedulerItem): PlanCard => ({
   text: item.text,
   kind: item.kind,
   ...(item.answer !== undefined && { answer: item.answer }),
+  ...(item.guardian_script !== undefined && { guardian_script: item.guardian_script }),
+  ...(item.student_task !== undefined && { student_task: item.student_task }),
   ...(item.regular_parts !== undefined && { regular_parts: item.regular_parts }),
   ...(item.irregular_parts !== undefined && { irregular_parts: item.irregular_parts }),
   ...(item.speech_text !== undefined && { speech_text: item.speech_text })

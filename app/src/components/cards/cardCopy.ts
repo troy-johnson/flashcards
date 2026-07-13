@@ -5,6 +5,8 @@
 export const cardCopy = {
   pa: {
     eyebrow: "Listen and say it",
+    guardianLabel: "What you say",
+    studentLabel: "What your child does",
     /** Guardian-facing line so the adult knows what a correct response sounds like. */
     answerPrefix: "Listen for:"
   },
