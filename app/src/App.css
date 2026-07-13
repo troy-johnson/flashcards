@@ -93,6 +93,30 @@ button,
   background: var(--color-bg-app);
 }
 
+.practice-surface {
+  width: min(720px, 100%);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.practice-surface .phonics-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.practice-exit {
+  min-width: 44px;
+  min-height: 44px;
+  justify-self: end;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-border-default);
+}
+
+.hero-panel > .practice-exit {
+  margin-left: var(--space-sm);
+}
+
 .phonics-card {
   width: min(720px, 100%);
   border-radius: 36px;
