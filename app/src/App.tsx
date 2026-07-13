@@ -526,6 +526,20 @@ function GuardianDiagRoute() {
   );
 }
 
+function PracticeExit({ studentId, disabled = false }: { studentId: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      className="practice-exit"
+      data-practice-exit
+      disabled={disabled}
+      onClick={() => navigate(`/guardian/${studentId}`)}
+    >
+      Exit practice
+    </button>
+  );
+}
+
 function PlayStartRoute({ studentId }: { studentId: string }) {
   const [practice, setPractice] = useState<ActivePractice | null>(() => loadPractice(studentId));
   const [status, setStatus] = useState<FetchStatus>(practice ? "ready" : "loading");
@@ -558,7 +572,10 @@ function PlayStartRoute({ studentId }: { studentId: string }) {
           <p className="empty">No cards available for today.</p>
         )}
         {status === "ready" && practice && practice.session.plan.cards.length > 0 && (
-          <button type="button" onClick={() => navigate(`/play/${studentId}/drill`)}>Start</button>
+          <>
+            <button type="button" onClick={() => navigate(`/play/${studentId}/drill`)}>Start</button>
+            <PracticeExit studentId={studentId} />
+          </>
         )}
       </section>
     </main>
@@ -612,8 +629,11 @@ function DrillRoute({ studentId }: { studentId: string }) {
 
   return (
     <main className="page-shell student-mode">
-      <DrillCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
-      {submitError && <p className="drill-alert" role="alert">{submitError}</p>}
+      <div className="practice-surface">
+        <PracticeExit studentId={studentId} disabled={busy} />
+        <DrillCard key={`${card.skill_id}:${card.item_id}`} card={card} onScore={onScore} />
+        {submitError && <p className="drill-alert" role="alert">{submitError}</p>}
+      </div>
     </main>
   );
 }
