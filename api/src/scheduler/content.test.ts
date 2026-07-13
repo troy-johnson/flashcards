@@ -111,6 +111,23 @@ describe("loadSchedulerContent", () => {
     expect(content.itemsById["heart_k_u1_the"]?.irregular_parts).toEqual(["e"]);
   });
 
+  it("preserves authored caregiver and child PA instructions during normalization", () => {
+    const item = content.itemsById["pa_k_u1_blend_at"];
+    expect(item?.guardian_script).toBe(
+      "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it."
+    );
+    expect(item?.student_task).toBe(
+      "Your child puts the sounds together and says the word."
+    );
+  });
+
+  it("keeps caregiver and child instructions absent when they are unauthored", () => {
+    const item = content.itemsById["phonics_k_u1_short_a_mat"];
+    expect(item).toBeDefined();
+    expect(item && "guardian_script" in item).toBe(false);
+    expect(item && "student_task" in item).toBe(false);
+  });
+
   it("preserves item speech_text as the sole TTS pronunciation override (003a Task 5)", () => {
     const injected = loadSchedulerContent({
       skills: [{ skill_id: "phonics_test", grade: "K", prerequisites: [] }],

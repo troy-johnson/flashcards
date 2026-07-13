@@ -251,6 +251,22 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
     }
   });
 
+  it("carries authored caregiver and child instructions only on their canonical PA card", () => {
+    const plan = buildPracticePlan({ grade: "K", ...emptyState });
+    const pa = plan.cards.find((c) => c.item_id === "pa_k_u1_blend_at");
+    expect(pa?.guardian_script).toBe(
+      "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it."
+    );
+    expect(pa?.student_task).toBe(
+      "Your child puts the sounds together and says the word."
+    );
+
+    const unrelated = plan.cards.find((c) => c.item_id === "phonics_k_u1_short_a_mat");
+    expect(unrelated).toBeDefined();
+    expect(unrelated && "guardian_script" in unrelated).toBe(false);
+    expect(unrelated && "student_task" in unrelated).toBe(false);
+  });
+
   it("propagates item speech_text onto plan cards, omitting it when absent (003a Task 5)", () => {
     const mk = (id: string, speech?: string): SchedulerItem => ({
       item_id: id,

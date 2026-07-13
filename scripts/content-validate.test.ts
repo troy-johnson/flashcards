@@ -147,6 +147,64 @@ describe("content manifest count gate", () => {
   beforeEach(resetTempContentRoot);
   afterEach(removeTempContentRoot);
 
+  const withCanonicalPaInstructions = () => {
+    const items = JSON.parse(productionItems) as Record<string, unknown>[];
+    for (const item of items) {
+      if (typeof item.item_id === "string" && item.item_id.startsWith("pa_") && !item.deprecated) {
+        item.guardian_script = "Say the sounds slowly.";
+        item.student_task = "Put the sounds together and say the word.";
+        item.answer = "at";
+      }
+    }
+    return items;
+  };
+
+  for (const field of ["guardian_script", "student_task", "answer"] as const) {
+    for (const invalidValue of [undefined, "", "   "] as const) {
+      const caseName = invalidValue === undefined ? "missing" : invalidValue === "" ? "empty" : "whitespace-only";
+
+      it(`rejects every live pa_ item whose ${field} is ${caseName}`, () => {
+        const livePaItems = withCanonicalPaInstructions().filter(
+          (item) => typeof item.item_id === "string" && item.item_id.startsWith("pa_") && !item.deprecated
+        );
+        assert.ok(livePaItems.length > 0, "expected at least one live canonical PA item");
+
+        for (const target of livePaItems) {
+          const items = withCanonicalPaInstructions();
+          const invalidItem = items.find((item) => item.item_id === target.item_id);
+          assert.ok(invalidItem, `expected fixture for ${String(target.item_id)}`);
+          if (invalidValue === undefined) delete invalidItem[field];
+          else invalidItem[field] = invalidValue;
+          writeItems(items);
+
+          assert.throws(
+            runValidator,
+            new RegExp(`item ${String(target.item_id)} requires nonblank ${field}`)
+          );
+        }
+      });
+    }
+  }
+
+  it("accepts a live pa_ item with a prompt and all canonical instruction fields", () => {
+    writeItems(withCanonicalPaInstructions());
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
+  it("does not require canonical instruction fields on non-PA or deprecated PA items", () => {
+    const items = withCanonicalPaInstructions();
+    items.push({
+      item_id: "pa_k_u1_retired",
+      skill_id: "pa_k_u1_blend_two_sound",
+      prompt: "Retired prompt.",
+      deprecated: true
+    });
+    writeItems(items);
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
   it("can validate an injected content root without using production content files", () => {
     writeSkills([{ skill_id: "phonics_temp", grade: "K", prerequisites: [] }]);
     writeScopeSequence([{ unit_id: "k_temp", grade: "K", skill_ids: ["phonics_temp"] }]);

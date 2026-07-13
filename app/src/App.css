@@ -142,6 +142,24 @@ button,
   margin: var(--space-xl) 0;
 }
 
+.pa-role-instructions {
+  display: grid;
+  gap: var(--space-lg);
+  margin: var(--space-xl) 0;
+  text-align: left;
+}
+
+.pa-role-instruction h2 {
+  font-size: 1.1rem;
+  margin: 0 0 var(--space-xs);
+}
+
+.pa-role-instruction p {
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* Guardian-facing PA answer line — quiet, below the child's prompt. */
 .guardian-answer {
   color: var(--color-text-muted, #6b5d43);

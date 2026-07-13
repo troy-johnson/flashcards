@@ -31,7 +31,37 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     });
   };
 
-  it("renders a PA card with the prompt for the child and the answer for the guardian", async () => {
+  it("renders canonical PA instructions as distinct guardian and child regions", async () => {
+    await render({
+      skill_id: "pa_k_u1_blend_two_sound",
+      item_id: "pa_k_u1_blend_at",
+      text: "Blend /a/ and /t/.",
+      kind: "pa",
+      answer: "at",
+      guardian_script: "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it.",
+      student_task: "Your child puts the sounds together and says the word."
+    });
+
+    const roleRegions = [...container.querySelectorAll(".pa-role-instruction")];
+    expect(roleRegions).toHaveLength(2);
+    expect(roleRegions[0]?.querySelector("h2")?.textContent).toBe("What you say");
+    expect(roleRegions[0]?.querySelector("p")?.textContent).toBe(
+      "Say, ‘/a/ /t/.’ Stretch /a/ slightly, then say /t/ right after it."
+    );
+    expect(roleRegions[1]?.querySelector("h2")?.textContent).toBe("What your child does");
+    expect(roleRegions[1]?.querySelector("p")?.textContent).toBe(
+      "Your child puts the sounds together and says the word."
+    );
+    expect(container.querySelector(".guardian-answer")?.textContent).toBe("Listen for: at");
+    expect(container.textContent).not.toContain("Blend /a/ and /t/.");
+    expect([...container.querySelectorAll<HTMLButtonElement>(".tap-controls button")].map((button) => button.textContent)).toEqual([
+      "Correct",
+      "Try again",
+      "Skip"
+    ]);
+  });
+
+  it("keeps the legacy PA prompt and answer experience when role instructions are absent", async () => {
     await render({
       skill_id: "pa_k_u1_blend_two_sound",
       item_id: "pa_k_u1_blend_at",

@@ -35,6 +35,10 @@ export type PracticeCard = {
   kind?: CardKind;
   /** PA: expected blended/segmented answer, surfaced to the guardian. */
   answer?: string;
+  /** PA: exact adult-facing words authored in instructional content. */
+  guardian_script?: string;
+  /** PA: plain-language description of the child's task. */
+  student_task?: string;
   /** Heart words: decodable parts. */
   regular_parts?: string[];
   /** Heart words: parts that must be remembered ("the heart"). */

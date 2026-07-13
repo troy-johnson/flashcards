@@ -43,6 +43,9 @@ type Item = {
   skill_id: string;
   text?: string;
   prompt?: string;
+  answer?: string;
+  guardian_script?: string;
+  student_task?: string;
   audio_id?: string;
   deprecated?: boolean;
 };
@@ -94,6 +97,14 @@ const skillsById = new Map(skills.map((s) => [s.skill_id, s]));
 const audioIds = new Set(audioEntries.map((a) => a.audio_id));
 for (const item of items) {
   if (!skillsById.has(item.skill_id)) fail(`item ${item.item_id} references missing skill ${item.skill_id}`);
+  if (!item.deprecated && item.item_id.startsWith("pa_")) {
+    for (const field of ["guardian_script", "student_task", "answer"] as const) {
+      const value = item[field];
+      if (typeof value !== "string" || value.trim().length === 0) {
+        fail(`item ${item.item_id} requires nonblank ${field}`);
+      }
+    }
+  }
   if (item.audio_id) {
     if (item.audio_id.startsWith("tts_")) {
       // A tts_ id is synthesized at runtime from the item's own text, so it need

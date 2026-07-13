@@ -10,9 +10,24 @@ export type DrillCardProps = {
 
 /** Phonemic awareness: the child hears/does the prompt; the guardian sees the expected answer. */
 function PhonemicAwarenessCard({ card, onScore }: DrillCardProps) {
+  const hasRoleInstructions = card.guardian_script && card.student_task;
+
   return (
     <CardShell label="Phonemic awareness practice card" eyebrow={cardCopy.pa.eyebrow} onScore={onScore}>
-      <div className="card-prompt">{card.text}</div>
+      {hasRoleInstructions ? (
+        <div className="pa-role-instructions">
+          <section className="pa-role-instruction">
+            <h2>{cardCopy.pa.guardianLabel}</h2>
+            <p>{card.guardian_script}</p>
+          </section>
+          <section className="pa-role-instruction">
+            <h2>{cardCopy.pa.studentLabel}</h2>
+            <p>{card.student_task}</p>
+          </section>
+        </div>
+      ) : (
+        <div className="card-prompt">{card.text}</div>
+      )}
       {card.answer && (
         <p className="guardian-answer">
           {cardCopy.pa.answerPrefix} <strong>{card.answer}</strong>
