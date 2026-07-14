@@ -29,6 +29,8 @@ export type ProtectedSoundView = {
   master_sha256?: string;
   playback_url?: string;
   playback_sha256?: string;
+  /** Browser-served runtime path; source playback_url stays canonical metadata. */
+  runtime_playback_url?: string;
   reviews: {
     kind: "recorder" | "owner" | "slp";
     reviewer: string;
@@ -50,6 +52,29 @@ export type GraphemePatternMapping = {
 export const audioCatalogRoutes = new Hono<{ Bindings: Env }>();
 
 /**
+ * The canonical record stores a source URL under /audio/. The app build stages
+ * the corresponding bytes under /audio/generated/, so the protected catalog
+ * must receive the runtime path instead of asking the browser to play the
+ * source-of-truth path that is not served by the SPA.
+ */
+export const toRuntimePlaybackUrl = (source?: string): string | undefined => {
+  if (!source?.startsWith("/audio/") || source.startsWith("/audio/generated/")) return undefined;
+  const relativePath = source.slice("/audio/".length);
+  if (
+    relativePath.length === 0 ||
+    relativePath.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")
+  ) {
+    return undefined;
+  }
+  return `/audio/generated/${relativePath}`;
+};
+
+export const toProtectedSoundView = (sound: ProtectedSoundView): ProtectedSoundView => {
+  const runtimePlaybackUrl = toRuntimePlaybackUrl(sound.playback_url);
+  return runtimePlaybackUrl ? { ...sound, runtime_playback_url: runtimePlaybackUrl } : sound;
+};
+
+/**
  * GET /guardian/audio-catalog — admin-only (DIAG_GUARDIAN_EMAIL gate, exactly
  * the diagnostics rule; spec 003 forbids a general admin-role system). Serves
  * canonical metadata only — media bytes are never proxied here.
@@ -60,7 +85,7 @@ audioCatalogRoutes.get("/", async (c) => {
   if (!canUseOperatorTools(c.env, guardian)) return c.text("forbidden", 403);
 
   return json({
-    sounds: soundsJson as ProtectedSoundView[],
+    sounds: (soundsJson as ProtectedSoundView[]).map(toProtectedSoundView),
     patterns: patternsJson as GraphemePatternMapping[]
   });
 });

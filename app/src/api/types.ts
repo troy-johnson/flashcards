@@ -89,6 +89,8 @@ export type AudioCatalogSound = {
   master_sha256?: string;
   playback_url?: string;
   playback_sha256?: string;
+  /** Staged browser path used by the protected catalog for recorded candidates. */
+  runtime_playback_url?: string;
   reviews: AudioCatalogReview[];
 };
 

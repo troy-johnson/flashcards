@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { computeFileSha256, computeReviewSubject, type InstructionalSound } from "./audio-schema.ts";
-import { checkPublicManifest, projectPublicManifest } from "./audio-manifest.ts";
+import {
+  checkPublicManifest,
+  projectPublicManifest,
+  projectStagedManifest,
+} from "./audio-manifest.ts";
 import { stageAudioAssets, stageAudioAssetsChecked } from "./audio-stage.ts";
 
 const makeSound = (overrides: Partial<InstructionalSound> = {}): InstructionalSound => {
@@ -103,6 +107,35 @@ describe("projectPublicManifest", () => {
   });
 });
 
+describe("projectStagedManifest", () => {
+  it("includes recorded candidates before SLP approval without changing the public manifest", () => {
+    const pending = makeSound();
+
+    assert.deepEqual(projectStagedManifest([pending]), {
+      schema_version: 2,
+      audio: [
+        {
+          audio_id: pending.sound_id,
+          src: "/audio/generated/sound_short_a.mp3",
+          sha256: pending.playback_sha256,
+        },
+      ],
+    });
+    assert.deepEqual(projectPublicManifest([pending]).audio, []);
+  });
+
+  it("sorts recorded candidates and excludes sounds without playback media", () => {
+    const b = makeSound({ sound_id: "sound_b", playback_url: "/audio/b.mp3" });
+    const a = makeSound({ sound_id: "sound_a", playback_url: "/audio/a.mp3" });
+    const missing = makeSound({ sound_id: "sound_missing", playback_url: undefined, playback_sha256: undefined });
+
+    assert.deepEqual(projectStagedManifest([b, missing, a]).audio.map((entry) => entry.audio_id), [
+      "sound_a",
+      "sound_b",
+    ]);
+  });
+});
+
 describe("checkPublicManifest", () => {
   it("rejects stale generated JSON", () => {
     withTempRoot((root) => {
@@ -176,6 +209,25 @@ describe("stageAudioAssetsChecked", () => {
       writeFileSync(join(root, "content/audio/manifest.json"), `${JSON.stringify({ schema_version: 2, audio: [] }, null, 2)}\n`);
 
       assert.doesNotThrow(() => stageAudioAssetsChecked(root));
+    });
+  });
+
+  it("stages a recorded pending candidate for protected catalog QA", () => {
+    withTempRoot((root) => {
+      const playbackPath = join(root, "content/audio/playback/sound_short_a.mp3");
+      mkdirSync(join(root, "content/audio/playback"), { recursive: true });
+      writeFileSync(playbackPath, "candidate-mp3-bytes");
+      const sound = makeSound({ playback_sha256: computeFileSha256(playbackPath) });
+      writeFileSync(join(root, "content/audio/sounds.json"), `${JSON.stringify([sound], null, 2)}\n`);
+      writeFileSync(join(root, "content/audio/patterns.json"), `${JSON.stringify([], null, 2)}\n`);
+      writeFileSync(join(root, "content/audio/manifest.json"), `${JSON.stringify({ schema_version: 2, audio: [] }, null, 2)}\n`);
+
+      stageAudioAssetsChecked(root);
+
+      assert.equal(
+        readFileSync(join(root, "app/public/audio/generated/sound_short_a.mp3"), "utf8"),
+        "candidate-mp3-bytes"
+      );
     });
   });
 });

@@ -11,9 +11,19 @@
 ## Outcome
 
 Capture multiple takes for all 44 canonical instructional sound targets, select one candidate
-master per target, and prove that real files pass through deterministic processing and the
-protected review catalog on target devices. Recorder and owner review are sufficient for the
-Stage 1 family decision. Checksum-bound SLP approval remains the educator-wave gate.
+master per target, and prove that real files pass through deterministic processing, candidate
+staging, and the protected review catalog on target devices. Recorder and owner review are
+sufficient for the Stage 1 family decision. Checksum-bound SLP approval remains the
+educator-wave gate and the learner-facing release gate.
+
+The two audio projections are intentionally separate:
+
+- `content/audio/manifest.json` is the learner-facing release manifest. It contains only
+  current checksum-bound SLP approvals, so it remains `0/44` after Stage 1 until SLP review.
+- `pnpm audio:stage` stages every recorded candidate whose playback bytes and declared hash
+  are valid into `app/public/audio/generated/`. The authenticated catalog receives the matching
+  generated runtime URL and can use it for owner QA. Staging a candidate does not add it to the
+  learner manifest or change the learner-facing SLP gate.
 
 The canonical inventory and guidance live in `content/audio/sounds.json`; this session log does
 not replace them. Do not change a target, IPA value, production behavior, or recording guidance
@@ -53,10 +63,17 @@ scratch/audio-recording/2026-07-16/
   raw/<sound_id>__take-03.wav
   selected/<sound_id>.wav
   playback/<sound_id>.m4a
+
+content/audio/
+  masters/<sound_id>.wav
+  playback/<sound_id>.m4a
 ```
 
 The selected filename must be exactly `<sound_id>.wav`; `audio:process` derives the manifest ID
-from that filename. Keep every raw take until owner review and the first backup are complete.
+from that filename. `content/audio/masters/` and `content/audio/playback/` are the canonical
+tracked inputs for content validation; `scratch/.../playback/` is only a review workspace until
+the selected encodes are copied into the canonical playback directory. Keep every raw take until
+owner review and the first backup are complete.
 
 ## Preflight
 
@@ -141,17 +158,74 @@ can detect changing gain, fatigue, and release quality.
 ## Selection and processing
 
 For each target, listen to every take and select the cleanest natural production. Copy the
-selection to `selected/<sound_id>.wav`, then run:
+selection to `selected/<sound_id>.wav`, then copy the selected masters into the canonical master
+directory and run the deterministic processor:
 
 ```bash
+mkdir -p content/audio/masters content/audio/playback
+cp scratch/audio-recording/2026-07-16/selected/<sound_id>.wav \
+  content/audio/masters/<sound_id>.wav
 pnpm audio:process \
   --input scratch/audio-recording/2026-07-16/selected \
   --output scratch/audio-recording/2026-07-16/playback \
   --profile rw-isolated-sound-v1
+cp scratch/audio-recording/2026-07-16/playback/*.m4a content/audio/playback/
 ```
 
 Expected: 44 playback files, or a precise per-sound failure list. Do not normalize around a
 validation failure without recording why; recapture when the source itself is wrong.
+
+The canonical media fields for each recorded sound are:
+
+```json
+{
+  "master_path": "sound_short_a.wav",
+  "master_sha256": "<sha256 of content/audio/masters/sound_short_a.wav>",
+  "playback_url": "/audio/sound_short_a.m4a",
+  "playback_sha256": "<sha256 of content/audio/playback/sound_short_a.m4a>"
+}
+```
+
+Get the two byte hashes with `shasum -a 256`. The source `playback_url` must remain under
+`/audio/`; do not replace it with `/audio/generated/`. The API adds the generated runtime path
+for the protected catalog after `pnpm audio:stage` has copied the bytes.
+
+Record both Stage 1 review dispositions in the canonical sound row. The exact review shape is:
+
+```json
+"reviews": [
+  {
+    "kind": "recorder",
+    "reviewer": "<recorder name>",
+    "reviewed_at": "2026-07-16T<time>Z",
+    "status": "approved",
+    "subject_sha256": "<current review subject>"
+  },
+  {
+    "kind": "owner",
+    "reviewer": "<owner name>",
+    "reviewed_at": "2026-07-16T<time>Z",
+    "status": "approved",
+    "subject_sha256": "<current review subject>",
+    "notes": "<selection, listening, or device-QA note>"
+  }
+]
+```
+
+After all four media fields are present, compute the subject for a sound with:
+
+```bash
+node --import tsx --input-type=module -e '
+import { loadAudioSources, computeReviewSubject } from "./scripts/audio-schema.ts";
+const id = process.argv[1];
+const sound = loadAudioSources("./content").sounds.find((candidate) => candidate.sound_id === id);
+if (!sound) throw new Error(`unknown sound: ${id}`);
+console.log(computeReviewSubject(sound));
+' sound_short_a
+```
+
+The subject excludes the `reviews` array but includes the current guidance and media hashes.
+Recompute it and update every review record if any guidance, master, or playback byte changes.
 
 After all files pass:
 
@@ -159,11 +233,26 @@ After all files pass:
 - [ ] Record selected take numbers and any rejected-target notes below.
 - [ ] Populate media paths and SHA-256 values in `content/audio/sounds.json`.
 - [ ] Add checksum-bound recorder and owner review records.
-- [ ] Generate and check the runtime manifest.
-- [ ] Stage playback files and verify every candidate in the protected catalog on a real phone,
-      tablet, and desktop.
-- [ ] Keep the learner-facing coverage gate unchanged until the `rw-1gz.8.2` release-policy seam
-      is reconciled with the two-wave decision.
+- [ ] Generate and check the learner-facing manifest; it should remain `0/44` until SLP approval:
+      `pnpm audio:manifest && pnpm audio:manifest:check`.
+- [ ] Stage candidate playback for the protected catalog:
+      `pnpm audio:stage`.
+- [ ] Verify every recorded candidate in the protected catalog on a real phone, tablet, and
+      desktop. The catalog uses `/audio/generated/<filename>`; the canonical source remains
+      `/audio/<filename>`.
+- [ ] Keep the learner-facing coverage gate unchanged: Stage 1 owner review enables catalog QA,
+      but only checksum-bound SLP approval can add a sound to the learner-facing manifest.
+
+For target-device QA from a local workstation, stage first, then start the API and app with the
+workstation's LAN address so a phone or tablet can reach the API:
+
+```bash
+pnpm audio:stage
+VITE_API_ORIGIN=http://<workstation-lan-ip>:8787 pnpm dev
+```
+
+Open `/guardian/audio-catalog` as the designated operator. Do not use the public practice route
+as the Stage 1 QA surface, and do not add an owner-only clip to `content/audio/manifest.json`.
 
 ## Session results
 
