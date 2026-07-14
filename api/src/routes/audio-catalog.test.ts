@@ -112,7 +112,8 @@ describe("protected audio catalog (003a Task 6)", () => {
       playback_url: "/audio/sound_short_a.m4a",
       reviews: [],
     };
-    expect((await toProtectedSoundView(sound)).runtime_playback_url).toBe(
+    expect((await toProtectedSoundView(sound)).runtime_playback_url).toBeUndefined();
+    expect((await toProtectedSoundView({ ...sound, playback_sha256: "a".repeat(64) })).runtime_playback_url).toBe(
       "/audio/generated/sound_short_a.m4a"
     );
   });
@@ -152,5 +153,17 @@ describe("protected audio catalog (003a Task 6)", () => {
       reviews: approved.reviews,
     });
     expect(stale.slp_approved).toBe(false);
+
+    const objected = await toProtectedSoundView({
+      ...sound,
+      reviews: [...approved.reviews, {
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-07-14T00:01:00Z",
+        status: "changes_requested",
+        subject_sha256: subject,
+      }],
+    });
+    expect(objected.slp_approved).toBe(false);
   });
 });

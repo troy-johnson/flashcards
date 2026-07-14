@@ -63,7 +63,7 @@ export function stageAudioAssets(root = process.cwd()): void {
  * This deliberately does not change content/audio/manifest.json: that public
  * learner manifest remains restricted to current checksum-bound SLP approvals.
  */
-export function stageStagedAudioAssets(root = process.cwd()): void {
+export function stageCandidateAudioAssets(root = process.cwd()): void {
   const manifest: StagedAudioManifest = projectStagedManifest(
     loadAudioSources(join(root, "content")).sounds
   );
@@ -76,7 +76,7 @@ export function stageStagedAudioAssets(root = process.cwd()): void {
 // content/audio/manifest.json. stageAudioAssets stays pure for unit tests.
 export function stageAudioAssetsChecked(root = process.cwd()): void {
   checkPublicManifest(root);
-  stageStagedAudioAssets(root);
+  stageCandidateAudioAssets(root);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

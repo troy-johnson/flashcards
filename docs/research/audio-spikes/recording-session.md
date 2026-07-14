@@ -18,8 +18,9 @@ educator-wave gate and the learner-facing release gate.
 
 The two audio projections are intentionally separate:
 
-- `content/audio/manifest.json` is the learner-facing release manifest. It contains only
-  current checksum-bound SLP approvals, so it remains `0/44` after Stage 1 until SLP review.
+- `content/audio/manifest.json` is the learner-facing release manifest. It contains only sounds
+  whose latest checksum-bound recorder, owner, and SLP dispositions all approve the current
+  subject, so it remains `0/44` after Stage 1 until SLP review.
 - `pnpm audio:stage` stages every recorded candidate whose playback bytes and declared hash
   are valid into `app/public/audio/generated/`. The authenticated catalog receives the matching
   generated runtime URL and can use it for owner QA. Staging a candidate does not add it to the
@@ -203,14 +204,14 @@ Record both Stage 1 review dispositions in the canonical sound row. The exact re
   {
     "kind": "recorder",
     "reviewer": "<recorder name>",
-    "reviewed_at": "2026-07-16T<time>Z",
+    "reviewed_at": "2026-07-16T<time>-06:00",
     "status": "approved",
     "subject_sha256": "<current review subject>"
   },
   {
     "kind": "owner",
     "reviewer": "<owner name>",
-    "reviewed_at": "2026-07-16T<time>Z",
+    "reviewed_at": "2026-07-16T<time>-06:00",
     "status": "approved",
     "subject_sha256": "<current review subject>",
     "notes": "<selection, listening, or device-QA note>"
@@ -232,6 +233,9 @@ console.log(computeReviewSubject(sound));
 
 The subject excludes the `reviews` array but includes the current guidance and media hashes.
 Recompute it and update every review record if any guidance, master, or playback byte changes.
+Append review records in disposition order: for each reviewer kind and current subject, the last
+record is authoritative. A later `changes_requested` revokes approval; a later `approved` record
+documents resolution.
 
 After all files pass:
 
@@ -249,7 +253,8 @@ After all files pass:
       desktop. The catalog uses `/audio/generated/<filename>`; the canonical source remains
       `/audio/<filename>`.
 - [ ] Keep the learner-facing coverage gate unchanged: Stage 1 owner review enables catalog QA,
-      but only checksum-bound SLP approval can add a sound to the learner-facing manifest.
+      but recorder, owner, and SLP approval of the current subject are all required before a
+      sound can enter the learner-facing manifest.
 
 For target-device QA from a local workstation, stage first, then start the API and app with the
 workstation's LAN address so a phone or tablet can reach the API:

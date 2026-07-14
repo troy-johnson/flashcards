@@ -100,17 +100,17 @@ export const computeProtectedReviewSubject = async (sound: ProtectedSoundView): 
 };
 
 export const toProtectedSoundView = async (sound: ProtectedSoundView): Promise<ProtectedSoundView> => {
-  const runtimePlaybackUrl = toRuntimePlaybackUrl(sound.playback_url);
+  const runtimePlaybackUrl = sound.playback_sha256
+    ? toRuntimePlaybackUrl(sound.playback_url)
+    : undefined;
   const currentSubject = await computeProtectedReviewSubject(sound);
+  const currentSlpReviews = sound.reviews.filter(
+    (review) => review.kind === "slp" && review.subject_sha256 === currentSubject
+  );
   const slpApproved = Boolean(
     sound.playback_url &&
       sound.playback_sha256 &&
-      sound.reviews.some(
-        (review) =>
-          review.kind === "slp" &&
-          review.status === "approved" &&
-          review.subject_sha256 === currentSubject
-      )
+      currentSlpReviews.at(-1)?.status === "approved"
   );
   return {
     ...sound,

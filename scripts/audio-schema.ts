@@ -4,9 +4,10 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 
 export type ProductionBehavior = "clip" | "sustain" | "glide" | "sequence";
 export type ReviewStatus = "approved" | "changes_requested";
+export type ReviewKind = "recorder" | "owner" | "slp";
 
 export type ReviewRecord = {
-  kind: "recorder" | "owner" | "slp";
+  kind: ReviewKind;
   reviewer: string;
   reviewed_at: string;
   status: ReviewStatus;
@@ -305,4 +306,20 @@ export function computeReviewSubject(sound: InstructionalSound): string {
     playback_sha256: sound.playback_sha256 ?? null,
   };
   return createHash("sha256").update(JSON.stringify(stable)).digest("hex");
+}
+
+/**
+ * Review records are append-only. For one subject and review lane, the last
+ * record is authoritative: objections revoke approval and later approval
+ * records that the objection was resolved.
+ */
+export function hasCurrentApproval(
+  sound: InstructionalSound,
+  kind: ReviewKind,
+  subjectSha256 = computeReviewSubject(sound)
+): boolean {
+  const current = sound.reviews.filter(
+    (review) => review.kind === kind && review.subject_sha256 === subjectSha256
+  );
+  return current.at(-1)?.status === "approved";
 }

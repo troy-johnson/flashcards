@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  computeReviewSubject,
+  hasCurrentApproval,
   loadAudioSources,
   playbackUrlToGeneratedUrl,
   resolvePlaybackPath,
@@ -26,12 +26,8 @@ export type StagedAudioManifest = PublicAudioManifest;
 
 const isApprovedForLearners = (sound: InstructionalSound): boolean => {
   if (!sound.playback_url || !sound.playback_sha256) return false;
-  const currentSubject = computeReviewSubject(sound);
-  return sound.reviews.some(
-    (review) =>
-      review.kind === "slp" &&
-      review.status === "approved" &&
-      review.subject_sha256 === currentSubject
+  return (["recorder", "owner", "slp"] as const).every((kind) =>
+    hasCurrentApproval(sound, kind)
   );
 };
 

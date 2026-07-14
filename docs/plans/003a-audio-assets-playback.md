@@ -405,8 +405,9 @@ export function stageAudioAssets(): void;
 
 - [ ] **Step 1: Write RED deterministic-generation tests**
 
-Assert that only SLP-approved current subjects enter learner-facing `audio`, while pending
-sounds may enter an `internal_audio` projection used only by the protected API:
+Assert that only current subjects whose latest recorder, owner, and SLP dispositions are all
+approved enter learner-facing `audio`, while pending sounds may enter the candidate staging
+projection used by the protected catalog:
 
 ```ts
 assert.deepEqual(projectPublicManifest([approved]), {

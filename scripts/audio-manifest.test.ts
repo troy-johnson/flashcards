@@ -35,9 +35,23 @@ const approve = (sound: InstructionalSound): InstructionalSound => ({
   ...sound,
   reviews: [
     {
+      kind: "recorder",
+      reviewer: "recorder",
+      reviewed_at: "2026-06-30T00:00:00Z",
+      status: "approved",
+      subject_sha256: computeReviewSubject(sound),
+    },
+    {
+      kind: "owner",
+      reviewer: "owner",
+      reviewed_at: "2026-06-30T00:01:00Z",
+      status: "approved",
+      subject_sha256: computeReviewSubject(sound),
+    },
+    {
       kind: "slp",
       reviewer: "slp-reviewer",
-      reviewed_at: "2026-06-30T00:00:00Z",
+      reviewed_at: "2026-06-30T00:02:00Z",
       status: "approved",
       subject_sha256: computeReviewSubject(sound),
     },
@@ -79,6 +93,52 @@ describe("projectPublicManifest", () => {
       () => projectPublicManifest([approve(makeSound({ playback_url: "/audio/generated/x.mp3" }))]),
       /playback_url must be a source \/audio\/ path \(not \/audio\/generated\/\)/
     );
+  });
+
+  it("requires current recorder, owner, and SLP approvals", () => {
+    const sound = makeSound();
+    const subject = computeReviewSubject(sound);
+    const slpOnly = {
+      ...sound,
+      reviews: [{
+        kind: "slp" as const,
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-06-30T00:00:00Z",
+        status: "approved" as const,
+        subject_sha256: subject,
+      }],
+    };
+
+    assert.deepEqual(projectPublicManifest([slpOnly]).audio, []);
+    assert.equal(projectPublicManifest([approve(sound)]).audio.length, 1);
+  });
+
+  it("uses the last current review per kind so objections revoke and later approval resolves", () => {
+    const approved = approve(makeSound());
+    const subject = computeReviewSubject(approved);
+    const objected = {
+      ...approved,
+      reviews: [...approved.reviews, {
+        kind: "slp" as const,
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-06-30T00:03:00Z",
+        status: "changes_requested" as const,
+        subject_sha256: subject,
+      }],
+    };
+    const resolved = {
+      ...objected,
+      reviews: [...objected.reviews, {
+        kind: "slp" as const,
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-06-30T00:04:00Z",
+        status: "approved" as const,
+        subject_sha256: subject,
+      }],
+    };
+
+    assert.deepEqual(projectPublicManifest([objected]).audio, []);
+    assert.equal(projectPublicManifest([resolved]).audio.length, 1);
   });
 
   it("sorts learner-facing entries by sound_id", () => {
