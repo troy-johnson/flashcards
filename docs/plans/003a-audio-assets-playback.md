@@ -405,8 +405,9 @@ export function stageAudioAssets(): void;
 
 - [ ] **Step 1: Write RED deterministic-generation tests**
 
-Assert that only SLP-approved current subjects enter learner-facing `audio`, while pending
-sounds may enter an `internal_audio` projection used only by the protected API:
+Assert that only current subjects whose latest recorder, owner, and SLP dispositions are all
+approved enter learner-facing `audio`, while pending sounds may enter the candidate staging
+projection used by the protected catalog:
 
 ```ts
 assert.deepEqual(projectPublicManifest([approved]), {
@@ -440,10 +441,13 @@ pnpm audio:manifest:check  # exits nonzero if generated output differs
 
 - [ ] **Step 4: Implement clean staging**
 
-`audio-stage.ts` must remove only `app/public/audio/generated`, recreate it, and copy the
-single committed playback set while verifying SHA-256. An empty `content/audio/playback/`
-directory is a valid no-op before approved media exists; staging must still recreate an empty
-generated directory and complete successfully.
+`audio-stage.ts` must remove only `app/public/audio/generated`, recreate it, and copy every
+checksum-verified playback file declared by the canonical sound inventory while verifying
+SHA-256. This includes recorded candidates needed by the protected catalog before SLP approval.
+The generated learner manifest remains SLP-gated, so staging a candidate does not make it a
+learner-facing release. An empty `content/audio/playback/` directory is a valid no-op before
+recorded media exists; staging must still recreate an empty generated directory and complete
+successfully.
 
 Use:
 

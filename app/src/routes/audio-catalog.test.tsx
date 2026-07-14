@@ -33,7 +33,14 @@ const makeCatalog = (): AudioCatalogResponse => {
       i === 0
         ? [{ kind: "slp", reviewer: "Dr. Reviewer", reviewed_at: "2026-07-01", status: "approved", subject_sha256: "abc123def456" }]
         : [],
-    ...(i < 2 ? { playback_url: `/audio/sound_${String(i).padStart(2, "0")}.mp3`, playback_sha256: `sha-${i}`.padEnd(64, "0") } : {})
+    ...(i === 0 ? { slp_approved: true } : {}),
+    ...(i < 2
+      ? {
+          playback_url: `/audio/sound_${String(i).padStart(2, "0")}.mp3`,
+          runtime_playback_url: `/audio/generated/sound_${String(i).padStart(2, "0")}.mp3`,
+          playback_sha256: `sha-${i}`.padEnd(64, "0")
+        }
+      : {})
   }));
   const patterns = Array.from({ length: 12 }, (_, i) => ({
     mapping_id: `mapping_${i}`,
@@ -116,7 +123,28 @@ describe("AudioCatalogRoute (003a Task 8)", () => {
       btn.click();
       await flush();
     });
-    expect(play).toHaveBeenCalledWith({ kind: "recorded", src: "/audio/sound_00.mp3" });
+    expect(play).toHaveBeenCalledWith({ kind: "recorded", src: "/audio/generated/sound_00.mp3" });
+  });
+
+  it("does not fall back to the canonical source URL when staging metadata is missing", async () => {
+    const catalog = makeCatalog();
+    const { runtime_playback_url: _runtimePlaybackUrl, ...withoutRuntime } = catalog.sounds[0]!;
+    catalog.sounds[0] = withoutRuntime;
+    vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
+    await render();
+
+    const row = container.querySelector('[data-sound-row="sound_00"]')!;
+    expect(row.querySelector("button[data-play]")).toBeNull();
+  });
+
+  it("uses the server checksum-bound status for the SLP release indicator", async () => {
+    const catalog = makeCatalog();
+    catalog.sounds[0] = { ...catalog.sounds[0]!, slp_approved: false };
+    vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
+    await render();
+
+    const row = container.querySelector('[data-sound-row="sound_00"]')!;
+    expect(row.textContent).toContain("SLP approval required before learner use");
   });
 
   it("shows referenced sound play buttons on multi-sound mappings", async () => {

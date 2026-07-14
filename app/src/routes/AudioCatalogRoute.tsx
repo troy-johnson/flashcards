@@ -20,7 +20,7 @@ type LoadState =
 const shortSha = (sha?: string) => (sha ? sha.slice(0, 12) : "");
 
 const slpApproved = (sound: AudioCatalogSound) =>
-  sound.reviews.some((r) => r.kind === "slp" && r.status === "approved");
+  sound.slp_approved === true;
 
 /** Module-level controller so the whole page shares one "one clip at a time" lane. */
 const catalogPlayback = createPlaybackController();
@@ -32,8 +32,8 @@ const catalogPlayback = createPlaybackController();
  */
 function PlayButton({ sound }: { sound: AudioCatalogSound }) {
   const [failed, setFailed] = useState(false);
-  if (!sound.playback_url) return null;
-  const src = sound.playback_url;
+  const src = sound.runtime_playback_url;
+  if (!src) return null;
   return (
     <>
       <button

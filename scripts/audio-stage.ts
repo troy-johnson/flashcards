@@ -1,18 +1,18 @@
 import { cpSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { GENERATED_URL_PREFIX, computeFileSha256, resolvePlaybackPath } from "./audio-schema.ts";
-import { checkPublicManifest } from "./audio-manifest.ts";
-
-type PublicAudioEntry = {
-  audio_id: string;
-  src: `/audio/${string}`;
-  sha256: string;
-};
-
-type PublicAudioManifest = {
-  schema_version: 2;
-  audio: PublicAudioEntry[];
-};
+import {
+  GENERATED_URL_PREFIX,
+  computeFileSha256,
+  loadAudioSources,
+  resolvePlaybackPath,
+} from "./audio-schema.ts";
+import {
+  checkPublicManifest,
+  projectStagedManifest,
+  type PublicAudioEntry,
+  type PublicAudioManifest,
+  type StagedAudioManifest,
+} from "./audio-manifest.ts";
 
 const readManifest = (root: string): PublicAudioManifest => {
   return JSON.parse(readFileSync(join(root, "content/audio/manifest.json"), "utf8")) as PublicAudioManifest;
@@ -29,14 +29,13 @@ const generatedRelativePath = (src: string): string => {
   return normalized;
 };
 
-export function stageAudioAssets(root = process.cwd()): void {
-  const manifest = readManifest(root);
+const stageEntries = (root: string, entries: PublicAudioEntry[]): void => {
   const outputRoot = join(root, "app/public/audio/generated");
 
   rmSync(outputRoot, { recursive: true, force: true });
   mkdirSync(outputRoot, { recursive: true });
 
-  for (const entry of manifest.audio) {
+  for (const entry of entries) {
     const rel = generatedRelativePath(entry.src);
     const source = resolvePlaybackPath(join(root, "content"), `/audio/${rel}`);
     if (!source) throw new Error(`${entry.audio_id}: src must be a safe /audio/ path`);
@@ -52,6 +51,23 @@ export function stageAudioAssets(root = process.cwd()): void {
     mkdirSync(dirname(dest), { recursive: true });
     cpSync(source, dest);
   }
+};
+
+export function stageAudioAssets(root = process.cwd()): void {
+  const manifest = readManifest(root);
+  stageEntries(root, manifest.audio);
+}
+
+/**
+ * Stage every recorded, checksum-bound candidate for the protected catalog.
+ * This deliberately does not change content/audio/manifest.json: that public
+ * learner manifest remains restricted to current checksum-bound SLP approvals.
+ */
+export function stageCandidateAudioAssets(root = process.cwd()): void {
+  const manifest: StagedAudioManifest = projectStagedManifest(
+    loadAudioSources(join(root, "content")).sounds
+  );
+  stageEntries(root, manifest.audio);
 }
 
 // Staging guarded by manifest freshness. Keeping the check in the entrypoint
@@ -60,7 +76,7 @@ export function stageAudioAssets(root = process.cwd()): void {
 // content/audio/manifest.json. stageAudioAssets stays pure for unit tests.
 export function stageAudioAssetsChecked(root = process.cwd()): void {
   checkPublicManifest(root);
-  stageAudioAssets(root);
+  stageCandidateAudioAssets(root);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { env, SELF } from "cloudflare:test";
 import { resetFoundationDb } from "../test/reset-db";
 import publicManifest from "../../../content/audio/manifest.json";
-import { audioCatalogRoutes } from "./audio-catalog";
+import {
+  audioCatalogRoutes,
+  computeProtectedReviewSubject,
+  toProtectedSoundView,
+  toRuntimePlaybackUrl,
+  type ProtectedSoundView,
+} from "./audio-catalog";
 import type { Env } from "../types";
 
 const seed = async () => {
@@ -82,5 +88,82 @@ describe("protected audio catalog (003a Task 6)", () => {
     expect(serialized).not.toContain("reviews");
     expect(serialized).not.toContain("notes");
     expect(serialized).not.toContain("recording_guidance");
+  });
+
+  it("maps canonical source media to the staged runtime URL for catalog playback", async () => {
+    expect(toRuntimePlaybackUrl("/audio/sound_short_a.m4a")).toBe(
+      "/audio/generated/sound_short_a.m4a"
+    );
+    expect(toRuntimePlaybackUrl(undefined)).toBeUndefined();
+    expect(toRuntimePlaybackUrl("/audio/generated/sound_short_a.m4a")).toBeUndefined();
+    expect(toRuntimePlaybackUrl("/audio/../private.m4a")).toBeUndefined();
+
+    const sound: ProtectedSoundView = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies by dialect.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.m4a",
+      reviews: [],
+    };
+    expect((await toProtectedSoundView(sound)).runtime_playback_url).toBeUndefined();
+    expect((await toProtectedSoundView({ ...sound, playback_sha256: "a".repeat(64) })).runtime_playback_url).toBe(
+      "/audio/generated/sound_short_a.m4a"
+    );
+  });
+
+  it("marks only a current checksum-bound SLP approval as releasable", async () => {
+    const sound: ProtectedSoundView = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies by dialect.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.m4a",
+      playback_sha256: "a".repeat(64),
+      reviews: [],
+    };
+    const subject = await computeProtectedReviewSubject(sound);
+    const approved = await toProtectedSoundView({
+      ...sound,
+      reviews: [{
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-07-14T00:00:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      }],
+    });
+    expect(approved.slp_approved).toBe(true);
+
+    const stale = await toProtectedSoundView({
+      ...sound,
+      playback_sha256: "b".repeat(64),
+      reviews: approved.reviews,
+    });
+    expect(stale.slp_approved).toBe(false);
+
+    const objected = await toProtectedSoundView({
+      ...sound,
+      reviews: [...approved.reviews, {
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-07-14T00:01:00Z",
+        status: "changes_requested",
+        subject_sha256: subject,
+      }],
+    });
+    expect(objected.slp_approved).toBe(false);
   });
 });

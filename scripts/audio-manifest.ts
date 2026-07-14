@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  computeReviewSubject,
+  hasCurrentApproval,
   loadAudioSources,
   playbackUrlToGeneratedUrl,
   resolvePlaybackPath,
@@ -19,14 +19,15 @@ export type PublicAudioManifest = {
   audio: PublicAudioEntry[];
 };
 
+// This projection is used only while staging the protected catalog. It has the
+// same runtime shape as the public manifest, but includes recorded candidates
+// before SLP approval. The learner-facing manifest remains SLP-gated.
+export type StagedAudioManifest = PublicAudioManifest;
+
 const isApprovedForLearners = (sound: InstructionalSound): boolean => {
   if (!sound.playback_url || !sound.playback_sha256) return false;
-  const currentSubject = computeReviewSubject(sound);
-  return sound.reviews.some(
-    (review) =>
-      review.kind === "slp" &&
-      review.status === "approved" &&
-      review.subject_sha256 === currentSubject
+  return (["recorder", "owner", "slp"] as const).every((kind) =>
+    hasCurrentApproval(sound, kind)
   );
 };
 
@@ -39,10 +40,13 @@ const assertSafePublicUrl = (src: string) => {
   }
 };
 
-export function projectPublicManifest(sounds: InstructionalSound[]): PublicAudioManifest {
+const projectMediaManifest = (
+  sounds: InstructionalSound[],
+  include: (sound: InstructionalSound) => boolean
+): PublicAudioManifest => {
   const seenUrls = new Set<string>();
   const audio = sounds
-    .filter(isApprovedForLearners)
+    .filter(include)
     .sort((a, b) => a.sound_id.localeCompare(b.sound_id))
     .map((sound): PublicAudioEntry => {
       const source = sound.playback_url!;
@@ -63,6 +67,17 @@ export function projectPublicManifest(sounds: InstructionalSound[]): PublicAudio
     });
 
   return { schema_version: 2, audio };
+};
+
+export function projectPublicManifest(sounds: InstructionalSound[]): PublicAudioManifest {
+  return projectMediaManifest(sounds, isApprovedForLearners);
+}
+
+export function projectStagedManifest(sounds: InstructionalSound[]): StagedAudioManifest {
+  return projectMediaManifest(
+    sounds,
+    (sound) => Boolean(sound.playback_url && sound.playback_sha256)
+  );
 }
 
 export function formatPublicManifest(manifest: PublicAudioManifest): string {

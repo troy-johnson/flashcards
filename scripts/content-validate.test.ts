@@ -377,7 +377,7 @@ describe("content manifest count gate", () => {
     );
   });
 
-  it("recorded_sound_targets counts a sound with valid media and a current SLP approval", () => {
+  it("recorded_sound_targets counts valid media with current recorder, owner, and SLP approvals", () => {
     // Build a minimal sounds.json with one sound that has media and an SLP
     // approval whose subject_sha256 matches the current computeReviewSubject.
     // Verifies the positive path including the anti-staleness hash check.
@@ -400,9 +400,23 @@ describe("content manifest count gate", () => {
     const subject = computeReviewSubject(approvedSound);
     approvedSound.reviews = [
       {
+        kind: "recorder",
+        reviewer: "recorder",
+        reviewed_at: "2026-01-01T00:00:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      },
+      {
+        kind: "owner",
+        reviewer: "owner",
+        reviewed_at: "2026-01-01T00:01:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      },
+      {
         kind: "slp",
         reviewer: "slp-reviewer",
-        reviewed_at: "2026-01-01T00:00:00Z",
+        reviewed_at: "2026-01-01T00:02:00Z",
         status: "approved",
         subject_sha256: subject,
       },
@@ -437,9 +451,23 @@ describe("content manifest count gate", () => {
       playback_sha256: playbackSha,
       reviews: [
         {
+          kind: "recorder",
+          reviewer: "recorder",
+          reviewed_at: "2026-01-01T00:00:00Z",
+          status: "approved",
+          subject_sha256: "stale-hash-does-not-match",
+        },
+        {
+          kind: "owner",
+          reviewer: "owner",
+          reviewed_at: "2026-01-01T00:01:00Z",
+          status: "approved",
+          subject_sha256: "stale-hash-does-not-match",
+        },
+        {
           kind: "slp",
           reviewer: "slp-reviewer",
-          reviewed_at: "2026-01-01T00:00:00Z",
+          reviewed_at: "2026-01-01T00:02:00Z",
           status: "approved",
           subject_sha256: "stale-hash-does-not-match",
         },

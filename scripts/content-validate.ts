@@ -7,6 +7,7 @@ import {
   validateAudioSources,
   checkAudioCardinality,
   computeReviewSubject,
+  hasCurrentApproval,
   resolvePlaybackPath,
   resolveMasterPath,
   computeFileSha256
@@ -319,11 +320,10 @@ if (usingDefaultContentRoot) {
 const soundIds = new Set(audioSources.sounds.map((s) => s.sound_id));
 
 const countedRecordedSoundTargets = audioSources.sounds.filter((s) => {
-  // Media is byte-verified above; here we only require a current SLP approval.
+  // Media is byte-verified above; count only fully review-approved learner media.
   if (!s.playback_url || !s.playback_sha256) return false;
-  const currentSubject = computeReviewSubject(s);
-  return s.reviews.some(
-    (r) => r.kind === "slp" && r.status === "approved" && r.subject_sha256 === currentSubject
+  return (["recorder", "owner", "slp"] as const).every((kind) =>
+    hasCurrentApproval(s, kind)
   );
 }).length;
 
