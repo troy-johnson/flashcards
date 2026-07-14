@@ -79,6 +79,9 @@ owner review and the first backup are complete.
 
 - [ ] Send or review `docs/research/2026-06-21-audio-inventory-slp-review-packet.md`; record the
       current pre-recording disposition on this bead.
+- [ ] If SLP approval is unavailable before capture, record explicit beta-risk acceptance before
+      the first take: Stage 1 owner review and protected-catalog QA are allowed, but no clip may
+      enter the learner-facing manifest until checksum-bound SLP approval.
 - [ ] Confirm recorder consent and provenance.
 - [ ] Disable automatic gain control, noise suppression, echo cancellation, and lossy capture.
 - [ ] Confirm 48 kHz, 24-bit, mono WAV with a short test file and `ffprobe`.
@@ -233,6 +236,8 @@ After all files pass:
 - [ ] Record selected take numbers and any rejected-target notes below.
 - [ ] Populate media paths and SHA-256 values in `content/audio/sounds.json`.
 - [ ] Add checksum-bound recorder and owner review records.
+- [ ] Run canonical validation after media and review edits:
+      `pnpm content:validate`.
 - [ ] Generate and check the learner-facing manifest; it should remain `0/44` until SLP approval:
       `pnpm audio:manifest && pnpm audio:manifest:check`.
 - [ ] Stage candidate playback for the protected catalog:

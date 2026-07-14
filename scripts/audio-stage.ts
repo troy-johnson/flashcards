@@ -10,13 +10,9 @@ import {
   checkPublicManifest,
   projectStagedManifest,
   type PublicAudioEntry,
+  type PublicAudioManifest,
   type StagedAudioManifest,
 } from "./audio-manifest.ts";
-
-type PublicAudioManifest = {
-  schema_version: 2;
-  audio: PublicAudioEntry[];
-};
 
 const readManifest = (root: string): PublicAudioManifest => {
   return JSON.parse(readFileSync(join(root, "content/audio/manifest.json"), "utf8")) as PublicAudioManifest;

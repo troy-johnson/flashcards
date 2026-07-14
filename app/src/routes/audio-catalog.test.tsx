@@ -125,6 +125,16 @@ describe("AudioCatalogRoute (003a Task 8)", () => {
     expect(play).toHaveBeenCalledWith({ kind: "recorded", src: "/audio/generated/sound_00.mp3" });
   });
 
+  it("does not fall back to the canonical source URL when staging metadata is missing", async () => {
+    const catalog = makeCatalog();
+    catalog.sounds[0] = { ...catalog.sounds[0]!, runtime_playback_url: undefined };
+    vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
+    await render();
+
+    const row = container.querySelector('[data-sound-row="sound_00"]')!;
+    expect(row.querySelector("button[data-play]")).toBeNull();
+  });
+
   it("shows referenced sound play buttons on multi-sound mappings", async () => {
     vi.mocked(getAudioCatalog).mockResolvedValue(makeCatalog());
     await render();

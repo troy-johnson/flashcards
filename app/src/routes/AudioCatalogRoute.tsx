@@ -32,7 +32,7 @@ const catalogPlayback = createPlaybackController();
  */
 function PlayButton({ sound }: { sound: AudioCatalogSound }) {
   const [failed, setFailed] = useState(false);
-  const src = sound.runtime_playback_url ?? sound.playback_url;
+  const src = sound.runtime_playback_url;
   if (!src) return null;
   return (
     <>
