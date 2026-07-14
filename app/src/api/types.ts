@@ -91,6 +91,8 @@ export type AudioCatalogSound = {
   playback_sha256?: string;
   /** Staged browser path used by the protected catalog for recorded candidates. */
   runtime_playback_url?: string;
+  /** Server-computed current checksum-bound SLP release status. */
+  slp_approved?: boolean;
   reviews: AudioCatalogReview[];
 };
 

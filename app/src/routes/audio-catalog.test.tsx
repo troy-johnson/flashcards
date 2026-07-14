@@ -33,6 +33,7 @@ const makeCatalog = (): AudioCatalogResponse => {
       i === 0
         ? [{ kind: "slp", reviewer: "Dr. Reviewer", reviewed_at: "2026-07-01", status: "approved", subject_sha256: "abc123def456" }]
         : [],
+    ...(i === 0 ? { slp_approved: true } : {}),
     ...(i < 2
       ? {
           playback_url: `/audio/sound_${String(i).padStart(2, "0")}.mp3`,
@@ -127,12 +128,23 @@ describe("AudioCatalogRoute (003a Task 8)", () => {
 
   it("does not fall back to the canonical source URL when staging metadata is missing", async () => {
     const catalog = makeCatalog();
-    catalog.sounds[0] = { ...catalog.sounds[0]!, runtime_playback_url: undefined };
+    const { runtime_playback_url: _runtimePlaybackUrl, ...withoutRuntime } = catalog.sounds[0]!;
+    catalog.sounds[0] = withoutRuntime;
     vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
     await render();
 
     const row = container.querySelector('[data-sound-row="sound_00"]')!;
     expect(row.querySelector("button[data-play]")).toBeNull();
+  });
+
+  it("uses the server checksum-bound status for the SLP release indicator", async () => {
+    const catalog = makeCatalog();
+    catalog.sounds[0] = { ...catalog.sounds[0]!, slp_approved: false };
+    vi.mocked(getAudioCatalog).mockResolvedValue(catalog);
+    await render();
+
+    const row = container.querySelector('[data-sound-row="sound_00"]')!;
+    expect(row.textContent).toContain("SLP approval required before learner use");
   });
 
   it("shows referenced sound play buttons on multi-sound mappings", async () => {

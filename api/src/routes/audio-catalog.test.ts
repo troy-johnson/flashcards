@@ -4,6 +4,7 @@ import { resetFoundationDb } from "../test/reset-db";
 import publicManifest from "../../../content/audio/manifest.json";
 import {
   audioCatalogRoutes,
+  computeProtectedReviewSubject,
   toProtectedSoundView,
   toRuntimePlaybackUrl,
   type ProtectedSoundView,
@@ -89,7 +90,7 @@ describe("protected audio catalog (003a Task 6)", () => {
     expect(serialized).not.toContain("recording_guidance");
   });
 
-  it("maps canonical source media to the staged runtime URL for catalog playback", () => {
+  it("maps canonical source media to the staged runtime URL for catalog playback", async () => {
     expect(toRuntimePlaybackUrl("/audio/sound_short_a.m4a")).toBe(
       "/audio/generated/sound_short_a.m4a"
     );
@@ -111,8 +112,45 @@ describe("protected audio catalog (003a Task 6)", () => {
       playback_url: "/audio/sound_short_a.m4a",
       reviews: [],
     };
-    expect(toProtectedSoundView(sound).runtime_playback_url).toBe(
+    expect((await toProtectedSoundView(sound)).runtime_playback_url).toBe(
       "/audio/generated/sound_short_a.m4a"
     );
+  });
+
+  it("marks only a current checksum-bound SLP approval as releasable", async () => {
+    const sound: ProtectedSoundView = {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel.",
+      dialect_notes: "Varies by dialect.",
+      recording_guidance: "Record in isolation.",
+      processing_profile: "standard_vowel",
+      playback_url: "/audio/sound_short_a.m4a",
+      playback_sha256: "a".repeat(64),
+      reviews: [],
+    };
+    const subject = await computeProtectedReviewSubject(sound);
+    const approved = await toProtectedSoundView({
+      ...sound,
+      reviews: [{
+        kind: "slp",
+        reviewer: "slp-reviewer",
+        reviewed_at: "2026-07-14T00:00:00Z",
+        status: "approved",
+        subject_sha256: subject,
+      }],
+    });
+    expect(approved.slp_approved).toBe(true);
+
+    const stale = await toProtectedSoundView({
+      ...sound,
+      playback_sha256: "b".repeat(64),
+      reviews: approved.reviews,
+    });
+    expect(stale.slp_approved).toBe(false);
   });
 });

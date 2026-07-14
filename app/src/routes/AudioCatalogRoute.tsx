@@ -20,7 +20,7 @@ type LoadState =
 const shortSha = (sha?: string) => (sha ? sha.slice(0, 12) : "");
 
 const slpApproved = (sound: AudioCatalogSound) =>
-  sound.reviews.some((r) => r.kind === "slp" && r.status === "approved");
+  sound.slp_approved === true;
 
 /** Module-level controller so the whole page shares one "one clip at a time" lane. */
 const catalogPlayback = createPlaybackController();

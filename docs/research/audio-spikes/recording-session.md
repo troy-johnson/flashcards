@@ -23,7 +23,9 @@ The two audio projections are intentionally separate:
 - `pnpm audio:stage` stages every recorded candidate whose playback bytes and declared hash
   are valid into `app/public/audio/generated/`. The authenticated catalog receives the matching
   generated runtime URL and can use it for owner QA. Staging a candidate does not add it to the
-  learner manifest or change the learner-facing SLP gate.
+  learner manifest or change the learner-facing SLP gate. Per Spec 003, these bundled audio bytes
+  are ordinary static assets; the protected catalog protects operational metadata and the QA
+  surface, while the manifest is the learner-release boundary.
 
 The canonical inventory and guidance live in `content/audio/sounds.json`; this session log does
 not replace them. Do not change a target, IPA value, production behavior, or recording guidance
@@ -80,8 +82,9 @@ owner review and the first backup are complete.
 - [ ] Send or review `docs/research/2026-06-21-audio-inventory-slp-review-packet.md`; record the
       current pre-recording disposition on this bead.
 - [ ] If SLP approval is unavailable before capture, record explicit beta-risk acceptance before
-      the first take: Stage 1 owner review and protected-catalog QA are allowed, but no clip may
-      enter the learner-facing manifest until checksum-bound SLP approval.
+      the first take, using the exact disposition `slp_pending_risk_accepted`: Stage 1 owner
+      review and protected-catalog QA are allowed, but no clip may enter the learner-facing
+      manifest until checksum-bound SLP approval.
 - [ ] Confirm recorder consent and provenance.
 - [ ] Disable automatic gain control, noise suppression, echo cancellation, and lossy capture.
 - [ ] Confirm 48 kHz, 24-bit, mono WAV with a short test file and `ffprobe`.

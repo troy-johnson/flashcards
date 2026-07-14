@@ -31,6 +31,8 @@ export type ProtectedSoundView = {
   playback_sha256?: string;
   /** Browser-served runtime path; source playback_url stays canonical metadata. */
   runtime_playback_url?: string;
+  /** True only when the current media/guidance subject has an approved SLP review. */
+  slp_approved?: boolean;
   reviews: {
     kind: "recorder" | "owner" | "slp";
     reviewer: string;
@@ -69,9 +71,52 @@ export const toRuntimePlaybackUrl = (source?: string): string | undefined => {
   return `/audio/generated/${relativePath}`;
 };
 
-export const toProtectedSoundView = (sound: ProtectedSoundView): ProtectedSoundView => {
+/**
+ * Worker-compatible counterpart to scripts/audio-schema.ts's review subject.
+ * The authoring helper uses node:crypto and cannot be imported into the Worker;
+ * keeping the stable field order here makes the API's release indicator use the
+ * same checksum-bound contract as the learner manifest.
+ */
+export const computeProtectedReviewSubject = async (sound: ProtectedSoundView): Promise<string> => {
+  const stable = {
+    sound_id: sound.sound_id,
+    instructional_label: sound.instructional_label,
+    ipa: sound.ipa,
+    example_word: sound.example_word,
+    phonetic_class: sound.phonetic_class,
+    production_behavior: sound.production_behavior,
+    production_notes: sound.production_notes,
+    dialect_notes: sound.dialect_notes,
+    recording_guidance: sound.recording_guidance,
+    processing_profile: sound.processing_profile,
+    master_sha256: sound.master_sha256 ?? null,
+    playback_sha256: sound.playback_sha256 ?? null,
+  };
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(stable))
+  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+export const toProtectedSoundView = async (sound: ProtectedSoundView): Promise<ProtectedSoundView> => {
   const runtimePlaybackUrl = toRuntimePlaybackUrl(sound.playback_url);
-  return runtimePlaybackUrl ? { ...sound, runtime_playback_url: runtimePlaybackUrl } : sound;
+  const currentSubject = await computeProtectedReviewSubject(sound);
+  const slpApproved = Boolean(
+    sound.playback_url &&
+      sound.playback_sha256 &&
+      sound.reviews.some(
+        (review) =>
+          review.kind === "slp" &&
+          review.status === "approved" &&
+          review.subject_sha256 === currentSubject
+      )
+  );
+  return {
+    ...sound,
+    ...(runtimePlaybackUrl ? { runtime_playback_url: runtimePlaybackUrl } : {}),
+    slp_approved: slpApproved,
+  };
 };
 
 /**
@@ -85,7 +130,7 @@ audioCatalogRoutes.get("/", async (c) => {
   if (!canUseOperatorTools(c.env, guardian)) return c.text("forbidden", 403);
 
   return json({
-    sounds: (soundsJson as ProtectedSoundView[]).map(toProtectedSoundView),
+    sounds: await Promise.all((soundsJson as ProtectedSoundView[]).map(toProtectedSoundView)),
     patterns: patternsJson as GraphemePatternMapping[]
   });
 });
