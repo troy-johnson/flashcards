@@ -258,6 +258,8 @@ describe("guardian and sign-in routes", () => {
   });
 
   it("creates a student from /guardian/add-student", async () => {
+    const createdStudent = { id: "student2", display_name: "Ben", grade: "1" as const, birth_month: null, prefs_json: {}, created_at: "now", archived_at: null };
+    (listStudents as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ students: [createdStudent] });
     window.history.pushState({}, "", "/guardian/add-student");
     await act(async () => root.render(<App />));
 
@@ -273,7 +275,26 @@ describe("guardian and sign-in routes", () => {
     });
 
     expect(createStudent).toHaveBeenCalledWith({ display_name: "Ben", grade: "1" });
-    expect(container.textContent).toContain("Ben is ready");
+    expect(window.location.pathname).toBe("/guardian");
+    expect(container.textContent).toContain("Ben");
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Ben was added");
+  });
+
+  it("stays on the add-student form when creation fails", async () => {
+    (createStudent as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("request failed"));
+    window.history.pushState({}, "", "/guardian/add-student");
+    await act(async () => root.render(<App />));
+
+    await act(async () => {
+      const nameInput = container.querySelector("input[name=display_name]") as HTMLInputElement;
+      nameInput.value = "Ben";
+      nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      nameInput.closest("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      await flush();
+    });
+
+    expect(window.location.pathname).toBe("/guardian/add-student");
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("Could not create student");
   });
 
   it("consumes a magic link from /auth/consume and navigates to /guardian", async () => {
