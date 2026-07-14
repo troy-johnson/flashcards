@@ -21,8 +21,10 @@ import "./App.css";
 
 type FetchStatus = "loading" | "ready" | "error";
 
-const navigate = (path: string): void => {
-  window.history.pushState({}, "", path);
+type NavigationState = { createdName?: string };
+
+const navigate = (path: string, state: NavigationState = {}): void => {
+  window.history.pushState(state, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
 };
 
@@ -236,6 +238,9 @@ function AuthConsumeRoute() {
 function GuardianRoute({ operatorTools }: { operatorTools: boolean }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [status, setStatus] = useState<FetchStatus>("loading");
+  const createdName = typeof window.history.state?.createdName === "string"
+    ? window.history.state.createdName
+    : null;
 
   useEffect(() => {
     let active = true;
@@ -256,6 +261,7 @@ function GuardianRoute({ operatorTools }: { operatorTools: boolean }) {
       <section className="panel">
         <h1>Guardian dashboard</h1>
         <p className="muted">Students you&apos;ve added show up here. Open one to start practice or view progress.</p>
+        {createdName && <p role="status">{createdName} was added to your students.</p>}
         <div className="actions">
           <a className="primary-link" href="/guardian/add-student">Add a student</a>
           {operatorTools && <a href="/guardian/diag">View diagnostics</a>}
@@ -281,7 +287,6 @@ function GuardianRoute({ operatorTools }: { operatorTools: boolean }) {
 }
 
 function AddStudentRoute() {
-  const [created, setCreated] = useState<Student | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
 
   const submit = async (event: FormEvent) => {
@@ -292,8 +297,7 @@ function AddStudentRoute() {
     setStatus("submitting");
     try {
       const { student } = await createStudent({ display_name: submittedName, grade: submittedGrade });
-      setCreated(student);
-      setStatus("idle");
+      navigate("/guardian", { createdName: student.display_name });
     } catch {
       setStatus("error");
     }
@@ -318,11 +322,6 @@ function AddStudentRoute() {
           <button type="submit" disabled={status === "submitting"}>Create student</button>
         </form>
         {status === "error" && <p role="alert">Could not create student. Try again.</p>}
-        {created && (
-          <p role="status">
-            {created.display_name} is ready for practice. <a href={`/guardian/${created.id}`}>Open dashboard</a>
-          </p>
-        )}
       </section>
     </main>
   );
