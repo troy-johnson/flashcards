@@ -13,6 +13,7 @@
     "audio:manifest": "tsx scripts/audio-manifest.ts",
     "audio:manifest:check": "tsx scripts/audio-manifest.ts --check",
     "audio:stage": "tsx scripts/audio-stage.ts",
+    "audio:dist:check": "tsx scripts/audio-dist-check.ts",
     "replay:attempts": "tsx scripts/replay-attempts.ts",
     "deploy:production:frontend": "tsx scripts/cloudflare-production-deploy.ts frontend",
     "deploy:production:api": "tsx scripts/cloudflare-production-deploy.ts api",

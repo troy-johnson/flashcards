@@ -1031,8 +1031,11 @@ Expected: FAIL because the checker does not exist.
 
 - [ ] **Step 3: Implement dist checker**
 
-The checker reads `content/audio/manifest.json`, resolves each `/audio/...` URL under
-`app/dist`, verifies count and SHA-256, and rejects extra generated media.
+The checker derives the checksum-bound staged-candidate projection from the canonical audio
+sources, resolves each generated runtime URL under `app/dist`, verifies count and SHA-256, and
+rejects extra generated media. This supersedes the original public-manifest-only wording after
+PR #130: the protected catalog intentionally stages owner-reviewed candidates before SLP
+approval, while `audio:manifest:check` remains the separate learner-release gate.
 
 - [ ] **Step 4: Add CI commands**
 
