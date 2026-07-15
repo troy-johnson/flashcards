@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { buildReviewSubjectPayload } from "audio-review-subject";
 import { json } from "../db/client";
 import { getAuthenticatedGuardian } from "../db/session";
 import { canUseOperatorTools } from "../auth/operator-policy";
@@ -72,29 +73,13 @@ export const toRuntimePlaybackUrl = (source?: string): string | undefined => {
 };
 
 /**
- * Worker-compatible counterpart to scripts/audio-schema.ts's review subject.
- * The authoring helper uses node:crypto and cannot be imported into the Worker;
- * keeping the stable field order here makes the API's release indicator use the
- * same checksum-bound contract as the learner manifest.
+ * Worker-compatible hash of the shared review-subject payload. Only the digest
+ * implementation differs from the Node authoring helper.
  */
 export const computeProtectedReviewSubject = async (sound: ProtectedSoundView): Promise<string> => {
-  const stable = {
-    sound_id: sound.sound_id,
-    instructional_label: sound.instructional_label,
-    ipa: sound.ipa,
-    example_word: sound.example_word,
-    phonetic_class: sound.phonetic_class,
-    production_behavior: sound.production_behavior,
-    production_notes: sound.production_notes,
-    dialect_notes: sound.dialect_notes,
-    recording_guidance: sound.recording_guidance,
-    processing_profile: sound.processing_profile,
-    master_sha256: sound.master_sha256 ?? null,
-    playback_sha256: sound.playback_sha256 ?? null,
-  };
   const digest = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(JSON.stringify(stable))
+    new TextEncoder().encode(JSON.stringify(buildReviewSubjectPayload(sound)))
   );
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 };
