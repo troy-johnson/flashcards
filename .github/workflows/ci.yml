@@ -30,6 +30,8 @@ jobs:
       - run: pnpm test
       - run: pnpm content:validate
       - run: pnpm audio:manifest:check
+      - run: pnpm --filter app build
+      - run: pnpm audio:dist:check
       - run: bash scripts/check-sentinel.sh
         env:
           BASE_REF: origin/${{ github.base_ref || 'main' }}
