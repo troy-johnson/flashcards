@@ -1,23 +1,30 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
-import { computeFileSha256, loadAudioSources } from "./audio-schema.ts";
+import {
+  computeFileSha256,
+  GENERATED_URL_PREFIX,
+  loadAudioSources,
+} from "./audio-schema.ts";
 import {
   projectStagedManifest,
   type PublicAudioManifest,
 } from "./audio-manifest.ts";
 
-const DIST_URL_PREFIX = "/audio/generated/";
-
 const generatedRelativePath = (src: string): string => {
-  if (!src.startsWith(DIST_URL_PREFIX)) {
-    throw new Error(`staged audio src must be under ${DIST_URL_PREFIX}: ${src}`);
+  if (!src.startsWith(GENERATED_URL_PREFIX)) {
+    throw new Error(`staged audio src must be under ${GENERATED_URL_PREFIX}: ${src}`);
   }
-  const path = src.slice(DIST_URL_PREFIX.length);
-  const normalized = relative("/", resolve("/", path));
-  if (!normalized || normalized.startsWith("..") || resolve("/", path) === "/") {
+  const path = src.slice(GENERATED_URL_PREFIX.length);
+  const segments = path.split("/");
+  if (
+    !path ||
+    path.includes("\\") ||
+    path.includes("\0") ||
+    segments.some((segment) => segment === "" || segment === "." || segment === "..")
+  ) {
     throw new Error(`staged audio src must be a safe generated path: ${src}`);
   }
-  return normalized;
+  return path;
 };
 
 const listFiles = (root: string, current = root): string[] => {
