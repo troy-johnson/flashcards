@@ -46,11 +46,12 @@ Scope to one package with `pnpm --filter api …` / `--filter app …`.
 
 ## Architecture
 
-pnpm workspace (`pnpm@9.15.0`), three packages:
+pnpm workspace (`pnpm@9.15.0`), four packages:
 
 - **`api/`** — Hono on Cloudflare Workers, D1 (SQLite). Routes in `api/src/routes/`, the practice scheduler in `api/src/scheduler/`, magic-link auth/email in `api/src/email/` + `routes/auth.ts`. `wrangler.toml` config.
 - **`app/`** — React 19 + Vite SPA (guardian + practice UI).
 - **`packages/copy/`** — TypeScript-only shared brand/UI/email copy, imported as `copy` by both `api` and `app`. Brand strings live here, never in `content/`.
+- **`packages/audio-review-subject/`** — runtime-neutral stable projection for checksum-bound audio review subjects, shared by Node authoring tools and the Worker catalog.
 - **`content/`** — instructional content as validated JSON data (`skills.json`, `scope-sequence.json`, `items/`, `audio/`); `scripts/content-validate.ts` is the gate.
 
 ## Conventions

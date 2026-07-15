@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { buildReviewSubjectPayload } from "../packages/audio-review-subject/index.ts";
 import {
   loadAudioSources,
   validateAudioSources,
@@ -320,12 +321,33 @@ describe("resolveMasterPath", () => {
 });
 
 describe("computeReviewSubject", () => {
+  it("builds the shared cross-runtime review subject payload", () => {
+    const sources = loadAudioSources(join(root, "content"));
+    const sound = sources.sounds[0]!;
+
+    assert.deepEqual(buildReviewSubjectPayload(sound), {
+      sound_id: "sound_short_a",
+      instructional_label: "ă",
+      ipa: "/æ/",
+      example_word: "apple",
+      phonetic_class: "front vowel",
+      production_behavior: "sustain",
+      production_notes: "Short front vowel; sustain cleanly without gliding toward a neighboring vowel.",
+      dialect_notes: "Exact height and backness varies across dialects.",
+      recording_guidance: "Record in isolation with a clean onset and release. Avoid adding a schwa before or after.",
+      processing_profile: "standard_vowel",
+      master_sha256: null,
+      playback_sha256: null,
+    });
+  });
+
   it("returns a deterministic hex string", () => {
     const sources = loadAudioSources(join(root, "content"));
     const sound = sources.sounds[0]!;
     const subject1 = computeReviewSubject(sound);
     const subject2 = computeReviewSubject(sound);
     assert.equal(subject1, subject2);
+    assert.equal(subject1, "775405152398d963e04781f4f2bba9f116786c93f2032f7d8c78716652c13245");
     assert.match(subject1, /^[0-9a-f]{64}$/);
   });
 

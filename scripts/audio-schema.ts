@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
+import { buildReviewSubjectPayload } from "../packages/audio-review-subject/index.ts";
 
 export type ProductionBehavior = "clip" | "sustain" | "glide" | "sequence";
 export type ReviewStatus = "approved" | "changes_requested";
@@ -291,21 +292,9 @@ export function computeFileSha256(path: string): string {
 }
 
 export function computeReviewSubject(sound: InstructionalSound): string {
-  const stable = {
-    sound_id: sound.sound_id,
-    instructional_label: sound.instructional_label,
-    ipa: sound.ipa,
-    example_word: sound.example_word,
-    phonetic_class: sound.phonetic_class,
-    production_behavior: sound.production_behavior,
-    production_notes: sound.production_notes,
-    dialect_notes: sound.dialect_notes,
-    recording_guidance: sound.recording_guidance,
-    processing_profile: sound.processing_profile,
-    master_sha256: sound.master_sha256 ?? null,
-    playback_sha256: sound.playback_sha256 ?? null,
-  };
-  return createHash("sha256").update(JSON.stringify(stable)).digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify(buildReviewSubjectPayload(sound)))
+    .digest("hex");
 }
 
 /**
