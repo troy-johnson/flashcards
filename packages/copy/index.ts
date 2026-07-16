@@ -49,12 +49,12 @@ export const support = {
 } as const;
 
 /**
- * Owner-approved July 15, 2026; not yet rendered or published.
+ * Owner-approved July 15, 2026; published for the early-access pilot July 16, 2026.
  * Plain-language Phase A privacy copy for Spec 002 FR27–FR29.
  */
 export const privacyPolicyDraft = {
   title: "Privacy Policy",
-  status: "Owner-approved draft — not yet published",
+  status: "Effective July 16, 2026",
   introduction:
     `${productName} is an early-access reading-practice pilot for young readers and the caring adults who practice with them. This policy explains the limited information the pilot uses and why.`,
   sections: [
@@ -104,12 +104,12 @@ export const privacyPolicyDraft = {
 } as const;
 
 /**
- * Owner-approved July 15, 2026; not yet rendered or published.
+ * Owner-approved July 15, 2026; published for the early-access pilot July 16, 2026.
  * Plain-language Phase A terms for Spec 002 FR27–FR29.
  */
 export const termsOfUseDraft = {
   title: "Terms of Use",
-  status: "Owner-approved draft — not yet published",
+  status: "Effective July 16, 2026",
   introduction:
     `These terms apply to the invite-only ${productName} early-access pilot. By using the pilot, a guardian agrees to use it responsibly and to supervise the child's practice.`,
   sections: [

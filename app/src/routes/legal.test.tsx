@@ -39,6 +39,8 @@ describe("public legal routes", () => {
     expect(container.textContent).toContain("There are no ads");
     expect(container.textContent).toContain("do not sell");
     expect(container.textContent).toContain("early-access pilot");
+    expect(container.textContent).toContain("Effective July 16, 2026");
+    expect(container.textContent).not.toContain("not yet published");
     expect(container.querySelector(`a[href="mailto:${support.email}"]`)).not.toBeNull();
     expect(container.querySelector(".guardian-header")).toBeNull();
   });
@@ -50,6 +52,8 @@ describe("public legal routes", () => {
     expect(container.querySelector("h1")?.textContent).toBe("Terms of Use");
     expect(container.textContent).toContain("Pilot purpose");
     expect(container.textContent).toContain("Acceptable use");
+    expect(container.textContent).toContain("Effective July 16, 2026");
+    expect(container.textContent).not.toContain("not yet published");
     expect(container.querySelector(`a[href="mailto:${support.email}"]`)).not.toBeNull();
   });
 
