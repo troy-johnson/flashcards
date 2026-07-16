@@ -40,7 +40,7 @@ database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"
 name = "api-flashcards"
 
 [env.production.vars]
-APP_ORIGIN = "https://flashcards.troyjohnson.workers.dev"
+APP_ORIGIN = "https://readersway.troyjohnson.dev"
 AUTH_EMAIL_ISSUER = "resend"
 AUTH_ACCESS_MODE = "allowlist"
 # Resend-verified sender identity for production magic links.
