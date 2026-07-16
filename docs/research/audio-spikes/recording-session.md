@@ -8,6 +8,17 @@
 
 **Family-wave deadline:** Record the Aug 1 proceed/fallback decision on `rw-ozz`
 
+## Pre-recording disposition — July 15, 2026
+
+- Inventory/SLP packet reviewed for session readiness: yes
+- Pre-recording SLP decision available: no
+- Owner disposition: `slp_pending_risk_accepted`
+- Scope of acceptance: recording, deterministic processing, candidate staging, and protected-catalog owner QA may proceed; no clip may enter the learner-facing manifest until the current checksum-bound subject has SLP approval
+- Capture facts still intentionally pending: session time, room, recorder consent/provenance, exact DJI transmitter/receiver, recording device/app, gain, microphone distance, room noise, dialect contrasts, and owner presence
+
+This disposition accepts a replaceable beta-recording risk only. It does not claim clinical
+approval and does not weaken the learner-facing SLP gate.
+
 ## Outcome
 
 Capture multiple takes for all 44 canonical instructional sound targets, select one candidate

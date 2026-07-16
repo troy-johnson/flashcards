@@ -143,6 +143,24 @@ describe("play and drill routes", () => {
     expect(exitPractice(container)).toBeNull();
   });
 
+  it("shows an all-caught-up state at the true end of the learning sequence", async () => {
+    (startPractice as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      practice_session: { id: "empty", student_id: "student1", plan: { cards: [] } },
+      terminal_reason: "review_complete_no_active_content"
+    });
+
+    window.history.pushState({}, "", "/play/student1");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.querySelector("h1")?.textContent).toBe("All caught up");
+    expect(container.textContent).toContain("nothing to practice today");
+    expect(container.querySelector('a[href="/guardian/student1"]')).not.toBeNull();
+    expect(exitPractice(container)).toBeNull();
+  });
+
   it("still reaches the finish screen when completion telemetry fails (best-effort)", async () => {
     (completePractice as unknown as ReturnType<typeof vi.fn>)
       .mockRejectedValueOnce(new Error("completion endpoint down"));

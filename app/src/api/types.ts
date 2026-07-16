@@ -124,6 +124,29 @@ export interface SessionSummaryRow {
   avg_duration_ms: number | null;
 }
 
+export interface ExitMarkerHouseholdRow {
+  guardian_id: string;
+  guardian_email: string;
+  completed_sessions: number;
+  first_completed_at: string;
+  last_completed_at: string;
+}
+
+export interface ExitMarkerStudentRow {
+  guardian_id: string;
+  guardian_email: string;
+  student_id: string;
+  student_name: string;
+  completed_sessions: number;
+  first_completed_at: string;
+  last_completed_at: string;
+}
+
+export interface ExitMarkers {
+  households: ExitMarkerHouseholdRow[];
+  students: ExitMarkerStudentRow[];
+}
+
 export interface FrictionRow {
   student_id: string;
   skill_id: string;
