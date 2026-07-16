@@ -13,7 +13,7 @@ import {
   startPractice
 } from "./api/literacy";
 import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
-import { landing, onboarding, productName } from "copy";
+import { landing, onboarding, privacyPolicyDraft, productName, support, termsOfUseDraft } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
@@ -95,6 +95,7 @@ function GuardianNav({ guardian, operatorTools }: { guardian: Guardian | null; o
             <a ref={firstActionRef} href="/guardian" onClick={closeForNavigation}>Students</a>
             {operatorTools && <a href="/guardian/diag" onClick={closeForNavigation}>Diagnostics</a>}
             {operatorTools && <a href="/guardian/audio-catalog" onClick={closeForNavigation}>Audio catalog</a>}
+            <a href={`mailto:${support.email}`} onClick={closeForNavigation}>Contact support</a>
             <form onSubmit={onLogout}><button type="submit">Sign out</button></form>
           </div>
         </nav>
@@ -142,9 +143,48 @@ function LandingRoute() {
           <p className="muted">Ready when you are.</p>
           <a className="primary-link" href="/signin">Sign in</a>
         </section>
+
+        <footer className="landing-footer">
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Use</a>
+        </footer>
       </div>
     </main>
   );
+}
+
+type LegalDocument = typeof privacyPolicyDraft | typeof termsOfUseDraft;
+
+function LegalRoute({ document }: { document: LegalDocument }) {
+  return (
+    <main className="page-shell">
+      <article className="panel legal-document">
+        <p className="eyebrow">{document.status}</p>
+        <h1>{document.title}</h1>
+        <p>{document.introduction}</p>
+        {document.sections.map((section) => (
+          <section key={section.heading}>
+            <h2>{section.heading}</h2>
+            {section.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </section>
+        ))}
+        <p>
+          Questions, deletion requests, and other data requests: {" "}
+          <a href={`mailto:${support.email}`}>{support.email}</a>
+        </p>
+      </article>
+    </main>
+  );
+}
+
+function PrivacyRoute() {
+  return <LegalRoute document={privacyPolicyDraft} />;
+}
+
+function TermsRoute() {
+  return <LegalRoute document={termsOfUseDraft} />;
 }
 
 function SignInRoute() {
@@ -720,6 +760,8 @@ function App() {
   let route;
   if (path === "/signin") route = <SignInRoute />;
   else if (path === "/auth/consume") route = <AuthConsumeRoute />;
+  else if (path === "/privacy") route = <PrivacyRoute />;
+  else if (path === "/terms") route = <TermsRoute />;
   else if (path === "/guardian") route = <GuardianRoute operatorTools={auth?.capabilities?.operator_tools === true} />;
   else if (path === "/guardian/add-student") route = <AddStudentRoute />;
   else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
@@ -735,7 +777,7 @@ function App() {
   }
 
   const isStudentMode = segments[0] === "play";
-  const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume";
+  const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume" || path === "/privacy" || path === "/terms";
   const showNav = !isStudentMode && !isPublicRoute;
   const guardian = auth?.guardian ?? null;
   const operatorTools = auth?.capabilities?.operator_tools === true;
