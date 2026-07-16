@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptInput, AudioCatalogResponse, AuthMeResponse, DiagnosticSummaryRow, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
+import type { AttemptInput, AudioCatalogResponse, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
 
 export interface SignInResponse {
   /** Present only when the API runs with the dev-log email issuer — never set in production. */
@@ -30,8 +30,13 @@ export const createStudent = (student: { display_name: string; grade: "K" | "1";
 export const getStudent = (studentId: string): Promise<{ student: Student }> =>
   apiFetch<{ student: Student }>(`/students/${studentId}`);
 
-export const startPractice = (studentId: string): Promise<{ practice_session: PracticeSession }> =>
-  apiFetch<{ practice_session: PracticeSession }>(`/practice/${studentId}/start`, { method: "POST" });
+export const startPractice = (studentId: string): Promise<{
+  practice_session: PracticeSession;
+  terminal_reason?: "review_complete_no_active_content";
+}> => apiFetch<{
+  practice_session: PracticeSession;
+  terminal_reason?: "review_complete_no_active_content";
+}>(`/practice/${studentId}/start`, { method: "POST" });
 
 export const scoreAttempt = (studentId: string, input: AttemptInput): Promise<{ attempt: { id: string; scoring_source: "guardian_tap" } }> =>
   apiFetch<{ attempt: { id: string; scoring_source: "guardian_tap" } }>(`/practice/${studentId}/attempt`, {
@@ -45,8 +50,8 @@ export const completePractice = (studentId: string, practiceSessionId: string): 
     body: JSON.stringify({ practice_session_id: practiceSessionId })
   });
 
-export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }> =>
-  apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] }>("/guardian/diag");
+export const getGuardianDiag = (): Promise<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[]; exit_markers: ExitMarkers }> =>
+  apiFetch<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[]; exit_markers: ExitMarkers }>("/guardian/diag");
 
 export const getAudioCatalog = (): Promise<AudioCatalogResponse> =>
   apiFetch<AudioCatalogResponse>("/guardian/audio-catalog");

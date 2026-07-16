@@ -12,8 +12,8 @@ import {
   signIn,
   startPractice
 } from "./api/literacy";
-import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
-import { landing, productName } from "copy";
+import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
+import { landing, onboarding, productName } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
@@ -306,7 +306,8 @@ function AddStudentRoute() {
   return (
     <main className="page-shell">
       <section className="panel narrow-panel">
-        <h1>Add a student</h1>
+        <h1>{onboarding.headline}</h1>
+        <p className="muted">{onboarding.subtitle}</p>
         <form onSubmit={submit} className="stack">
           <label>
             Student first name
@@ -429,8 +430,11 @@ function StudentSettingsRoute({ studentId }: { studentId: string }) {
   );
 }
 
+const formatDiagnosticDate = (value: string): string =>
+  new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+
 function GuardianDiagRoute() {
-  const [data, setData] = useState<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[] } | null>(null);
+  const [data, setData] = useState<{ guardian: Guardian; summary: DiagnosticSummaryRow[]; sessions: SessionSummaryRow[]; friction: FrictionRow[]; exit_markers: ExitMarkers } | null>(null);
   const [status, setStatus] = useState<FetchStatus>("loading");
 
   useEffect(() => {
@@ -456,6 +460,45 @@ function GuardianDiagRoute() {
         {status === "error" && <p role="alert">Could not load diagnostics. You may not have access on this account.</p>}
         {status === "ready" && data && (
           <>
+            <h2>Pilot exit markers</h2>
+            <p className="muted">Completed sessions across pilot households and students. Use the first and last completion dates to assess sustained use.</p>
+            {data.exit_markers.households.length === 0 ? (
+              <p className="empty">No completed pilot sessions yet.</p>
+            ) : (
+              <table className="diag-table">
+                <thead>
+                  <tr><th>Household</th><th>Completed</th><th>First completion</th><th>Last completion</th></tr>
+                </thead>
+                <tbody>
+                  {data.exit_markers.households.map((household) => (
+                    <tr key={household.guardian_id}>
+                      <td>{household.guardian_email}</td>
+                      <td>{household.completed_sessions}</td>
+                      <td>{formatDiagnosticDate(household.first_completed_at)}</td>
+                      <td>{formatDiagnosticDate(household.last_completed_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {data.exit_markers.students.length > 0 && (
+              <table className="diag-table">
+                <thead>
+                  <tr><th>Student</th><th>Household</th><th>Completed</th><th>First completion</th><th>Last completion</th></tr>
+                </thead>
+                <tbody>
+                  {data.exit_markers.students.map((student) => (
+                    <tr key={student.student_id}>
+                      <td>{student.student_name}</td>
+                      <td>{student.guardian_email}</td>
+                      <td>{student.completed_sessions}</td>
+                      <td>{formatDiagnosticDate(student.first_completed_at)}</td>
+                      <td>{formatDiagnosticDate(student.last_completed_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
             <h2>Sessions</h2>
             {data.sessions.length === 0 ? (
               <p className="empty">No practice sessions yet.</p>
@@ -542,16 +585,18 @@ function PracticeExit({ studentId, disabled = false }: { studentId: string; disa
 function PlayStartRoute({ studentId }: { studentId: string }) {
   const [practice, setPractice] = useState<ActivePractice | null>(() => loadPractice(studentId));
   const [status, setStatus] = useState<FetchStatus>(practice ? "ready" : "loading");
+  const [terminalReason, setTerminalReason] = useState<"review_complete_no_active_content" | null>(null);
 
   useEffect(() => {
     if (practice) return;
     let active = true;
     startPractice(studentId)
-      .then(({ practice_session }) => {
+      .then(({ practice_session, terminal_reason }) => {
         if (!active) return;
         const next = { session: practice_session, index: 0, shown_at: new Date().toISOString() };
-        savePractice(studentId, next);
+        if (!terminal_reason) savePractice(studentId, next);
         setPractice(next);
+        setTerminalReason(terminal_reason ?? null);
         setStatus("ready");
       })
       .catch(() => active && setStatus("error"));
@@ -560,17 +605,25 @@ function PlayStartRoute({ studentId }: { studentId: string }) {
     };
   }, [practice, studentId]);
 
+  const caughtUp = terminalReason === "review_complete_no_active_content";
+
   return (
     <main className="page-shell student-mode">
       <section className="panel hero-panel">
-        <h1>Today: {practice?.session.plan.cards.length ?? 0} things</h1>
-        <p>Read each word. Your guardian taps how it went.</p>
+        <h1>{caughtUp ? "All caught up" : `Today: ${practice?.session.plan.cards.length ?? 0} things`}</h1>
+        {!caughtUp && <p>Read each word. Your guardian taps how it went.</p>}
         {status === "loading" && <p>Getting today&apos;s cards…</p>}
         {status === "error" && <p className="drill-alert" role="alert">Could not start practice. <a href={`/guardian/${studentId}`}>Back</a></p>}
-        {status === "ready" && practice && practice.session.plan.cards.length === 0 && (
+        {status === "ready" && practice && caughtUp && (
+          <>
+            <p className="empty">You&apos;ve finished the available learning path, so there&apos;s nothing to practice today.</p>
+            <a className="primary-link" href={`/guardian/${studentId}`}>Back to progress</a>
+          </>
+        )}
+        {status === "ready" && practice && !caughtUp && practice.session.plan.cards.length === 0 && (
           <p className="empty">No cards available for today.</p>
         )}
-        {status === "ready" && practice && practice.session.plan.cards.length > 0 && (
+        {status === "ready" && practice && !caughtUp && practice.session.plan.cards.length > 0 && (
           <>
             <button type="button" onClick={() => navigate(`/play/${studentId}/drill`)}>Start</button>
             <PracticeExit studentId={studentId} />

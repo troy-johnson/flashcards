@@ -117,6 +117,92 @@ describe("practice and diagnostic routes", () => {
     expect(response.status).toBe(expected);
   });
 
+  it("reports completed-session exit markers across pilot households", async () => {
+    const otherCreatedAt = "2026-07-01T12:00:00.000Z";
+    await env.DB.prepare("INSERT INTO student (id, guardian_id, display_name, grade, created_at) VALUES (?, ?, ?, ?, ?)")
+      .bind("student_other", "g_other", "Lin", "K", otherCreatedAt).run();
+
+    const completedSessions = [
+      ["creator_1", "student1", "2026-07-01T12:00:00.000Z", "2026-07-01T12:08:00.000Z"],
+      ["creator_2", "student2", "2026-07-15T12:00:00.000Z", "2026-07-15T12:09:00.000Z"],
+      ["other_1", "student_other", "2026-07-10T12:00:00.000Z", "2026-07-10T12:07:00.000Z"]
+    ] as const;
+    for (const [id, studentId, startedAt, completedAt] of completedSessions) {
+      await env.DB.prepare(
+        "INSERT INTO practice_session (id, student_id, plan_json, started_at, completed_at) VALUES (?, ?, '{}', ?, ?)"
+      ).bind(id, studentId, startedAt, completedAt).run();
+    }
+
+    const response = await diagnosticsRequest("local-guardian@example.com", "session=s_diag");
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      exit_markers: {
+        households: Array<{
+          guardian_id: string;
+          guardian_email: string;
+          completed_sessions: number;
+          first_completed_at: string;
+          last_completed_at: string;
+        }>;
+        students: Array<{
+          guardian_id: string;
+          guardian_email: string;
+          student_id: string;
+          student_name: string;
+          completed_sessions: number;
+          first_completed_at: string;
+          last_completed_at: string;
+        }>;
+      };
+    }>();
+
+    expect(body.exit_markers.households).toEqual([
+      {
+        guardian_id: "g_diag",
+        guardian_email: "local-guardian@example.com",
+        completed_sessions: 2,
+        first_completed_at: "2026-07-01T12:08:00.000Z",
+        last_completed_at: "2026-07-15T12:09:00.000Z"
+      },
+      {
+        guardian_id: "g_other",
+        guardian_email: "other@example.com",
+        completed_sessions: 1,
+        first_completed_at: "2026-07-10T12:07:00.000Z",
+        last_completed_at: "2026-07-10T12:07:00.000Z"
+      }
+    ]);
+    expect(body.exit_markers.students).toEqual([
+      {
+        guardian_id: "g_diag",
+        guardian_email: "local-guardian@example.com",
+        student_id: "student1",
+        student_name: "Ada",
+        completed_sessions: 1,
+        first_completed_at: "2026-07-01T12:08:00.000Z",
+        last_completed_at: "2026-07-01T12:08:00.000Z"
+      },
+      {
+        guardian_id: "g_diag",
+        guardian_email: "local-guardian@example.com",
+        student_id: "student2",
+        student_name: "Grace",
+        completed_sessions: 1,
+        first_completed_at: "2026-07-15T12:09:00.000Z",
+        last_completed_at: "2026-07-15T12:09:00.000Z"
+      },
+      {
+        guardian_id: "g_other",
+        guardian_email: "other@example.com",
+        student_id: "student_other",
+        student_name: "Lin",
+        completed_sessions: 1,
+        first_completed_at: "2026-07-10T12:07:00.000Z",
+        last_completed_at: "2026-07-10T12:07:00.000Z"
+      }
+    ]);
+  });
+
   it("creates a practice session and persists guardian-tap attempts", async () => {
     const start = await SELF.fetch("https://api.test/practice/student1/start", { method: "POST", headers: { cookie: "session=s_diag" } });
     expect(start.status).toBe(201);

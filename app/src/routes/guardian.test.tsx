@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { consumeMagicLink, createStudent, getCurrentGuardian, getStudent, listStudents, logout, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, getCurrentGuardian, getGuardianDiag, getStudent, listStudents, logout, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => ({})),
@@ -13,7 +13,13 @@ vi.mock("../api/literacy", () => ({
   createStudent: vi.fn(async () => ({ student: { id: "student2", display_name: "Ben", grade: "1", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
   getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
   getCurrentGuardian: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null } })),
-  getGuardianDiag: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null }, summary: [], sessions: [], friction: [] })),
+  getGuardianDiag: vi.fn(async () => ({
+    guardian: { id: "g1", email: "g@example.com", display_name: null },
+    summary: [],
+    sessions: [],
+    friction: [],
+    exit_markers: { households: [], students: [] }
+  })),
   logout: vi.fn(async () => undefined),
   startPractice: vi.fn(),
   scoreAttempt: vi.fn()
@@ -209,6 +215,49 @@ describe("guardian and sign-in routes", () => {
     expect(container.querySelector('a[href="/guardian/audio-catalog"]')).toBeNull();
   });
 
+  it("surfaces completed-session exit markers by household and student", async () => {
+    (getGuardianDiag as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      guardian: { id: "g1", email: "operator@example.com", display_name: null },
+      summary: [],
+      sessions: [],
+      friction: [],
+      exit_markers: {
+        households: [{
+          guardian_id: "g-family",
+          guardian_email: "family@example.com",
+          completed_sessions: 10,
+          first_completed_at: "2026-07-01T12:00:00.000Z",
+          last_completed_at: "2026-07-15T12:00:00.000Z"
+        }],
+        students: [{
+          guardian_id: "g-family",
+          guardian_email: "family@example.com",
+          student_id: "student1",
+          student_name: "Ada",
+          completed_sessions: 10,
+          first_completed_at: "2026-07-01T12:00:00.000Z",
+          last_completed_at: "2026-07-15T12:00:00.000Z"
+        }]
+      }
+    });
+    window.history.pushState({}, "", "/guardian/diag");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(container.textContent).toContain("Pilot exit markers");
+    expect(container.textContent).toContain("family@example.com");
+    expect(container.textContent).toContain("Ada");
+    expect(container.textContent).toContain("10");
+    expect(container.textContent).toContain("Jul 1, 2026");
+    expect(container.textContent).toContain("Jul 15, 2026");
+    const tables = container.querySelectorAll("table");
+    expect(tables[1]?.textContent).toContain("family@example.com");
+    expect(tables[1]?.textContent).not.toContain("g-family");
+  });
+
   it("renders K and 1st-grade siblings as separate selectable students", async () => {
     const siblings = [
       { id: "student_k", display_name: "Maya", grade: "K" as const, birth_month: null, prefs_json: {}, created_at: "now", archived_at: null },
@@ -278,6 +327,14 @@ describe("guardian and sign-in routes", () => {
     expect(window.location.pathname).toBe("/guardian");
     expect(container.textContent).toContain("Ben");
     expect(container.querySelector('[role="status"]')?.textContent).toContain("Ben was added");
+  });
+
+  it("renders centralized onboarding copy on the add-student route", async () => {
+    window.history.pushState({}, "", "/guardian/add-student");
+    await act(async () => root.render(<App />));
+
+    expect(container.querySelector("h1")?.textContent).toBe("Add your child");
+    expect(container.textContent).toContain("First name, grade, a few preferences. About a minute.");
   });
 
   it("stays on the add-student form when creation fails", async () => {
