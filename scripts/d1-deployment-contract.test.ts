@@ -63,6 +63,19 @@ test("production enrollment is allowlisted while local and preview stay open", (
   );
 });
 
+test("production API uses a same-site custom domain for the cookie-backed SPA", () => {
+  const production = tomlSection("env.production");
+
+  assert.match(
+    production,
+    /routes\s*=\s*\[[\s\S]*?pattern\s*=\s*"api\.readersway\.troyjohnson\.dev"[\s\S]*?custom_domain\s*=\s*true[\s\S]*?\]/,
+  );
+  assert.match(
+    tomlSection("env.production.vars"),
+    /^APP_ORIGIN\s*=\s*"https:\/\/readersway\.troyjohnson\.dev"\s*$/m,
+  );
+});
+
 test("production operator designation is secret-backed without committing a real address", () => {
   assert.match(
     tomlSection("vars"),

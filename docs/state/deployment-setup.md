@@ -17,12 +17,15 @@ with Static Assets from `app/wrangler.toml`.
      `pnpm --filter app exec wrangler versions upload`
    - Production branch deploy command: `pnpm deploy:production:frontend`
    - Root directory: leave empty (monorepo)
-5. Environment variables (Production + Preview):
-   - `VITE_API_ORIGIN = https://api-flashcards.troyjohnson.workers.dev`
-   - `NODE_VERSION = 24`
+5. Environment variables:
+   - Production: `VITE_API_ORIGIN = https://api.readersway.troyjohnson.dev`
+   - Preview: `VITE_API_ORIGIN = https://api-flashcards-preview.troyjohnson.workers.dev`
+   - Production + Preview: `NODE_VERSION = 24`
 
-Production deploys land at `https://flashcards.troyjohnson.workers.dev/`.
-The API `APP_ORIGIN` for preview and production must match that URL.
+Production deploys land at `https://readersway.troyjohnson.dev/`.
+Production API requests use `https://api.readersway.troyjohnson.dev`, a
+same-site custom domain required for the `SameSite=Lax` session cookie. The API
+`APP_ORIGIN` for production must match the frontend custom domain.
 
 The production command builds the SPA, uploads it with the explicit
 `app/wrangler.toml` config, and inspects the candidate metadata. It deploys the
@@ -170,6 +173,8 @@ Actions variable is still `false`; do not rely only on the checked-in workflow t
 
 - Frontend Worker name: `flashcards`.
 - Backend API Worker name: `api-flashcards` (`api-flashcards-preview` for preview env deploys).
+- Production frontend custom domain: `readersway.troyjohnson.dev`.
+- Production API custom domain: `api.readersway.troyjohnson.dev`.
 - Preview uses D1 UUID `e3884eb3-fb85-4b29-9940-9c241bbc67ef`; the
   configured name is `literacy_preview`, while Cloudflare currently reports the
   remote resource name as `flashcards`.
