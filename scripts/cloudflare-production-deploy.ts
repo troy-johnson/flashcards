@@ -188,18 +188,18 @@ const deployTriggers = async (
   config: string,
   run: CommandRunner,
 ) => {
-  if (target !== "api") return;
-
-  await run("pnpm", [
+  const args = [
     "exec",
     "wrangler",
     "triggers",
     "deploy",
     "--config",
     config,
-    "--env",
-    "production",
-  ]);
+  ];
+  if (target === "api") {
+    args.push("--env", "production");
+  }
+  await run("pnpm", args);
 };
 
 export const runProductionDeployment = async (
