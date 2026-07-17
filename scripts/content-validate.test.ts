@@ -240,6 +240,51 @@ describe("content manifest count gate", () => {
     assert.throws(runValidator, /phonics_k_u1_bad uses untaught grapheme b/);
   });
 
+  it("fails when a word uses a later-declared digraph even though its letters were introduced", () => {
+    writeSkills([
+      { skill_id: "phonics_k_u1_consonants", grade: "K", prerequisites: [] },
+      { skill_id: "phonics_k_u2_digraph_sh", grade: "K", prerequisites: [] }
+    ]);
+    writeScopeSequence([
+      { unit_id: "k_u1", grade: "K", skill_ids: ["phonics_k_u1_consonants"] },
+      { unit_id: "k_u2", grade: "K", skill_ids: ["phonics_k_u2_digraph_sh"] }
+    ]);
+    writeItems([{ item_id: "phonics_k_u1_ship", skill_id: "phonics_k_u1_consonants", text: "ship" }]);
+    writeAudioManifest([]);
+    writeDecodabilityMap([
+      { skill_id: "phonics_k_u1_consonants", graphemes: ["s", "h", "i", "p"] },
+      { skill_id: "phonics_k_u2_digraph_sh", graphemes: ["sh"] }
+    ]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 2 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 1 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /phonics_k_u1_ship uses untaught grapheme sh/);
+  });
+
+  it("accepts a digraph once the skill introduces it", () => {
+    writeSkills([{ skill_id: "phonics_k_u2_digraph_sh", grade: "K", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "k_u2", grade: "K", skill_ids: ["phonics_k_u2_digraph_sh"] }]);
+    writeItems([{ item_id: "phonics_k_u2_ship", skill_id: "phonics_k_u2_digraph_sh", text: "ship" }]);
+    writeAudioManifest([]);
+    writeDecodabilityMap([{ skill_id: "phonics_k_u2_digraph_sh", graphemes: ["sh", "i", "p"] }]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 1 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 1 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
+
   it("fails when authored content is below the manifest minimum", () => {
     writeItems(
       JSON.parse(productionItems).filter(
