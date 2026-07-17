@@ -11,9 +11,11 @@ import {
 
 type Target = "api" | "frontend";
 type CommandResult = { stdout: string; stderr: string };
+type CommandRunnerOptions = { env?: NodeJS.ProcessEnv };
 type CommandRunner = (
   command: string,
   args: string[],
+  options?: CommandRunnerOptions,
 ) => Promise<CommandResult>;
 
 type DeploymentDependencies = {
@@ -24,10 +26,10 @@ type DeploymentDependencies = {
 const versionIdPattern =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
 
-const defaultRunner: CommandRunner = (command, args) =>
+const defaultRunner: CommandRunner = (command, args, options) =>
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {
-      env: process.env,
+      env: options?.env ?? process.env,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -145,7 +147,19 @@ export const runProductionDeployment = async (
   try {
     let secretsFile: string | undefined;
     if (target === "frontend") {
-      await run("pnpm", ["--filter", "app", "build"]);
+      const apiOrigin = env.VITE_API_ORIGIN?.trim();
+      if (!apiOrigin) {
+        throw new Error(
+          "VITE_API_ORIGIN must be configured in the frontend production build environment",
+        );
+      }
+      await run(
+        "pnpm",
+        ["--filter", "app", "build"],
+        {
+          env: { ...process.env, ...env, VITE_API_ORIGIN: apiOrigin },
+        },
+      );
     } else {
       const operatorEmail = env.DIAG_GUARDIAN_EMAIL?.trim();
       if (!operatorEmail) {

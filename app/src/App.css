@@ -423,6 +423,20 @@ button:disabled {
   max-width: 56ch;
 }
 
+.landing-story,
+.landing-privacy {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.landing-story p,
+.landing-privacy p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: var(--text-body-l-lh);
+}
+
 .landing-steps ol {
   display: grid;
   gap: var(--space-md);
@@ -458,6 +472,14 @@ button:disabled {
   gap: var(--space-md);
   place-items: center;
   padding-block: var(--space-md);
+}
+
+.landing-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-md);
 }
 
 .dev-magic-link {
