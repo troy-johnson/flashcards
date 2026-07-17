@@ -183,6 +183,25 @@ const deployVersion = async (
   await run("pnpm", args);
 };
 
+const deployTriggers = async (
+  target: Target,
+  config: string,
+  run: CommandRunner,
+) => {
+  if (target !== "api") return;
+
+  await run("pnpm", [
+    "exec",
+    "wrangler",
+    "triggers",
+    "deploy",
+    "--config",
+    config,
+    "--env",
+    "production",
+  ]);
+};
+
 export const runProductionDeployment = async (
   target: Target,
   dependencies: Partial<DeploymentDependencies> = {},
@@ -249,6 +268,7 @@ export const runProductionDeployment = async (
       candidate.versionId,
       run,
     );
+    await deployTriggers(target, candidate.config, run);
   } finally {
     if (temporaryDirectory) {
       await rm(temporaryDirectory, { recursive: true, force: true });
