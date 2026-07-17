@@ -22,6 +22,11 @@ const apiBindingsWithoutOperator = [
   { name: "RESEND_API_KEY", type: "secret_text" },
 ];
 
+const apiBindingsWithOperator = [
+  ...apiBindingsWithoutOperator,
+  { name: "DIAG_GUARDIAN_EMAIL", type: "secret_text" },
+];
+
 const createFrontendBundleFixture = async (): Promise<string> => {
   const directory = await mkdtemp(join(tmpdir(), "readers-way-build-test-"));
   await writeFile(
@@ -76,6 +81,50 @@ test("API production deployment stops before traffic when candidate validation f
   );
 
   assert.equal(commands.some((args) => args.includes("deploy")), false);
+});
+
+test("API production deployment applies configured routes after deploying the candidate", async () => {
+  const commands: string[][] = [];
+  const run = async (_command: string, args: string[]) => {
+    commands.push(args);
+    if (args.includes("upload")) {
+      return { stdout: `Worker Version ID: ${versionId}`, stderr: "" };
+    }
+    if (args.includes("view")) {
+      return {
+        stdout: JSON.stringify({
+          resources: { script_runtime: {}, bindings: apiBindingsWithOperator },
+        }),
+        stderr: "",
+      };
+    }
+    return { stdout: "", stderr: "" };
+  };
+
+  await runProductionDeployment("api", {
+    env: { DIAG_GUARDIAN_EMAIL: "operator@example.com" },
+    run,
+  });
+
+  const versionDeployIndex = commands.findIndex(
+    (args) => args.includes("versions") && args.includes("deploy"),
+  );
+  const triggerDeployIndex = commands.findIndex(
+    (args) => args.includes("triggers") && args.includes("deploy"),
+  );
+
+  assert.ok(versionDeployIndex >= 0);
+  assert.ok(triggerDeployIndex > versionDeployIndex);
+  assert.deepEqual(commands[triggerDeployIndex], [
+    "exec",
+    "wrangler",
+    "triggers",
+    "deploy",
+    "--config",
+    "api/wrangler.toml",
+    "--env",
+    "production",
+  ]);
 });
 
 test("frontend production deployment validates assets before deploying the exact candidate", async () => {
