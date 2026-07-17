@@ -8,6 +8,7 @@
     "typecheck": "pnpm --recursive typecheck",
     "test": "pnpm --recursive test && pnpm test:scripts",
     "test:scripts": "node --import tsx --test --test-concurrency=1 scripts/*.test.ts",
+    "frontend:production:bundle:check": "tsx scripts/frontend-production-bundle-check.ts",
     "content:validate": "tsx scripts/content-validate.ts",
     "audio:process": "tsx scripts/audio-process.ts",
     "audio:manifest": "tsx scripts/audio-manifest.ts",

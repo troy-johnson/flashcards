@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -21,10 +21,57 @@ type CommandRunner = (
 type DeploymentDependencies = {
   env: Partial<NodeJS.ProcessEnv>;
   run: CommandRunner;
+  frontendDistDirectory?: string;
 };
+
+export const productionApiOrigin =
+  "https://api.readersway.troyjohnson.dev";
 
 const versionIdPattern =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
+
+const frontendTextExtensions = new Set([".css", ".html", ".js", ".json", ".map", ".svg"]);
+
+const frontendTextFiles = async (directory: string): Promise<string[]> => {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await frontendTextFiles(path)));
+      continue;
+    }
+    const extension = entry.name.slice(entry.name.lastIndexOf(".")).toLowerCase();
+    if (frontendTextExtensions.has(extension)) files.push(path);
+  }
+  return files;
+};
+
+export const assertFrontendProductionBundle = async (
+  directory = join(process.cwd(), "app", "dist"),
+  expectedApiOrigin = productionApiOrigin,
+): Promise<void> => {
+  const files = await frontendTextFiles(directory);
+  const contents = await Promise.all(files.map((path) => readFile(path, "utf8")));
+  const bundle = contents.join("\n");
+
+  if (!bundle.includes(expectedApiOrigin)) {
+    throw new Error(
+      `frontend production bundle must embed ${expectedApiOrigin}`,
+    );
+  }
+
+  for (const forbiddenOrigin of [
+    "http://localhost:8787",
+    "https://api-flashcards.troyjohnson.workers.dev",
+  ]) {
+    if (bundle.includes(forbiddenOrigin)) {
+      throw new Error(
+        `frontend production bundle must not embed ${forbiddenOrigin}`,
+      );
+    }
+  }
+};
 
 const defaultRunner: CommandRunner = (command, args, options) =>
   new Promise((resolve, reject) => {
@@ -136,6 +183,25 @@ const deployVersion = async (
   await run("pnpm", args);
 };
 
+const deployTriggers = async (
+  target: Target,
+  config: string,
+  run: CommandRunner,
+) => {
+  const args = [
+    "exec",
+    "wrangler",
+    "triggers",
+    "deploy",
+    "--config",
+    config,
+  ];
+  if (target === "api") {
+    args.push("--env", "production");
+  }
+  await run("pnpm", args);
+};
+
 export const runProductionDeployment = async (
   target: Target,
   dependencies: Partial<DeploymentDependencies> = {},
@@ -153,6 +219,11 @@ export const runProductionDeployment = async (
           "VITE_API_ORIGIN must be configured in the frontend production build environment",
         );
       }
+      if (apiOrigin !== productionApiOrigin) {
+        throw new Error(
+          `VITE_API_ORIGIN must use the same-site production API origin ${productionApiOrigin}`,
+        );
+      }
       await run(
         "pnpm",
         ["--filter", "app", "build"],
@@ -160,6 +231,7 @@ export const runProductionDeployment = async (
           env: { ...process.env, ...env, VITE_API_ORIGIN: apiOrigin },
         },
       );
+      await assertFrontendProductionBundle(dependencies.frontendDistDirectory);
     } else {
       const operatorEmail = env.DIAG_GUARDIAN_EMAIL?.trim();
       if (!operatorEmail) {
@@ -196,6 +268,7 @@ export const runProductionDeployment = async (
       candidate.versionId,
       run,
     );
+    await deployTriggers(target, candidate.config, run);
   } finally {
     if (temporaryDirectory) {
       await rm(temporaryDirectory, { recursive: true, force: true });

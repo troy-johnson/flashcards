@@ -31,6 +31,9 @@ jobs:
       - run: pnpm content:validate
       - run: pnpm audio:manifest:check
       - run: pnpm --filter app build
+        env:
+          VITE_API_ORIGIN: https://api.readersway.troyjohnson.dev
+      - run: pnpm frontend:production:bundle:check
       - run: pnpm audio:dist:check
       - run: bash scripts/check-sentinel.sh
         env:

@@ -38,6 +38,9 @@ database_id = "e3884eb3-fb85-4b29-9940-9c241bbc67ef"
 # mutate pilot data.
 [env.production]
 name = "api-flashcards"
+routes = [
+  { pattern = "api.readersway.troyjohnson.dev", custom_domain = true },
+]
 
 [env.production.vars]
 APP_ORIGIN = "https://readersway.troyjohnson.dev"
