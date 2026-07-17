@@ -192,6 +192,7 @@ if (existsSync(decodabilityMapPath)) {
     if (!skillsById.has(entry.skill_id)) fail(`decodability-map references missing skill ${entry.skill_id}`);
     introducedBySkill.set(entry.skill_id, entry.graphemes.map((grapheme) => grapheme.toLowerCase()));
   }
+  const declaredGraphemes = [...new Set(decodabilityEntries.flatMap((entry) => entry.graphemes.map((grapheme) => grapheme.toLowerCase())))];
 
   const scopeSkillOrder = scope.flatMap((unit) => unit.skill_ids);
   const cumulativeGraphemesBySkill = new Map<string, Set<string>>();
@@ -214,11 +215,12 @@ if (existsSync(decodabilityMapPath)) {
 
   const untaughtGraphemes = (text: string, allowed: Set<string>) => {
     const source = text.toLowerCase().replace(/[^a-z]/g, "");
-    const graphemes = [...allowed].sort((a, b) => b.length - a.length);
+    const graphemes = [...new Set([...allowed, ...declaredGraphemes])].sort((a, b) => b.length - a.length);
     const missing: string[] = [];
     for (let i = 0; i < source.length;) {
       const match = graphemes.find((grapheme) => source.startsWith(grapheme, i));
       if (match) {
+        if (!allowed.has(match)) missing.push(match);
         i += match.length;
       } else {
         missing.push(source[i]!);
