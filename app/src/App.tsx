@@ -115,6 +115,19 @@ function LandingRoute() {
           <a className="primary-link" href="/signin">Sign in</a>
         </section>
 
+        <section className="panel landing-story">
+          <h2>For caring adults and young readers</h2>
+          <p>{landing.audience}</p>
+          <p>{landing.practice}</p>
+          <p>{landing.instruction}</p>
+        </section>
+
+        <section className="panel landing-privacy">
+          <h2>Private, early-access practice</h2>
+          <p>{landing.privacy}</p>
+          <p>{landing.pilot}</p>
+        </section>
+
         <section className="panel landing-steps">
           <h2>How it works</h2>
           <ol>
@@ -140,8 +153,8 @@ function LandingRoute() {
         </section>
 
         <section className="landing-cta">
-          <p className="muted">Ready when you are.</p>
-          <a className="primary-link" href="/signin">Sign in</a>
+          <p className="muted">Interested in the invite-only pilot?</p>
+          <a className="primary-link" href={`mailto:${support.email}`}>Contact the pilot team</a>
         </section>
 
         <footer className="landing-footer">

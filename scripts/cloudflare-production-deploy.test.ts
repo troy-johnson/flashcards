@@ -70,7 +70,10 @@ test("frontend production deployment validates assets before deploying the exact
     return { stdout: "", stderr: "" };
   };
 
-  await runProductionDeployment("frontend", { env: {}, run });
+  await runProductionDeployment("frontend", {
+    env: { VITE_API_ORIGIN: "https://api.example.com" },
+    run,
+  });
 
   const upload = commands.find((args) => args.includes("upload"));
   assert.ok(upload?.includes("app/wrangler.toml"));
@@ -78,5 +81,65 @@ test("frontend production deployment validates assets before deploying the exact
     commands.some(
       (args) => args.includes("deploy") && args.includes(versionId),
     ),
+  );
+});
+
+test("frontend production deployment rejects a missing API origin before building or uploading", async () => {
+  const commands: string[][] = [];
+  const run = async (_command: string, args: string[]) => {
+    commands.push(args);
+    return { stdout: `Worker Version ID: ${versionId}`, stderr: "" };
+  };
+
+  await assert.rejects(
+    () => runProductionDeployment("frontend", { env: {}, run }),
+    /VITE_API_ORIGIN/,
+  );
+
+  assert.equal(commands.length, 0);
+});
+
+test("frontend production deployment forwards the supplied API origin to the build", async () => {
+  const commands: string[][] = [];
+  const buildOrigins: Array<string | undefined> = [];
+  const apiOrigin = "https://api.example.com";
+  const run = async (
+    _command: string,
+    args: string[],
+    options?: { env?: NodeJS.ProcessEnv },
+  ) => {
+    commands.push(args);
+    if (args.includes("build")) {
+      buildOrigins.push(options?.env?.VITE_API_ORIGIN);
+    }
+    if (args.includes("upload")) {
+      return { stdout: `Worker Version ID: ${versionId}`, stderr: "" };
+    }
+    if (args.includes("view")) {
+      return {
+        stdout: JSON.stringify({
+          resources: {
+            script: { handlers: null },
+            script_runtime: {
+              assets: { not_found_handling: "single-page-application" },
+            },
+            bindings: [],
+          },
+        }),
+        stderr: "",
+      };
+    }
+    return { stdout: "", stderr: "" };
+  };
+
+  await runProductionDeployment("frontend", {
+    env: { VITE_API_ORIGIN: apiOrigin },
+    run,
+  });
+
+  assert.deepEqual(buildOrigins, [apiOrigin]);
+  assert.ok(
+    commands.findIndex((args) => args.includes("build")) <
+      commands.findIndex((args) => args.includes("upload")),
   );
 });
