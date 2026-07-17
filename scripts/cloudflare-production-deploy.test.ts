@@ -166,6 +166,24 @@ test("frontend production deployment validates assets before deploying the exact
         (args) => args.includes("deploy") && args.includes(versionId),
       ),
     );
+
+    const versionDeployIndex = commands.findIndex(
+      (args) => args.includes("versions") && args.includes("deploy"),
+    );
+    const triggerDeployIndex = commands.findIndex(
+      (args) => args.includes("triggers") && args.includes("deploy"),
+    );
+
+    assert.ok(versionDeployIndex >= 0);
+    assert.ok(triggerDeployIndex > versionDeployIndex);
+    assert.deepEqual(commands[triggerDeployIndex], [
+      "exec",
+      "wrangler",
+      "triggers",
+      "deploy",
+      "--config",
+      "app/wrangler.toml",
+    ]);
   } finally {
     await rm(frontendDistDirectory, { recursive: true, force: true });
   }
