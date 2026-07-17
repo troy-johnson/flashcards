@@ -159,6 +159,18 @@ test("Cloudflare Git Builds use validated, target-specific production deploy com
   );
 });
 
+test("CI builds and checks the real production frontend bundle", () => {
+  assert.equal(
+    rootPackage.scripts?.["frontend:production:bundle:check"],
+    "tsx scripts/frontend-production-bundle-check.ts",
+  );
+  assert.match(
+    ciWorkflow,
+    /- run: pnpm --filter app build\s+env:\s+VITE_API_ORIGIN:\s+https:\/\/api\.readersway\.troyjohnson\.dev/m,
+  );
+  assert.match(ciWorkflow, /- run: pnpm frontend:production:bundle:check/);
+});
+
 test("production config includes the public magic-link abuse limiter", () => {
   assert.match(
     wranglerConfig,
