@@ -39,6 +39,12 @@ The two audio projections are intentionally separate:
   are ordinary static assets; the protected catalog protects operational metadata and the QA
   surface, while the manifest is the learner-release boundary.
 
+Stage 1 byte-access authorization was confirmed by the recorder/owner on 2026-07-17: these are
+the recorder's own recordings, and candidate playback bytes may be reachable by deterministic
+public URLs during Stage 1. Candidate bytes are therefore non-confidential at this stage; this
+authorization does not approve learner release, which remains gated by the current checksum-bound
+recorder, owner, and SLP dispositions.
+
 The canonical inventory and guidance live in `content/audio/sounds.json`; this session log does
 not replace them. Do not change a target, IPA value, production behavior, or recording guidance
 only in this file.
@@ -280,16 +286,19 @@ as the Stage 1 QA surface, and do not add an owner-only clip to `content/audio/m
 
 ## Session results
 
-- Session started:
-- Session ended:
-- Targets captured:
-- Targets with selected masters:
-- Targets passing `audio:process`:
-- Targets requiring another speaker or recapture:
-- Selected-take notes:
+- Session started: 2026-07-16 (time not recorded)
+- Session ended: 2026-07-16 (time not recorded)
+- Targets captured: 44/44
+- Targets with selected masters: 44/44
+- Targets passing `audio:process`: 44/44
+- Targets requiring another speaker or recapture: Pending recorder, owner, and SLP review
+- Selected-take notes: Take 2 selected for every canonical target. Duplicate-suffixed copies were
+  removed before selection. Selected masters were converted to 48 kHz, mono, 24-bit WAV; edge
+  silence was trimmed, with provisional 100 ms padding for `sound_th_unvoiced`, +3 dB for
+  `sound_v`, and +2 dB for `sound_z`.
 - Backup location recorded privately:
-- Owner review result and date:
-- Protected-catalog device QA result and date:
+- Owner review result and date: Pending
+- Protected-catalog device QA result and date: Pending
 
 ## SLP handoff
 
