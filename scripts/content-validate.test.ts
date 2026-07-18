@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -29,10 +29,23 @@ const createTempContentRoot = () => {
   const tempContentRoot = mkdtempSync(join(tmpdir(), "content-validate-"));
   mkdirSync(join(tempContentRoot, "items"));
   mkdirSync(join(tempContentRoot, "audio"));
+  mkdirSync(join(tempContentRoot, "audio/masters"));
+  mkdirSync(join(tempContentRoot, "audio/playback"));
   writeFileSync(join(tempContentRoot, "manifest.json"), productionManifest);
   writeFileSync(join(tempContentRoot, "audio/manifest.json"), productionAudioManifest);
   writeFileSync(join(tempContentRoot, "audio/sounds.json"), productionSounds);
   writeFileSync(join(tempContentRoot, "audio/patterns.json"), productionPatterns);
+  const sounds = JSON.parse(productionSounds) as Array<{ sound_id: string }>;
+  for (const sound of sounds) {
+    copyFileSync(
+      join(root, "content/audio/masters", `${sound.sound_id}.wav`),
+      join(tempContentRoot, "audio/masters", `${sound.sound_id}.wav`)
+    );
+    copyFileSync(
+      join(root, "content/audio/playback", `${sound.sound_id}.m4a`),
+      join(tempContentRoot, "audio/playback", `${sound.sound_id}.m4a`)
+    );
+  }
   writeFileSync(join(tempContentRoot, "skills.json"), productionSkills);
   writeFileSync(join(tempContentRoot, "scope-sequence.json"), productionScope);
   writeFileSync(join(tempContentRoot, "items/seed.json"), productionItems);
@@ -399,8 +412,8 @@ describe("content manifest count gate", () => {
   });
 
   it("recorded_sound_targets counts 0 when no sounds have SLP-approved media", () => {
-    // The canonical sounds.json has no media or SLP approvals yet, so the count
-    // must be 0 regardless of required_now being 0 as well.
+    // The canonical sounds.json has candidate media but no SLP approvals yet,
+    // so the count must be 0 regardless of required_now being 0 as well.
     writeManifest({
       ...validCategories,
       recorded_sound_targets: { v1_target: 44, required_now: 0 }
@@ -614,7 +627,7 @@ describe("content manifest count gate", () => {
       dialect_notes: "Varies.",
       recording_guidance: "Record in isolation.",
       processing_profile: "standard_vowel",
-      master_path: "sound_short_a.wav",
+      master_path: "missing-sound_short_a.wav",
       master_sha256: "deadbeef",
       reviews: [],
     };
@@ -678,12 +691,16 @@ describe("content manifest count gate", () => {
     // production sound, and confirm resolution flips on the env var.
     const externalMasterRoot = mkdtempSync(join(tmpdir(), "master-root-"));
     try {
-      const masterFile = join(externalMasterRoot, "sound_short_a.wav");
+      const masterFile = join(externalMasterRoot, "external-sound_short_a.wav");
       writeFileSync(masterFile, "external-master-bytes");
       const masterSha = computeFileSha256(masterFile);
 
       const sounds = JSON.parse(productionSounds) as Record<string, unknown>[];
-      sounds[0]!.master_path = "sound_short_a.wav";
+      for (const sound of sounds) {
+        delete sound.master_path;
+        delete sound.master_sha256;
+      }
+      sounds[0]!.master_path = "external-sound_short_a.wav";
       sounds[0]!.master_sha256 = masterSha;
       writeFileSync(soundsPath, JSON.stringify(sounds, null, 2));
 

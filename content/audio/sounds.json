@@ -10,7 +10,11 @@
     "dialect_notes": "Exact height and backness varies across dialects.",
     "recording_guidance": "Record in isolation with a clean onset and release. Avoid adding a schwa before or after.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_a.wav",
+    "master_sha256": "1c7bf90add2c7656ad82a08c783a5c5e406c904f2e1590f08be25214723ab8d6",
+    "playback_url": "/audio/sound_short_a.m4a",
+    "playback_sha256": "10ef131433ec9cd3d6e0c32b62ee49b15e5f31d76d48b560f6015bff15f87f33"
   },
   {
     "sound_id": "sound_short_e",
@@ -23,7 +27,11 @@
     "dialect_notes": "May approach /e/ in some varieties.",
     "recording_guidance": "Record in isolation; sustain without tensing toward a higher vowel.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_e.wav",
+    "master_sha256": "68a7e12b7ed8dad5b6be63482fba7c6b06bf81d38e8b8362954aa5c6371cc400",
+    "playback_url": "/audio/sound_short_e.m4a",
+    "playback_sha256": "6df8f24f2452052437e54221b4d01222ab740d947759cf746030668328d75a57"
   },
   {
     "sound_id": "sound_short_i",
@@ -36,7 +44,11 @@
     "dialect_notes": "Unstressed reduction must be avoided in the model recording.",
     "recording_guidance": "Record in isolation as a clear stressed syllable-nucleus quality.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_i.wav",
+    "master_sha256": "34c495e0e37207dca066dd0f9ac82d941fa9bdf2a01bd71c2ddd933e3c81efde",
+    "playback_url": "/audio/sound_short_i.m4a",
+    "playback_sha256": "ae34abf150653f29a4c0aab4aa1e0174ce62447a51b63378a9c3def70f894da5"
   },
   {
     "sound_id": "sound_short_o",
@@ -49,7 +61,11 @@
     "dialect_notes": "Cot–caught contrast is dialect-sensitive; recorder must preserve low-back unrounded quality.",
     "recording_guidance": "Record as an open, unrounded low back vowel; avoid merging with /ɔ/.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_o.wav",
+    "master_sha256": "a6de1473e1f4ca03be7a21f8291917611c5931ebd30617e12c5c447f539b1888",
+    "playback_url": "/audio/sound_short_o.m4a",
+    "playback_sha256": "e0881de0f47dfd7bf1bbc89fb482e1e3bc58232e31a6a2d378b94f953dbe66c0"
   },
   {
     "sound_id": "sound_short_u",
@@ -62,7 +78,11 @@
     "dialect_notes": "Keep distinct from schwa in the stressed model; some regional accents raise this vowel.",
     "recording_guidance": "Record in a stressed context to prevent schwa reduction.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_u.wav",
+    "master_sha256": "af75dbbeaf7d1043b987992b528204eb7734682b939bc480aa336a32629d882e",
+    "playback_url": "/audio/sound_short_u.m4a",
+    "playback_sha256": "fe2c66fe5bb0b80ef4645ebe38aae2efe38abfef1cc1b39f81aa353b022c5fad"
   },
   {
     "sound_id": "sound_long_a",
@@ -75,7 +95,11 @@
     "dialect_notes": "Dynamic realization varies; some dialects produce a purer monophthong.",
     "recording_guidance": "Record as a natural diphthong in isolation; let the glide complete.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_a.wav",
+    "master_sha256": "0ccfe0c160fddbbf64adb981ee63e0c42c3272bb0b6b1fe09c47d3bf3d5bc7a1",
+    "playback_url": "/audio/sound_long_a.m4a",
+    "playback_sha256": "e6af690f9883e0020f5ae4495d62b2133077ece2f56ca4af35110aadc5df8c33"
   },
   {
     "sound_id": "sound_long_e",
@@ -88,7 +112,11 @@
     "dialect_notes": "Often narrowly diphthongal phonetically in American English.",
     "recording_guidance": "Record in isolation; aim for a steady, tense quality.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_e.wav",
+    "master_sha256": "cca857a519efbff59c52124ef7704befbe47c9cbc5b451428faaa59b2b8a79f8",
+    "playback_url": "/audio/sound_long_e.m4a",
+    "playback_sha256": "41cff84af9157bc03fa33166b693b5fd111953f431e681a5ed7e0ad60dba2545"
   },
   {
     "sound_id": "sound_long_i",
@@ -101,7 +129,11 @@
     "dialect_notes": "Dynamic realization varies; Canadian raising may alter the onset before voiceless consonants.",
     "recording_guidance": "Record in isolation as a full diphthong; let the glide complete naturally.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_i.wav",
+    "master_sha256": "784ab3153f091e09f0ad2e9b6d3dffffef0b60b55409a564c67d38447171b6e4",
+    "playback_url": "/audio/sound_long_i.m4a",
+    "playback_sha256": "c101e8d841f06aaee3116689a921819947009ce7b46101f85f3cc6d0c3be11eb"
   },
   {
     "sound_id": "sound_long_o",
@@ -114,7 +146,11 @@
     "dialect_notes": "Degree of glide varies; some dialects produce a purer monophthong.",
     "recording_guidance": "Record as a natural diphthong; let the glide complete.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_o.wav",
+    "master_sha256": "c047e1a135f0b317cafd31ceb4634d81a3d609fcdc97926060cb31b3084cec9b",
+    "playback_url": "/audio/sound_long_o.m4a",
+    "playback_sha256": "cce26baea0ac4a14b6fa921037c6e69900abae8a62f74c8249b3eb3342733a9c"
   },
   {
     "sound_id": "sound_long_u_yoo",
@@ -127,7 +163,11 @@
     "dialect_notes": "Not a single phoneme; SLP must approve as a combined instructional target before final recording.",
     "recording_guidance": "Record as one smooth sequence without pausing between the glide and vowel.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_u_yoo.wav",
+    "master_sha256": "176d7cc2635f21651fda5e7467f3488cf8730cc19359b1a71f44a78b3c6f7bd2",
+    "playback_url": "/audio/sound_long_u_yoo.m4a",
+    "playback_sha256": "955e0f3ca17f4c2bdd4f16be956aec9bc4f5e9828c7d3363563f80cabdad605b"
   },
   {
     "sound_id": "sound_aw",
@@ -140,7 +180,11 @@
     "dialect_notes": "Cot–caught merger risk; SLP must confirm contrast policy and recorder capability before recording.",
     "recording_guidance": "Record as a clearly rounded back vowel; verify the recorder preserves the caught–cot contrast.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_aw.wav",
+    "master_sha256": "7ff3626bba76334dc95aa515e24ca27b5016fcd5f9fe8dd6b1acd4d8ff998d59",
+    "playback_url": "/audio/sound_aw.m4a",
+    "playback_sha256": "09e77f0cdb0d3aa19db7343bad782030929e4be202eaca004627dd1714360ada"
   },
   {
     "sound_id": "sound_short_oo",
@@ -153,7 +197,11 @@
     "dialect_notes": "Keep clearly distinct from /u/; some dialects merge these before certain consonants.",
     "recording_guidance": "Record in isolation as a lax, short quality; avoid diphthongal movement.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_short_oo.wav",
+    "master_sha256": "e5776635fd446199a167fcf3109147f010d22ca45826795d1137ba9300383af5",
+    "playback_url": "/audio/sound_short_oo.m4a",
+    "playback_sha256": "b4f387cad989e87fe42a6b93c0dae461c6d7422a6e5793ebb2f7f58b9419abb8"
   },
   {
     "sound_id": "sound_long_oo",
@@ -166,7 +214,11 @@
     "dialect_notes": "Often has a glide or fronted onset in American English.",
     "recording_guidance": "Record as a steady tense quality; minimize any fronted onset.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_long_oo.wav",
+    "master_sha256": "5a3c06996969dcdda0c93487d8a43a6304f94c6d1dfe357d81ce430de84cd1d0",
+    "playback_url": "/audio/sound_long_oo.m4a",
+    "playback_sha256": "be6cbbc7520d4c9a10dbe4bce6232df43e002da45ec0e47656f32fcd9b0fc3a2"
   },
   {
     "sound_id": "sound_schwa",
@@ -179,7 +231,11 @@
     "dialect_notes": "Avoid turning it into stressed /ʌ/ in the model; exaggerating this vowel is pedagogically misleading.",
     "recording_guidance": "Record as a genuinely brief, unstressed quality; do not lengthen or stress.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_schwa.wav",
+    "master_sha256": "c46c75671562bee4a043a974213435b8304617eac4743cf5c58d28bbee155065",
+    "playback_url": "/audio/sound_schwa.m4a",
+    "playback_sha256": "0605b08262cbd9e1ebcbd61bc7d069870960e79319850860725db0475bfdad2a"
   },
   {
     "sound_id": "sound_ar",
@@ -192,7 +248,11 @@
     "dialect_notes": "Rhotic reference; exact phonetic analysis varies. Non-rhotic dialects should not be used for recording.",
     "recording_guidance": "Record in isolation with full rhoticity; avoid weakening the rhotic quality.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_ar.wav",
+    "master_sha256": "e50659c6c3c6b97878b317253bd0a05e6310cba8ca5b48f6130a6cfd097993d1",
+    "playback_url": "/audio/sound_ar.m4a",
+    "playback_sha256": "867993cc458cff4f7c07bea9f11620eb691b4c8bef7fb7137a692d55f6a26d7c"
   },
   {
     "sound_id": "sound_er",
@@ -205,7 +265,11 @@
     "dialect_notes": "Tongue posture varies between bunched and retroflex; both produce equivalent auditory result.",
     "recording_guidance": "Record in isolation; aim for a consistent, easily perceptible rhotic quality.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_er.wav",
+    "master_sha256": "ad17935bb38e3c10b0533e5ce4c9c080e97e21d5b6b18b017056b0a327f41a45",
+    "playback_url": "/audio/sound_er.m4a",
+    "playback_sha256": "917eb3b3a39d7398f602e8799c6f7be89ea836cafc5674120f23d45e5132b598"
   },
   {
     "sound_id": "sound_or",
@@ -218,7 +282,11 @@
     "dialect_notes": "Horse–hoarse and cot–caught contrasts vary; SLP should confirm contrast policy.",
     "recording_guidance": "Record with clear rounding and rhoticity in isolation.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_or.wav",
+    "master_sha256": "63731c3822488119922560a3a22ac684c9fc8e7ed1a5d4793e0d15cad2dd74d8",
+    "playback_url": "/audio/sound_or.m4a",
+    "playback_sha256": "cbfd9bf223f9fbfdffd7334c7bc1f8f9eabb4a5ff9fc06754c324d7bc9d9dccb"
   },
   {
     "sound_id": "sound_oi",
@@ -231,7 +299,11 @@
     "dialect_notes": "Dynamic realization varies across dialects.",
     "recording_guidance": "Record as a full natural diphthong; let the glide complete.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_oi.wav",
+    "master_sha256": "733a66b4e649817cae7afaf819aac3d918df90d860a22f9720c38c7738b5468a",
+    "playback_url": "/audio/sound_oi.m4a",
+    "playback_sha256": "5e87314c2ff87f7af81171bddca249b9f96b5f504d3cce869a704be2a441d842"
   },
   {
     "sound_id": "sound_ow",
@@ -244,7 +316,11 @@
     "dialect_notes": "Dynamic realization varies; Canadian raising may alter the onset before voiceless consonants.",
     "recording_guidance": "Record as a full natural diphthong in isolation; let the glide complete.",
     "processing_profile": "standard_vowel",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_ow.wav",
+    "master_sha256": "cdce07fefb3933c49555f88ad55b75596520c95d4aee515e0006b504cf55cce9",
+    "playback_url": "/audio/sound_ow.m4a",
+    "playback_sha256": "e39b82546cd6111f1b996bf183d27170336831d1609c0c36c04fc3c4d945c52e"
   },
   {
     "sound_id": "sound_h",
@@ -257,7 +333,11 @@
     "dialect_notes": "Realization varies; avoid adding a following vowel in the model.",
     "recording_guidance": "Record in isolation with a brief, airy onset; do not add /ə/ after.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_h.wav",
+    "master_sha256": "ce29561f39fe8e47e497b66ed5d36466c885ff1e459024418f1c349f0dc56dd6",
+    "playback_url": "/audio/sound_h.m4a",
+    "playback_sha256": "e942ad3688d5e2f8b4e0f23feaba097242deeefb300beb41465b43315088f543"
   },
   {
     "sound_id": "sound_p",
@@ -270,7 +350,11 @@
     "dialect_notes": "No schwa release; aspirate naturally in onset position.",
     "recording_guidance": "Record the burst only; no trailing vowel. Slight aspiration is natural.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_p.wav",
+    "master_sha256": "fa434faf0091147699b238a597156ffa24c0ada24bccf01e6a418c403d56c103",
+    "playback_url": "/audio/sound_p.m4a",
+    "playback_sha256": "b54675c6445ddaa8d725c5e2ef442dec1be25003700608c3ec07d22f40f74629"
   },
   {
     "sound_id": "sound_b",
@@ -283,7 +367,11 @@
     "dialect_notes": "No schwa; voicing may be incomplete at burst onset.",
     "recording_guidance": "Record the burst; keep it tight and free of trailing vowel.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_b.wav",
+    "master_sha256": "017d387ca5231050be964b8d9d7b3a86c5576051c733c4eef3c188c4c72c08ef",
+    "playback_url": "/audio/sound_b.m4a",
+    "playback_sha256": "b103df0374ef1822a0e3e71dc85042760b68d4cc59cbc7b07489ac7a2408fee3"
   },
   {
     "sound_id": "sound_m",
@@ -296,7 +384,11 @@
     "dialect_notes": "Keep lips closed throughout; avoid nasalizing an adjacent vowel.",
     "recording_guidance": "Record as a steady nasal hum with lips together.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_m.wav",
+    "master_sha256": "0b46d336e8d678541c8a8dd3bbb0076a2dbb91b5540ab2d09535cccddbef5de4",
+    "playback_url": "/audio/sound_m.m4a",
+    "playback_sha256": "084821da224dfc910e07c46ff954fb00f598af225bba7f5c0cb56114fb605957"
   },
   {
     "sound_id": "sound_f",
@@ -309,7 +401,11 @@
     "dialect_notes": "Keep continuous; avoid stopping the airflow mid-sustain.",
     "recording_guidance": "Record as a steady frication; upper teeth lightly on lower lip.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_f.wav",
+    "master_sha256": "ba7db30adbc5307e5db9997294869e0a2ce48d7dfcad084eda203f89c363a3bc",
+    "playback_url": "/audio/sound_f.m4a",
+    "playback_sha256": "0edbc0d49be3d2f47293a391f699a4670b00b55ac319a168cb616cba180d4f01"
   },
   {
     "sound_id": "sound_v",
@@ -322,7 +418,11 @@
     "dialect_notes": "Keep voicing consistent; avoid devoicing at end of sustain.",
     "recording_guidance": "Record as a steady voiced frication; check for buzzy voicing quality.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_v.wav",
+    "master_sha256": "e7fc72f75e5ddf113b5a36b482ee62720f96c18eb724d2f83911eb0deac28418",
+    "playback_url": "/audio/sound_v.m4a",
+    "playback_sha256": "24e0f523ed758594de04ea8810879b559e208682f2c1397a9bf78ed79af88fa0"
   },
   {
     "sound_id": "sound_th_unvoiced",
@@ -335,7 +435,11 @@
     "dialect_notes": "Keep separate from voiced /ð/; TH-stopping dialects should not be used as the reference recording.",
     "recording_guidance": "Record as steady voiceless frication; check for absence of voicing.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_th_unvoiced.wav",
+    "master_sha256": "931dbb26c1d12f4ac4a319b9e9993cb46e2ba6bc8efca3c5dc264f6b58f59784",
+    "playback_url": "/audio/sound_th_unvoiced.m4a",
+    "playback_sha256": "3374d5bfa42a78a5e60b11b2ae06fb2ef3272a0a96c2996ac5d17c7d17dacad8"
   },
   {
     "sound_id": "sound_th_voiced",
@@ -348,7 +452,11 @@
     "dialect_notes": "Keep separate from voiceless /θ/; TH-stopping dialects should not be used as the reference recording.",
     "recording_guidance": "Record as steady voiced frication; confirm voicing is present throughout.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_th_voiced.wav",
+    "master_sha256": "4d8a29796ff7805286c8afb66bf945b9121b8589ba99c9c253f904106ef4ea5d",
+    "playback_url": "/audio/sound_th_voiced.m4a",
+    "playback_sha256": "87acd67aec11198ef32e7a4bcea36d6b5b5c9eb7d0598757f14b165b26d88c39"
   },
   {
     "sound_id": "sound_t",
@@ -361,7 +469,11 @@
     "dialect_notes": "No schwa release; do not use a flapped realization as the reference.",
     "recording_guidance": "Record the burst only; natural aspiration is fine. No trailing vowel.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_t.wav",
+    "master_sha256": "1bb39ac1a4288a06a463222af8f718200d4dbecf47287f6947b20e8d8611f408",
+    "playback_url": "/audio/sound_t.m4a",
+    "playback_sha256": "8e617b4dbe6cd94767a70c564638a7bb8b278797b21f84766cdba762b3cdeb5c"
   },
   {
     "sound_id": "sound_d",
@@ -374,7 +486,11 @@
     "dialect_notes": "No schwa; voicing may be incomplete at burst onset in some positions.",
     "recording_guidance": "Record the burst; keep it tight and free of trailing vowel.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_d.wav",
+    "master_sha256": "b7f390840552be7c14977d85d82f2d2fe152d2d201fdddc4ed8f8221137c5ae8",
+    "playback_url": "/audio/sound_d.m4a",
+    "playback_sha256": "47d6ea125a252243e4273b46ce1d499d58e744769af8609dea7df07975ca7d9d"
   },
   {
     "sound_id": "sound_n",
@@ -387,7 +503,11 @@
     "dialect_notes": "Keep tongue placement stable; avoid velarizing into /ŋ/.",
     "recording_guidance": "Record as a steady nasal resonance with tongue tip on alveolar ridge.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_n.wav",
+    "master_sha256": "d0eaeee283dff15bbd40d490fcd9ceb9dee77bf020535b88ab0cf002b28dbbe8",
+    "playback_url": "/audio/sound_n.m4a",
+    "playback_sha256": "cf3ddec3622252329963e84650cca31c4442ad60d6d169d3f79d2808971d7bed"
   },
   {
     "sound_id": "sound_s",
@@ -400,7 +520,11 @@
     "dialect_notes": "Avoid /ʃ/ retraction; keep tongue tip near alveolar ridge.",
     "recording_guidance": "Record as a steady high-frequency frication without retraction.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_s.wav",
+    "master_sha256": "8aeeb9be0defe1da575af910354a26132191c9704f83f5f7d74e0ef40c4d1d61",
+    "playback_url": "/audio/sound_s.m4a",
+    "playback_sha256": "417815d04b03e38b083ff063533196427c619b902412bbe68a75d596e890f28a"
   },
   {
     "sound_id": "sound_z",
@@ -413,7 +537,11 @@
     "dialect_notes": "Keep voicing consistent; avoid devoicing at end of sustain.",
     "recording_guidance": "Record as a steady voiced frication; check for buzzing quality.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_z.wav",
+    "master_sha256": "336de36baf224b664328f046f3c7f4d5832fc7a5685ebf97a26246d62c0b17e7",
+    "playback_url": "/audio/sound_z.m4a",
+    "playback_sha256": "5d10ebe32607d5530a91bfdf66d0d4e744cb54c10b9af2eb3920d8c8ed4ec051"
   },
   {
     "sound_id": "sound_l",
@@ -426,7 +554,11 @@
     "dialect_notes": "Model onset position 'light l'; dark-l vocalization should not be the reference.",
     "recording_guidance": "Record in an onset context or in isolation as a clear lateral; tongue tip on alveolar ridge.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_l.wav",
+    "master_sha256": "bf8ff2491162479a46e81717db2bc1e6915096ed2e5e27a179c6631fc266f8e3",
+    "playback_url": "/audio/sound_l.m4a",
+    "playback_sha256": "cfe3756eb8b9061639ac7a13c50b6d6ef94d93843d0da6331907a5a653e15952"
   },
   {
     "sound_id": "sound_sh",
@@ -439,7 +571,11 @@
     "dialect_notes": "No significant dialect variation for the core target.",
     "recording_guidance": "Record as a steady hushing frication; tongue retracted past alveolar ridge.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_sh.wav",
+    "master_sha256": "1a6c082f7919037405057bad7ecfe6f28d4ad8c2d98e1451d0f38650987c90d9",
+    "playback_url": "/audio/sound_sh.m4a",
+    "playback_sha256": "e47ddc2588b66ff0ac371340f8375974889b68d0c6a0c273d9e3fd468d8141cf"
   },
   {
     "sound_id": "sound_zh",
@@ -452,7 +588,11 @@
     "dialect_notes": "Initial /ʒ/ is very rare in English; medial example is preferred.",
     "recording_guidance": "Record in isolation with voicing; use the medial quality of 'measure' as the tonal model.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_zh.wav",
+    "master_sha256": "e900eac8abe05de2b117ba62f6b45a79e02f8ec908cf83184028312d9e980e02",
+    "playback_url": "/audio/sound_zh.m4a",
+    "playback_sha256": "6d971e0d77d2447beeec82e090d9bb1c069bff1a24671876c6a8183afb875a61"
   },
   {
     "sound_id": "sound_ch",
@@ -465,7 +605,11 @@
     "dialect_notes": "No significant dialect variation for the core target.",
     "recording_guidance": "Record as the natural affricate burst + frication; do not suppress the fricative component.",
     "processing_profile": "affricate_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_ch.wav",
+    "master_sha256": "01a80058b2b1f07c9a2f4f9eaad6b37f209389d69bbc145db20708c5a17719b2",
+    "playback_url": "/audio/sound_ch.m4a",
+    "playback_sha256": "8583a857daa20e535471099293dd7100afa99513f5d65acd134ab87f95d75cd2"
   },
   {
     "sound_id": "sound_j",
@@ -478,7 +622,11 @@
     "dialect_notes": "No significant dialect variation for the core target.",
     "recording_guidance": "Record as the natural affricate with voiced frication; keep tight, no trailing vowel.",
     "processing_profile": "affricate_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_j.wav",
+    "master_sha256": "64eb107f1d04d5e94b2afaaf024fd2e8f465f5a57451b505574fe1f366a792c2",
+    "playback_url": "/audio/sound_j.m4a",
+    "playback_sha256": "273b7d075ff8eaac709932cb759ae6789b9ed5b68a6283bddce2e03cee25b72b"
   },
   {
     "sound_id": "sound_y",
@@ -491,7 +639,11 @@
     "dialect_notes": "Keep distinct from the letter name 'wye'; model the phoneme, not the letter.",
     "recording_guidance": "Record as a short palatal glide; do not sustain into a vowel.",
     "processing_profile": "glide_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_y.wav",
+    "master_sha256": "abdc7d7a9def319d2bb9e8b39dbf91439811edcc176d4d38a351365fc5d52c42",
+    "playback_url": "/audio/sound_y.m4a",
+    "playback_sha256": "972f05c0cde4f0e70baa8cb1eddf393138191b5737cd95e5bfa0d49d3b10357e"
   },
   {
     "sound_id": "sound_r",
@@ -504,7 +656,11 @@
     "dialect_notes": "Bunched and retroflex realizations are both valid; use whichever is more natural for the recorder.",
     "recording_guidance": "Record in onset position; sustain with consistent rhoticity.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_r.wav",
+    "master_sha256": "48941ed6d1bbed499ab745a029149790a91cdf817cc9aa8bfce0515b51be90bd",
+    "playback_url": "/audio/sound_r.m4a",
+    "playback_sha256": "125b9b9134d0612a66eef31799bd37a15e7b10b38f58054a772ee17b19b43b3f"
   },
   {
     "sound_id": "sound_k",
@@ -517,7 +673,11 @@
     "dialect_notes": "No schwa; natural aspiration in onset position is fine.",
     "recording_guidance": "Record the burst only with natural aspiration; no trailing vowel.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_k.wav",
+    "master_sha256": "b1c57ab66237471c99da03cbd99ce0b0cf6702f62d6be6b8a5521450eba05258",
+    "playback_url": "/audio/sound_k.m4a",
+    "playback_sha256": "8039b7e0a6724e0f68126bebd7f70a1893be8ae274a72445ab21a43e9da1702d"
   },
   {
     "sound_id": "sound_g",
@@ -530,7 +690,11 @@
     "dialect_notes": "No schwa; voicing may be incomplete at burst onset.",
     "recording_guidance": "Record the burst; keep tight with no trailing vowel.",
     "processing_profile": "stop_clip",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_g.wav",
+    "master_sha256": "ceba32402c849d75289cad57b9cba0b6ca0420ecd95ce54eec669a5531441368",
+    "playback_url": "/audio/sound_g.m4a",
+    "playback_sha256": "24088f8aa5a8298ee9143916b77f78d1dedc3f9b1e71f1e9d42b6a55d91e9781"
   },
   {
     "sound_id": "sound_ng",
@@ -543,7 +707,11 @@
     "dialect_notes": "Do not add a following /g/; the isolated nasal is the target, not a stop-nasal cluster.",
     "recording_guidance": "Record as a sustained velar nasal resonance; tongue back on velum, no trailing stop.",
     "processing_profile": "standard_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_ng.wav",
+    "master_sha256": "323f8d55263119bc87dbbca82475b762d68f55adcb7eb0f6d3e77c8c8a3987ba",
+    "playback_url": "/audio/sound_ng.m4a",
+    "playback_sha256": "e4276e38b916c5d8282b1bbf2b016545d304c617488f3fc32971c13ec178671b"
   },
   {
     "sound_id": "sound_wh",
@@ -556,7 +724,11 @@
     "dialect_notes": "Wine–whine merger is common; SLP must decide whether to retain as a UFLI target for this reference dialect.",
     "recording_guidance": "Record as a voiceless labiovelar frication/approximant; verify the recorder preserves the wine–whine contrast.",
     "processing_profile": "glide_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_wh.wav",
+    "master_sha256": "75779ce5bd1f59be1c0d18176b456126537a683f434ff7ebae17b52252471b29",
+    "playback_url": "/audio/sound_wh.m4a",
+    "playback_sha256": "15c4c213951057992baaaa9fabbf78456eda17f6307646d520d850dca0185683"
   },
   {
     "sound_id": "sound_w",
@@ -569,6 +741,10 @@
     "dialect_notes": "Contrast with /ʍ/ is dialect-sensitive; contrast may not be available in all recorders.",
     "recording_guidance": "Record as a short voiced labiovelar onset glide.",
     "processing_profile": "glide_consonant",
-    "reviews": []
+    "reviews": [],
+    "master_path": "sound_w.wav",
+    "master_sha256": "84c662c9fe1ad145c62d88343810fd1ec9f25718e74bce0bcdd69ead8555843d",
+    "playback_url": "/audio/sound_w.m4a",
+    "playback_sha256": "e6d480fe7786573e8975d7f2d9d3af919c7312597d3f8f731bfd765e29174343"
   }
 ]

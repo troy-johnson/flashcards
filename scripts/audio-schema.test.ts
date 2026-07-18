@@ -336,8 +336,8 @@ describe("computeReviewSubject", () => {
       dialect_notes: "Exact height and backness varies across dialects.",
       recording_guidance: "Record in isolation with a clean onset and release. Avoid adding a schwa before or after.",
       processing_profile: "standard_vowel",
-      master_sha256: null,
-      playback_sha256: null,
+      master_sha256: sound.master_sha256,
+      playback_sha256: sound.playback_sha256,
     });
   });
 
@@ -347,7 +347,7 @@ describe("computeReviewSubject", () => {
     const subject1 = computeReviewSubject(sound);
     const subject2 = computeReviewSubject(sound);
     assert.equal(subject1, subject2);
-    assert.equal(subject1, "775405152398d963e04781f4f2bba9f116786c93f2032f7d8c78716652c13245");
+    assert.equal(subject1, "672ed4229bddf53d35c3c2aeb8c13ff45f40f77d2769ec8b11faa60f0200f990");
     assert.match(subject1, /^[0-9a-f]{64}$/);
   });
 
