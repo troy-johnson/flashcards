@@ -2,11 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPlaybackController } from "./playback";
 
-/**
- * Recorded-lane tests (003a Task 8 needs clip playback). The TTS lane is
- * deliberately stubbed to `unavailable` until the Phase 0 device spike selects
- * an initiation algorithm (Task 7) — locked by a test below.
- */
+/** Recorded and TTS playback stay behind one output-only controller (003a). */
 
 type FakeAudio = {
   src: string;
@@ -77,10 +73,53 @@ describe("createPlaybackController — recorded lane", () => {
   });
 });
 
-describe("createPlaybackController — tts lane (Phase 0 gate)", () => {
-  it("returns unavailable until the Phase 0 device spike selects an algorithm", async () => {
-    const controller = createPlaybackController({ createAudio: makeFakeAudio().createAudio });
+describe("createPlaybackController — tts lane", () => {
+  it("speaks text directly from the play call and completes when the utterance ends", async () => {
+    const utterances: SpeechSynthesisUtterance[] = [];
+    const createUtterance = (text: string) => {
+      const utterance = new EventTarget() as SpeechSynthesisUtterance;
+      Object.assign(utterance, { text, voice: null });
+      utterances.push(utterance);
+      return utterance;
+    };
+    const speechSynthesis = {
+      cancel: vi.fn(),
+      getVoices: vi.fn(() => []),
+      speak: vi.fn((utterance: SpeechSynthesisUtterance) => {
+        queueMicrotask(() => utterance.dispatchEvent(new Event("end")));
+      })
+    };
+    const controller = createPlaybackController({
+      createAudio: makeFakeAudio().createAudio,
+      createUtterance,
+      speechSynthesis
+    });
+
     const result = await controller.play({ kind: "tts", text: "mat" });
-    expect(result.status).toBe("unavailable");
+
+    expect(speechSynthesis.speak).toHaveBeenCalledWith(utterances[0]);
+    expect(utterances[0]?.text).toBe("mat");
+    expect(result).toEqual({ status: "completed" });
+  });
+
+  it("returns a typed failure when the browser rejects speech startup", async () => {
+    const createUtterance = (text: string) =>
+      Object.assign(new EventTarget(), { text, voice: null }) as SpeechSynthesisUtterance;
+    const controller = createPlaybackController({
+      createAudio: makeFakeAudio().createAudio,
+      createUtterance,
+      speechSynthesis: {
+        cancel: vi.fn(),
+        getVoices: vi.fn(() => []),
+        speak: vi.fn(() => {
+          throw new Error("speech startup failed");
+        })
+      }
+    });
+
+    await expect(controller.play({ kind: "tts", text: "mat" })).resolves.toEqual({
+      status: "failed",
+      reason: "speech startup failed"
+    });
   });
 });

@@ -3,10 +3,8 @@
  * Task 8). Output-only by design: never reads student state, never exposes
  * scoring callbacks, cannot advance or block practice.
  *
- * The TTS lane is DELIBERATELY `unavailable` until the Phase 0 real-iPad spike
- * (docs/research/audio-spikes/phase-0-tts-device.md) selects an initiation
- * algorithm — Task 7 fills it in from that evidence. Do not implement TTS here
- * without the device evidence sheet marked PASS.
+ * TTS starts synchronously from the caller's tap. Target-device QA remains the
+ * evidence gate for browser/voice behavior.
  */
 
 export type PlaybackRequest =
@@ -29,10 +27,14 @@ export type PlaybackController = {
 type PlaybackDeps = {
   /** Injectable for tests; defaults to a real HTMLAudioElement. */
   createAudio?: (src: string) => HTMLAudioElement;
+  createUtterance?: (text: string) => SpeechSynthesisUtterance;
+  speechSynthesis?: Pick<SpeechSynthesis, "cancel" | "getVoices" | "speak">;
 };
 
 export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackController {
   const createAudio = deps.createAudio ?? ((src: string) => new Audio(src));
+  const createUtterance = deps.createUtterance ?? ((text: string) => new SpeechSynthesisUtterance(text));
+  const speechSynthesis = deps.speechSynthesis ?? globalThis.speechSynthesis;
   let current: HTMLAudioElement | null = null;
 
   const cancel = () => {
@@ -40,11 +42,42 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
       current.pause();
       current = null;
     }
+    speechSynthesis?.cancel();
   };
 
   const play = async (request: PlaybackRequest): Promise<PlaybackResult> => {
     if (request.kind === "tts") {
-      return { status: "unavailable", reason: "TTS pending Phase 0 device evidence (003a Task 1/7)" };
+      if (
+        !speechSynthesis ||
+        (typeof globalThis.SpeechSynthesisUtterance === "undefined" && !deps.createUtterance)
+      ) {
+        return { status: "unavailable", reason: "Text-to-speech is not available in this browser" };
+      }
+      cancel();
+      try {
+        const utterance = createUtterance(request.text);
+        return new Promise<PlaybackResult>((resolve) => {
+          utterance.addEventListener("end", () => resolve({ status: "completed" }), { once: true });
+          utterance.addEventListener(
+            "error",
+            () => resolve({ status: "failed", reason: "Text-to-speech could not play" }),
+            { once: true }
+          );
+          try {
+            speechSynthesis.speak(utterance);
+          } catch (err) {
+            resolve({
+              status: "failed",
+              reason: err instanceof Error ? err.message : "Text-to-speech could not start"
+            });
+          }
+        });
+      } catch (err) {
+        return {
+          status: "failed",
+          reason: err instanceof Error ? err.message : "Text-to-speech could not start"
+        };
+      }
     }
     // Every browser playback URL must be origin-rooted under /audio/ (spec 003).
     if (!request.src.startsWith("/audio/")) {
