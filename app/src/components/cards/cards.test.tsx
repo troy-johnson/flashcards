@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DrillCard } from "./DrillCard";
 import { splitHeartParts } from "./heartParts";
 import type { PracticeCard } from "../../api/types";
+import type { PlaybackController } from "../../audio/playback";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -24,9 +25,13 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     vi.clearAllMocks();
   });
 
-  const render = async (card: PracticeCard, onScore: (r: string) => void | Promise<void> = () => {}) => {
+  const render = async (
+    card: PracticeCard,
+    onScore: (r: string) => void | Promise<void> = () => {},
+    playback?: PlaybackController
+  ) => {
     await act(async () => {
-      root.render(<DrillCard card={card} onScore={onScore as never} />);
+      root.render(<DrillCard card={card} onScore={onScore as never} playback={playback} />);
       await flush();
     });
   };
@@ -128,6 +133,83 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     await render({ skill_id: "phonics_k_u1_short_a", item_id: "mat", text: "mat" });
     expect(container.querySelector(".eyebrow")?.textContent).toBe("Read this word");
     expect(container.querySelector(".card-word")?.textContent).toBe("mat");
+  });
+
+  it("lets the guardian hear a phonics word using its pronunciation override", async () => {
+    const playback: PlaybackController = {
+      play: vi.fn(async () => ({ status: "completed" as const })),
+      cancel: vi.fn()
+    };
+    await render(
+      {
+        skill_id: "phonics_k_u1_short_a",
+        item_id: "read",
+        text: "read",
+        speech_text: "red",
+        kind: "phonics"
+      },
+      () => {},
+      playback
+    );
+
+    const hear = container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!;
+    expect(hear).not.toBeNull();
+    await act(async () => {
+      hear.click();
+      await flush();
+    });
+    expect(playback.play).toHaveBeenCalledWith({ kind: "tts", text: "red" });
+  });
+
+  it("offers whole-item TTS for heart words and fluency sentences", async () => {
+    const playback: PlaybackController = {
+      play: vi.fn(async () => ({ status: "completed" as const })),
+      cancel: vi.fn()
+    };
+    await render(
+      { skill_id: "heart_k", item_id: "said", text: "said", kind: "heart", irregular_parts: ["ai"] },
+      () => {},
+      playback
+    );
+    const wordButton = container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!;
+    await act(async () => {
+      wordButton.click();
+      await flush();
+    });
+    expect(playback.play).toHaveBeenLastCalledWith({ kind: "tts", text: "said" });
+
+    await render(
+      { skill_id: "fluency_k", item_id: "sam-sat", text: "Sam sat.", kind: "fluency" },
+      () => {},
+      playback
+    );
+    const sentenceButton = container.querySelector<HTMLButtonElement>('button[aria-label="Hear this sentence"]')!;
+    await act(async () => {
+      sentenceButton.click();
+      await flush();
+    });
+    expect(playback.play).toHaveBeenLastCalledWith({ kind: "tts", text: "Sam sat." });
+  });
+
+  it("shows a playback failure without disabling guardian scoring", async () => {
+    const playback: PlaybackController = {
+      play: vi.fn(async () => ({ status: "failed" as const, reason: "voice failed" })),
+      cancel: vi.fn()
+    };
+    await render(
+      { skill_id: "phonics_k", item_id: "mat", text: "mat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      await flush();
+    });
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("Could not play");
+    expect(
+      [...container.querySelectorAll<HTMLButtonElement>(".tap-controls button")].every((button) => !button.disabled)
+    ).toBe(true);
   });
 
   it("fires onScore once per card and re-enables on rejection, on every mode", async () => {

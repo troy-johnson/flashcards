@@ -167,6 +167,23 @@ button,
   margin-bottom: var(--space-lg);
 }
 
+.practice-audio {
+  margin: calc(-1 * var(--space-md)) 0 var(--space-xl);
+}
+
+.practice-audio-button {
+  min-height: 48px;
+  padding-inline: var(--space-lg);
+  background: var(--color-accent-active);
+  color: var(--color-text-on-accent);
+}
+
+.practice-audio-error {
+  margin: var(--space-sm) 0 0;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
 /* The irregular ("heart") part of a heart word. */
 .heart-part {
   color: var(--color-accent, #b3402e);
