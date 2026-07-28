@@ -1,26 +1,36 @@
 [
   {
     "skill_id": "pa_k_u1_isolate_initial_sound",
+    "display_name": "Hear the first sound",
+    "guardian_description": "Identifies the first sound in a spoken word.",
     "grade": "K",
     "prerequisites": []
   },
   {
     "skill_id": "pa_k_u1_blend_two_sound",
+    "display_name": "Blend two sounds",
+    "guardian_description": "Puts two spoken sounds together to make a word, such as /a/ and /t/ making “at.”",
     "grade": "K",
     "prerequisites": []
   },
   {
     "skill_id": "phonics_k_u1_consonants_mstp",
+    "display_name": "Letters m, s, t, and p",
+    "guardian_description": "Connects the letters m, s, t, and p with their sounds and reads words that use them.",
     "grade": "K",
     "prerequisites": []
   },
   {
     "skill_id": "phonics_k_u1_short_a",
+    "display_name": "Short a",
+    "guardian_description": "Recognizes the short a sound, as in “mat.”",
     "grade": "K",
     "prerequisites": []
   },
   {
     "skill_id": "phonics_k_u1_cvc_blend_short_a",
+    "display_name": "Read short-a words",
+    "guardian_description": "Blends consonant-vowel-consonant words with short a, such as “sat” and “map.”",
     "grade": "K",
     "prerequisites": [
       "pa_k_u1_blend_two_sound",
@@ -30,11 +40,15 @@
   },
   {
     "skill_id": "heart_k_u1_batch_01",
+    "display_name": "Kindergarten heart words",
+    "guardian_description": "Reads common words with a part that does not follow the phonics patterns taught so far.",
     "grade": "K",
     "prerequisites": []
   },
   {
     "skill_id": "fluency_k_u1_cvc_sentences",
+    "display_name": "Read short-a sentences",
+    "guardian_description": "Reads short sentences accurately and smoothly using familiar short-a words and heart words.",
     "grade": "K",
     "prerequisites": [
       "phonics_k_u1_short_a"
@@ -42,6 +56,8 @@
   },
   {
     "skill_id": "pa_k_u2_segment_three_sound",
+    "display_name": "Break apart three-sound words",
+    "guardian_description": "Says each sound in a three-sound word in order.",
     "grade": "K",
     "prerequisites": [
       "pa_k_u1_blend_two_sound"
@@ -49,6 +65,8 @@
   },
   {
     "skill_id": "phonics_k_u2_consonants_ncdg",
+    "display_name": "Letters n, c, d, and g",
+    "guardian_description": "Connects the letters n, c, d, and g with their sounds and reads words that use them.",
     "grade": "K",
     "prerequisites": [
       "phonics_k_u1_consonants_mstp"
@@ -56,6 +74,8 @@
   },
   {
     "skill_id": "phonics_k_u2_short_o",
+    "display_name": "Short o",
+    "guardian_description": "Recognizes the short o sound, as in “dog.”",
     "grade": "K",
     "prerequisites": [
       "phonics_k_u1_short_a"
@@ -63,6 +83,8 @@
   },
   {
     "skill_id": "phonics_k_u2_cvc_blend_short_o",
+    "display_name": "Read short-o words",
+    "guardian_description": "Blends consonant-vowel-consonant words with short o, such as “cot” and “dog.”",
     "grade": "K",
     "prerequisites": [
       "phonics_k_u2_short_o",
@@ -72,6 +94,8 @@
   },
   {
     "skill_id": "fluency_k_u2_cvc_sentences",
+    "display_name": "Read short-o sentences",
+    "guardian_description": "Reads short sentences accurately and smoothly using familiar short-o words and heart words.",
     "grade": "K",
     "prerequisites": [
       "fluency_k_u1_cvc_sentences",
@@ -80,11 +104,15 @@
   },
   {
     "skill_id": "phonics_1_u1_alphabet_review",
+    "display_name": "Review letter sounds",
+    "guardian_description": "Reviews familiar letters and the sounds they represent.",
     "grade": "1",
     "prerequisites": []
   },
   {
     "skill_id": "phonics_1_u1_short_i",
+    "display_name": "Read short-i words",
+    "guardian_description": "Reads words with the short i sound, as in “sit.”",
     "grade": "1",
     "prerequisites": [
       "phonics_1_u1_alphabet_review"
@@ -92,6 +120,8 @@
   },
   {
     "skill_id": "phonics_1_u1_short_e_u",
+    "display_name": "Read short-e and short-u words",
+    "guardian_description": "Reads words with short e and short u sounds, such as “pet” and “sun.”",
     "grade": "1",
     "prerequisites": [
       "phonics_1_u1_short_i"
@@ -99,11 +129,15 @@
   },
   {
     "skill_id": "heart_1_u1_batch_01",
+    "display_name": "First-grade heart words",
+    "guardian_description": "Reads common words with a part that does not follow the phonics patterns taught so far.",
     "grade": "1",
     "prerequisites": []
   },
   {
     "skill_id": "fluency_1_u1_short_vowel_sentences",
+    "display_name": "Read short-vowel sentences",
+    "guardian_description": "Reads short sentences accurately and smoothly using familiar short-vowel words and heart words.",
     "grade": "1",
     "prerequisites": [
       "phonics_1_u1_short_e_u",

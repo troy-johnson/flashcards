@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { loadSchedulerContent } from "./content";
+import { loadSchedulerContent, type Skill } from "./content";
+
+const testSkill = (skill_id: string): Skill => ({
+  skill_id,
+  grade: "K",
+  prerequisites: [],
+  display_name: "Test skill",
+  guardian_description: "A test-only skill description."
+});
 
 describe("loadSchedulerContent", () => {
   const content = loadSchedulerContent();
@@ -172,7 +180,7 @@ describe("loadSchedulerContent", () => {
 
   it("preserves item speech_text as the sole TTS pronunciation override (003a Task 5)", () => {
     const injected = loadSchedulerContent({
-      skills: [{ skill_id: "phonics_test", grade: "K", prerequisites: [] }],
+      skills: [testSkill("phonics_test")],
       units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_test"] }],
       items: [
         { item_id: "phonics_test_read", skill_id: "phonics_test", text: "read", speech_text: "reed" },
@@ -186,7 +194,7 @@ describe("loadSchedulerContent", () => {
   it("throws when a skill id has no known kind prefix", () => {
     expect(() =>
       loadSchedulerContent({
-        skills: [{ skill_id: "mystery_k_u1_thing", grade: "K", prerequisites: [] }],
+        skills: [testSkill("mystery_k_u1_thing")],
         units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["mystery_k_u1_thing"] }],
         items: [{ item_id: "mystery_k_u1_thing_x", skill_id: "mystery_k_u1_thing", text: "x" }]
       })
@@ -195,7 +203,7 @@ describe("loadSchedulerContent", () => {
 
   it("excludes deprecated items from itemsById and itemsBySkill (never schedulable)", () => {
     const injected = loadSchedulerContent({
-      skills: [{ skill_id: "phonics_k_u1_short_a", grade: "K", prerequisites: [] }],
+      skills: [testSkill("phonics_k_u1_short_a")],
       units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_k_u1_short_a"] }],
       items: [
         { item_id: "phonics_k_u1_short_a_cat", skill_id: "phonics_k_u1_short_a", text: "mat", deprecated: true },

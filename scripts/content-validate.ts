@@ -38,7 +38,14 @@ const fail = (message: string): never => {
 
 const GRADE_ORDER: Record<string, number> = { K: 0, "1": 1 };
 
-type Skill = { skill_id: string; grade: "K" | "1"; prerequisites?: string[]; deprecated?: boolean };
+type Skill = {
+  skill_id: string;
+  grade: "K" | "1";
+  prerequisites?: string[];
+  deprecated?: boolean;
+  display_name: string;
+  guardian_description: string;
+};
 type Item = {
   item_id: string;
   skill_id: string;
@@ -96,6 +103,14 @@ unique("audio_id", audioEntries.map((a) => a.audio_id));
 
 const skillsById = new Map(skills.map((s) => [s.skill_id, s]));
 const audioIds = new Set(audioEntries.map((a) => a.audio_id));
+for (const skill of skills) {
+  for (const field of ["display_name", "guardian_description"] as const) {
+    const value = skill[field];
+    if (typeof value !== "string" || value.trim().length === 0) {
+      fail(`skill ${skill.skill_id} requires nonblank ${field}`);
+    }
+  }
+}
 for (const item of items) {
   if (!skillsById.has(item.skill_id)) fail(`item ${item.item_id} references missing skill ${item.skill_id}`);
   if (!item.deprecated && item.item_id.startsWith("pa_")) {
