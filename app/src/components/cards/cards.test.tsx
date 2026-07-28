@@ -96,6 +96,23 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     expect(container.querySelector(".card-word")?.textContent).toBe("said");
   });
 
+  it("renders as as a heart word with only its irregular s highlighted", async () => {
+    await render({
+      skill_id: "heart_k_u1_batch_01",
+      item_id: "heart_k_u1_as",
+      text: "as",
+      kind: "heart",
+      regular_parts: ["a"],
+      irregular_parts: ["s"]
+    });
+
+    expect(container.querySelector(".eyebrow")?.textContent).toBe("Read this heart word");
+    expect(container.querySelector(".card-word")?.textContent).toBe("as");
+    expect(
+      [...container.querySelectorAll(".heart-part")].map((element) => element.textContent)
+    ).toEqual(["s"]);
+  });
+
   it("renders the full word when irregular_parts is missing or empty (codex review finding 3 refutation lock)", async () => {
     await render({
       skill_id: "heart_k_u1_batch_01",

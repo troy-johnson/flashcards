@@ -161,6 +161,27 @@ describe("loadSchedulerContent", () => {
     expect(content.itemsById["heart_k_u1_the"]?.irregular_parts).toEqual(["e"]);
   });
 
+  it("schedules as as a heart word and preserves the short-a decodable bar with Sam", () => {
+    expect(content.itemsById["phonics_k_u1_cvc_a_as"]).toBeUndefined();
+    expect(content.itemsById["heart_k_u1_as"]).toMatchObject({
+      kind: "heart",
+      text: "as",
+      regular_parts: ["a"],
+      irregular_parts: ["s"]
+    });
+    expect(content.itemsById["phonics_k_u1_cvc_a_sam"]).toMatchObject({
+      kind: "phonics",
+      text: "Sam",
+      skill_id: "phonics_k_u1_cvc_blend_short_a"
+    });
+    expect(
+      content.itemsBySkill["phonics_k_u1_cvc_blend_short_a"]?.map((item) => item.item_id)
+    ).toContain("phonics_k_u1_cvc_a_sam");
+    expect(
+      content.itemsBySkill["phonics_k_u1_cvc_blend_short_a"]?.map((item) => item.item_id)
+    ).not.toContain("phonics_k_u1_cvc_a_as");
+  });
+
   it("preserves authored caregiver and child PA instructions during normalization", () => {
     const item = content.itemsById["pa_k_u1_blend_at"];
     expect(item?.guardian_script).toBe(
