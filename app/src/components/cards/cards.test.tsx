@@ -291,7 +291,9 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
 
   it("cancels playback when the audio control unmounts", async () => {
     const playback: PlaybackController = {
-      play: vi.fn(() => new Promise(() => {})),
+      play: vi.fn(
+        () => new Promise<Awaited<ReturnType<PlaybackController["play"]>>>(() => {})
+      ),
       cancel: vi.fn()
     };
     await render(

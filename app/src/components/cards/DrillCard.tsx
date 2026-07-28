@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AttemptResult, PracticeCard } from "../../api/types";
 import { createPlaybackController, type PlaybackController } from "../../audio/playback";
 import { CardShell } from "./CardShell";
@@ -24,13 +24,24 @@ function PracticeAudioButton({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
-  useEffect(() => () => playback.cancel(), [playback]);
+  useEffect(() => {
+    setBusy(false);
+    setError(null);
+    return () => {
+      requestIdRef.current += 1;
+      playback.cancel();
+    };
+  }, [card.item_id, playback]);
 
   const play = async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setBusy(true);
     setError(null);
     const result = await playback.play({ kind: "tts", text: card.speech_text ?? card.text });
+    if (requestIdRef.current !== requestId) return;
     if (result.status === "failed" || result.status === "unavailable") {
       setError("Could not play that audio. You can keep practicing.");
     }

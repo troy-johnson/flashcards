@@ -29,21 +29,31 @@ type PlaybackDeps = {
   createAudio?: (src: string) => HTMLAudioElement;
   createUtterance?: (text: string) => SpeechSynthesisUtterance;
   speechSynthesis?: Pick<SpeechSynthesis, "cancel" | "getVoices" | "speak">;
+  ttsTimeoutMs?: number;
 };
 
 export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackController {
   const createAudio = deps.createAudio ?? ((src: string) => new Audio(src));
   const createUtterance = deps.createUtterance ?? ((text: string) => new SpeechSynthesisUtterance(text));
   const speechSynthesis = deps.speechSynthesis ?? globalThis.speechSynthesis;
+  const ttsTimeoutMs = deps.ttsTimeoutMs ?? 15_000;
   let current: HTMLAudioElement | null = null;
+  let currentTts:
+    | {
+        settle(result: PlaybackResult): void;
+      }
+    | null = null;
 
-  const cancel = () => {
+  const cancelWithReason = (reason: string) => {
     if (current) {
       current.pause();
       current = null;
     }
+    currentTts?.settle({ status: "failed", reason });
     speechSynthesis?.cancel();
   };
+
+  const cancel = () => cancelWithReason("playback canceled");
 
   const play = async (request: PlaybackRequest): Promise<PlaybackResult> => {
     if (request.kind === "tts") {
@@ -53,20 +63,37 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
       ) {
         return { status: "unavailable", reason: "Text-to-speech is not available in this browser" };
       }
-      cancel();
+      cancelWithReason("superseded by a newer play");
       try {
         const utterance = createUtterance(request.text);
         return new Promise<PlaybackResult>((resolve) => {
-          utterance.addEventListener("end", () => resolve({ status: "completed" }), { once: true });
-          utterance.addEventListener(
-            "error",
-            () => resolve({ status: "failed", reason: "Text-to-speech could not play" }),
-            { once: true }
-          );
+          let settled = false;
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          const onEnd = () => active.settle({ status: "completed" });
+          const onError = () =>
+            active.settle({ status: "failed", reason: "Text-to-speech could not play" });
+          const active = {
+            settle(result: PlaybackResult) {
+              if (settled) return;
+              settled = true;
+              if (timeout !== undefined) clearTimeout(timeout);
+              utterance.removeEventListener("end", onEnd);
+              utterance.removeEventListener("error", onError);
+              if (currentTts === active) currentTts = null;
+              resolve(result);
+            }
+          };
+          currentTts = active;
+          utterance.addEventListener("end", onEnd, { once: true });
+          utterance.addEventListener("error", onError, { once: true });
+          timeout = setTimeout(() => {
+            active.settle({ status: "failed", reason: "Text-to-speech timed out" });
+            speechSynthesis.cancel();
+          }, ttsTimeoutMs);
           try {
             speechSynthesis.speak(utterance);
           } catch (err) {
-            resolve({
+            active.settle({
               status: "failed",
               reason: err instanceof Error ? err.message : "Text-to-speech could not start"
             });
@@ -83,7 +110,7 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
     if (!request.src.startsWith("/audio/")) {
       return { status: "failed", reason: `refusing non-/audio/ source: ${request.src}` };
     }
-    cancel(); // one clip at a time
+    cancelWithReason("superseded by a newer play"); // one output at a time
     const element = createAudio(request.src);
     current = element;
     element.addEventListener("ended", () => {
