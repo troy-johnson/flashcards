@@ -229,6 +229,91 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     ).toBe(true);
   });
 
+  it("ignores a stale playback failure after advancing to a new card", async () => {
+    let settleFirst:
+      | ((result: Awaited<ReturnType<PlaybackController["play"]>>) => void)
+      | undefined;
+    let settleSecond:
+      | ((result: Awaited<ReturnType<PlaybackController["play"]>>) => void)
+      | undefined;
+    const playback: PlaybackController = {
+      play: vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              settleFirst = resolve;
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              settleSecond = resolve;
+            })
+        ),
+      cancel: vi.fn()
+    };
+
+    await render(
+      { skill_id: "phonics_k", item_id: "mat", text: "mat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      await flush();
+    });
+
+    await render(
+      { skill_id: "phonics_k", item_id: "sat", text: "sat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      await flush();
+    });
+
+    await act(async () => {
+      settleFirst?.({ status: "failed", reason: "old card failed" });
+      await flush();
+    });
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')?.ariaBusy
+    ).toBe("true");
+
+    await act(async () => {
+      settleSecond?.({ status: "completed" });
+      await flush();
+    });
+  });
+
+  it("cancels playback when the audio control unmounts", async () => {
+    const playback: PlaybackController = {
+      play: vi.fn(() => new Promise(() => {})),
+      cancel: vi.fn()
+    };
+    await render(
+      { skill_id: "phonics_k", item_id: "mat", text: "mat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      root.render(
+        <DrillCard
+          card={{ skill_id: "pa_k", item_id: "blend", text: "Blend.", kind: "pa" }}
+          onScore={() => {}}
+          playback={playback}
+        />
+      );
+      await flush();
+    });
+
+    expect(playback.cancel).toHaveBeenCalled();
+  });
+
   it("fires onScore once per card and re-enables on rejection, on every mode", async () => {
     const onScore = vi.fn(async () => {});
     await render(

@@ -74,6 +74,12 @@ describe("createPlaybackController — recorded lane", () => {
 });
 
 describe("createPlaybackController — tts lane", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it("speaks text directly from the play call and completes when the utterance ends", async () => {
     const utterances: SpeechSynthesisUtterance[] = [];
     const createUtterance = (text: string) => {
@@ -121,5 +127,125 @@ describe("createPlaybackController — tts lane", () => {
       status: "failed",
       reason: "speech startup failed"
     });
+  });
+
+  it("fails within a bounded timeout when the browser emits no completion event", async () => {
+    vi.useFakeTimers();
+    const createUtterance = (text: string) =>
+      Object.assign(new EventTarget(), { text, voice: null }) as SpeechSynthesisUtterance;
+    const speechSynthesis = {
+      cancel: vi.fn(),
+      getVoices: vi.fn(() => []),
+      speak: vi.fn()
+    };
+    const controller = createPlaybackController({
+      createUtterance,
+      speechSynthesis,
+      ttsTimeoutMs: 100
+    });
+
+    const result = controller.play({ kind: "tts", text: "mat" });
+    await vi.advanceTimersByTimeAsync(100);
+
+    await expect(result).resolves.toEqual({
+      status: "failed",
+      reason: "Text-to-speech timed out"
+    });
+    expect(speechSynthesis.cancel).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("settles the prior request when a newer utterance replaces it and ignores stale events", async () => {
+    const utterances: SpeechSynthesisUtterance[] = [];
+    const createUtterance = (text: string) => {
+      const utterance = Object.assign(new EventTarget(), {
+        text,
+        voice: null
+      }) as SpeechSynthesisUtterance;
+      utterances.push(utterance);
+      return utterance;
+    };
+    const speechSynthesis = {
+      cancel: vi.fn(),
+      getVoices: vi.fn(() => []),
+      speak: vi.fn()
+    };
+    const controller = createPlaybackController({ createUtterance, speechSynthesis });
+
+    const first = controller.play({ kind: "tts", text: "mat" });
+    const second = controller.play({ kind: "tts", text: "sat" });
+
+    await expect(first).resolves.toEqual({
+      status: "failed",
+      reason: "superseded by a newer play"
+    });
+    utterances[0]?.dispatchEvent(new Event("end"));
+    utterances[1]?.dispatchEvent(new Event("end"));
+    await expect(second).resolves.toEqual({ status: "completed" });
+  });
+
+  it("settles an in-flight utterance when cancel is called", async () => {
+    const createUtterance = (text: string) =>
+      Object.assign(new EventTarget(), { text, voice: null }) as SpeechSynthesisUtterance;
+    const speechSynthesis = {
+      cancel: vi.fn(),
+      getVoices: vi.fn(() => []),
+      speak: vi.fn()
+    };
+    const controller = createPlaybackController({ createUtterance, speechSynthesis });
+
+    const result = controller.play({ kind: "tts", text: "mat" });
+    controller.cancel();
+
+    await expect(result).resolves.toEqual({
+      status: "failed",
+      reason: "playback canceled"
+    });
+  });
+
+  it("cleans up its timeout on completion and can retry after a failure", async () => {
+    vi.useFakeTimers();
+    const utterances: SpeechSynthesisUtterance[] = [];
+    const createUtterance = (text: string) => {
+      const utterance = Object.assign(new EventTarget(), {
+        text,
+        voice: null
+      }) as SpeechSynthesisUtterance;
+      utterances.push(utterance);
+      return utterance;
+    };
+    const controller = createPlaybackController({
+      createUtterance,
+      speechSynthesis: {
+        cancel: vi.fn(),
+        getVoices: vi.fn(() => []),
+        speak: vi.fn()
+      },
+      ttsTimeoutMs: 100
+    });
+
+    const first = controller.play({ kind: "tts", text: "mat" });
+    utterances[0]?.dispatchEvent(new Event("error"));
+    await expect(first).resolves.toEqual({
+      status: "failed",
+      reason: "Text-to-speech could not play"
+    });
+
+    const retry = controller.play({ kind: "tts", text: "mat" });
+    utterances[1]?.dispatchEvent(new Event("end"));
+    await expect(retry).resolves.toEqual({ status: "completed" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("reports unavailable speech synthesis without entering a stuck request", async () => {
+    vi.stubGlobal("speechSynthesis", undefined);
+    vi.stubGlobal("SpeechSynthesisUtterance", undefined);
+    const controller = createPlaybackController();
+
+    await expect(controller.play({ kind: "tts", text: "mat" })).resolves.toEqual({
+      status: "unavailable",
+      reason: "Text-to-speech is not available in this browser"
+    });
+    controller.cancel();
   });
 });
