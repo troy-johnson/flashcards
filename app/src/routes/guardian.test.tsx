@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
-import { consumeMagicLink, createStudent, getCurrentGuardian, getGuardianDiag, getStudent, listStudents, logout, signIn } from "../api/literacy";
+import { consumeMagicLink, createStudent, getCurrentGuardian, getGuardianDiag, getStudent, getStudentProgress, listStudents, logout, signIn } from "../api/literacy";
 
 vi.mock("../api/literacy", () => ({
   signIn: vi.fn(async () => ({})),
@@ -12,6 +12,9 @@ vi.mock("../api/literacy", () => ({
   listStudents: vi.fn(async () => ({ students: [{ id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null }] })),
   createStudent: vi.fn(async () => ({ student: { id: "student2", display_name: "Ben", grade: "1", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
   getStudent: vi.fn(async () => ({ student: { id: "student1", display_name: "Ada", grade: "K", birth_month: null, prefs_json: {}, created_at: "now", archived_at: null } })),
+  getStudentProgress: vi.fn(async () => ({
+    progress: { total_attempts: 0, correct: 0, skills: [] }
+  })),
   getCurrentGuardian: vi.fn(async () => ({ guardian: { id: "g1", email: "g@example.com", display_name: null } })),
   getGuardianDiag: vi.fn(async () => ({
     guardian: { id: "g1", email: "g@example.com", display_name: null },
@@ -256,6 +259,86 @@ describe("guardian and sign-in routes", () => {
     const tables = container.querySelectorAll("table");
     expect(tables[1]?.textContent).toContain("family@example.com");
     expect(tables[1]?.textContent).not.toContain("g-family");
+  });
+
+  it("shows family-safe expandable progress without calling operator diagnostics", async () => {
+    (getStudentProgress as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      progress: {
+        total_attempts: 5,
+        correct: 4,
+        skills: [
+          {
+            skill_id: "heart_k_u1_batch_01",
+            display_name: "Kindergarten heart words",
+            guardian_description:
+              "Reads common words with a part that does not follow the phonics patterns taught so far.",
+            attempts: 2,
+            correct: 2
+          },
+          {
+            skill_id: "phonics_k_u1_cvc_blend_short_a",
+            display_name: "Read short-a words",
+            guardian_description:
+              "Blends consonant-vowel-consonant words with short a, such as “sat” and “map.”",
+            attempts: 3,
+            correct: 2
+          }
+        ]
+      }
+    });
+    window.history.pushState({}, "", "/guardian/student1");
+
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+
+    expect(getStudent).toHaveBeenCalledWith("student1");
+    expect(getStudentProgress).toHaveBeenCalledWith("student1");
+    expect(getGuardianDiag).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("4 of 5 correct (80%).");
+
+    const disclosures = [...container.querySelectorAll<HTMLDetailsElement>("details.progress-skill-card")];
+    expect(disclosures).toHaveLength(2);
+    expect(disclosures[0]?.querySelector("summary")?.getAttribute("role")).toBeNull();
+    expect(disclosures[0]?.getAttribute("aria-expanded")).toBeNull();
+    const firstGrid = disclosures[0]?.querySelector(".progress-skill-summary-grid");
+    expect(firstGrid?.querySelector(".progress-skill-name")?.textContent).toBe(
+      "Kindergarten heart words"
+    );
+    expect(firstGrid?.querySelector(".progress-skill-score")?.textContent).toBe("2/2");
+    expect(container.textContent).not.toContain("heart_k_u1_batch_01");
+    expect(container.textContent).not.toContain("phonics_k_u1_cvc_blend_short_a");
+
+    await act(async () => disclosures[0]?.querySelector("summary")?.click());
+    expect(disclosures[0]?.open).toBe(true);
+    expect(disclosures[0]?.querySelector(".progress-skill-description")?.textContent).toContain(
+      "Reads common words"
+    );
+  });
+
+  it("keeps empty progress distinct from a progress request failure", async () => {
+    window.history.pushState({}, "", "/guardian/student1");
+    await act(async () => {
+      root.render(<App />);
+      await flush();
+    });
+    expect(container.querySelector(".empty")?.textContent).toContain("No attempts yet");
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+
+    (getStudentProgress as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("progress unavailable")
+    );
+    await act(async () => {
+      window.history.pushState({}, "", "/guardian/student2");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      await flush();
+    });
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "Could not load student progress"
+    );
+    expect(container.querySelector(".empty")).toBeNull();
   });
 
   it("renders K and 1st-grade siblings as separate selectable students", async () => {
