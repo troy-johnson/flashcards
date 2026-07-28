@@ -28,6 +28,48 @@ describe("loadSchedulerContent", () => {
     );
   });
 
+  it("loads canonical family-facing metadata for every retained skill", () => {
+    for (const skill of content.skills) {
+      expect(skill.display_name.trim().length).toBeGreaterThan(0);
+      expect(skill.guardian_description.trim().length).toBeGreaterThan(0);
+    }
+    expect(content.skills.find((skill) => skill.skill_id === "phonics_k_u1_short_a")).toMatchObject({
+      display_name: "Short a",
+      guardian_description: "Recognizes the short a sound, as in “mat.”"
+    });
+  });
+
+  it("retains metadata for a deprecated skill while continuing to exclude deprecated items", () => {
+    const injected = loadSchedulerContent({
+      skills: [
+        {
+          skill_id: "phonics_k_retired",
+          grade: "K",
+          prerequisites: [],
+          deprecated: true,
+          display_name: "Earlier phonics",
+          guardian_description: "A retained historical skill."
+        }
+      ],
+      units: [],
+      items: [
+        {
+          item_id: "phonics_k_retired_item",
+          skill_id: "phonics_k_retired",
+          text: "mat",
+          deprecated: true
+        }
+      ]
+    });
+
+    expect(injected.skills[0]).toMatchObject({
+      deprecated: true,
+      display_name: "Earlier phonics",
+      guardian_description: "A retained historical skill."
+    });
+    expect(injected.itemsById).toEqual({});
+  });
+
   it("loads every unit from scope-sequence.json", () => {
     expect(content.units.map((u) => u.unit_id)).toEqual(["k_u1", "k_u2", "1_u1"]);
   });

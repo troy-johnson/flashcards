@@ -68,8 +68,18 @@ const removeTempContentRoot = () => {
   rmSync(contentRoot, { recursive: true, force: true });
 };
 
-const writeSkills = (skills: unknown[]) => {
+const writeRawSkills = (skills: unknown[]) => {
   writeFileSync(skillsPath, `${JSON.stringify(skills, null, 2)}\n`);
+};
+
+const writeSkills = (skills: unknown[]) => {
+  writeRawSkills(
+    skills.map((skill) => ({
+      display_name: "Test skill",
+      guardian_description: "A plain-language description for families.",
+      ...(skill as Record<string, unknown>)
+    }))
+  );
 };
 
 const writeScopeSequence = (units: unknown[]) => {
@@ -159,6 +169,46 @@ const validCategories = {
 describe("content manifest count gate", () => {
   beforeEach(resetTempContentRoot);
   afterEach(removeTempContentRoot);
+
+  const withCanonicalSkillMetadata = () =>
+    (JSON.parse(productionSkills) as Record<string, unknown>[]).map((skill) => ({
+      ...skill,
+      display_name: `Display name for ${String(skill.skill_id)}`,
+      guardian_description: `Description for ${String(skill.skill_id)}.`
+    }));
+
+  for (const field of ["display_name", "guardian_description"] as const) {
+    for (const invalidValue of [undefined, "", "   "] as const) {
+      const caseName =
+        invalidValue === undefined ? "missing" : invalidValue === "" ? "empty" : "whitespace-only";
+
+      for (const retainedState of ["live", "deprecated"] as const) {
+        it(`rejects a retained ${retainedState} skill whose ${field} is ${caseName}`, () => {
+          const skills = withCanonicalSkillMetadata();
+          const target =
+            retainedState === "live"
+              ? skills[0]!
+              : {
+                  skill_id: "phonics_k_retired",
+                  grade: "K",
+                  prerequisites: [],
+                  deprecated: true,
+                  display_name: "Retired skill",
+                  guardian_description: "A retained historical skill."
+                };
+          if (retainedState === "deprecated") skills.push(target);
+          if (invalidValue === undefined) delete target[field];
+          else target[field] = invalidValue;
+          writeRawSkills(skills);
+
+          assert.throws(
+            runValidator,
+            new RegExp(`skill ${String(target.skill_id)} requires nonblank ${field}`)
+          );
+        });
+      }
+    }
+  }
 
   const withCanonicalPaInstructions = () => {
     const items = JSON.parse(productionItems) as Record<string, unknown>[];
