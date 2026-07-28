@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptInput, AudioCatalogResponse, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student } from "./types";
+import type { AttemptInput, AudioCatalogResponse, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, PracticeSession, SessionSummaryRow, Student, StudentProgressResponse } from "./types";
 
 export interface SignInResponse {
   /** Present only when the API runs with the dev-log email issuer — never set in production. */
@@ -29,6 +29,9 @@ export const createStudent = (student: { display_name: string; grade: "K" | "1";
 
 export const getStudent = (studentId: string): Promise<{ student: Student }> =>
   apiFetch<{ student: Student }>(`/students/${studentId}`);
+
+export const getStudentProgress = (studentId: string): Promise<StudentProgressResponse> =>
+  apiFetch<StudentProgressResponse>(`/students/${studentId}/progress`);
 
 export const startPractice = (studentId: string): Promise<{
   practice_session: PracticeSession;
