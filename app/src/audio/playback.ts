@@ -32,6 +32,8 @@ type PlaybackDeps = {
   ttsTimeoutMs?: number;
 };
 
+type CancellationReason = "playback canceled" | "superseded by a newer play";
+
 export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackController {
   const createAudio = deps.createAudio ?? ((src: string) => new Audio(src));
   const createUtterance = deps.createUtterance ?? ((text: string) => new SpeechSynthesisUtterance(text));
@@ -44,7 +46,7 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
       }
     | null = null;
 
-  const cancelWithReason = (reason: string) => {
+  const cancelWithReason = (reason: CancellationReason) => {
     if (current) {
       current.pause();
       current = null;
@@ -69,31 +71,37 @@ export function createPlaybackController(deps: PlaybackDeps = {}): PlaybackContr
         return new Promise<PlaybackResult>((resolve) => {
           let settled = false;
           let timeout: ReturnType<typeof setTimeout> | undefined;
-          const onEnd = () => active.settle({ status: "completed" });
+          const onEnd = () => activeTtsRequest.settle({ status: "completed" });
           const onError = () =>
-            active.settle({ status: "failed", reason: "Text-to-speech could not play" });
-          const active = {
+            activeTtsRequest.settle({
+              status: "failed",
+              reason: "Text-to-speech could not play"
+            });
+          const activeTtsRequest = {
             settle(result: PlaybackResult) {
               if (settled) return;
               settled = true;
               if (timeout !== undefined) clearTimeout(timeout);
               utterance.removeEventListener("end", onEnd);
               utterance.removeEventListener("error", onError);
-              if (currentTts === active) currentTts = null;
+              if (currentTts === activeTtsRequest) currentTts = null;
               resolve(result);
             }
           };
-          currentTts = active;
+          currentTts = activeTtsRequest;
           utterance.addEventListener("end", onEnd, { once: true });
           utterance.addEventListener("error", onError, { once: true });
           timeout = setTimeout(() => {
-            active.settle({ status: "failed", reason: "Text-to-speech timed out" });
+            activeTtsRequest.settle({
+              status: "failed",
+              reason: "Text-to-speech timed out"
+            });
             speechSynthesis.cancel();
           }, ttsTimeoutMs);
           try {
             speechSynthesis.speak(utterance);
           } catch (err) {
-            active.settle({
+            activeTtsRequest.settle({
               status: "failed",
               reason: err instanceof Error ? err.message : "Text-to-speech could not start"
             });

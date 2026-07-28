@@ -131,8 +131,15 @@ describe("createPlaybackController — tts lane", () => {
 
   it("fails within a bounded timeout when the browser emits no completion event", async () => {
     vi.useFakeTimers();
-    const createUtterance = (text: string) =>
-      Object.assign(new EventTarget(), { text, voice: null }) as SpeechSynthesisUtterance;
+    const utterances: SpeechSynthesisUtterance[] = [];
+    const createUtterance = (text: string) => {
+      const utterance = Object.assign(new EventTarget(), {
+        text,
+        voice: null
+      }) as SpeechSynthesisUtterance;
+      utterances.push(utterance);
+      return utterance;
+    };
     const speechSynthesis = {
       cancel: vi.fn(),
       getVoices: vi.fn(() => []),
@@ -152,6 +159,11 @@ describe("createPlaybackController — tts lane", () => {
       reason: "Text-to-speech timed out"
     });
     expect(speechSynthesis.cancel).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+
+    const retry = controller.play({ kind: "tts", text: "mat" });
+    utterances[1]?.dispatchEvent(new Event("end"));
+    await expect(retry).resolves.toEqual({ status: "completed" });
     expect(vi.getTimerCount()).toBe(0);
   });
 
