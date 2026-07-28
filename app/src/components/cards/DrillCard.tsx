@@ -26,14 +26,13 @@ function PracticeAudioButton({
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    setBusy(false);
-    setError(null);
-    return () => {
+  useEffect(
+    () => () => {
       requestIdRef.current += 1;
       playback.cancel();
-    };
-  }, [card.item_id, playback]);
+    },
+    [playback]
+  );
 
   const play = async () => {
     const requestId = requestIdRef.current + 1;
@@ -110,7 +109,7 @@ function HeartWordCard({ card, onScore, playback = practicePlayback }: DrillCard
             )
           : card.text}
       </div>
-      <PracticeAudioButton card={card} label="Hear this word" playback={playback} />
+      <PracticeAudioButton key={card.item_id} card={card} label="Hear this word" playback={playback} />
     </CardShell>
   );
 }
@@ -120,7 +119,12 @@ function FluencyCard({ card, onScore, playback = practicePlayback }: DrillCardPr
   return (
     <CardShell label="Fluency practice card" eyebrow={cardCopy.fluency.eyebrow} onScore={onScore}>
       <div className="card-sentence">{card.text}</div>
-      <PracticeAudioButton card={card} label="Hear this sentence" playback={playback} />
+      <PracticeAudioButton
+        key={card.item_id}
+        card={card}
+        label="Hear this sentence"
+        playback={playback}
+      />
     </CardShell>
   );
 }
@@ -129,7 +133,7 @@ function PhonicsCard({ card, onScore, playback = practicePlayback }: DrillCardPr
   return (
     <CardShell label="Phonics practice card" eyebrow={cardCopy.phonics.eyebrow} onScore={onScore}>
       <div className="card-word">{card.text}</div>
-      <PracticeAudioButton card={card} label="Hear this word" playback={playback} />
+      <PracticeAudioButton key={card.item_id} card={card} label="Hear this word" playback={playback} />
     </CardShell>
   );
 }
