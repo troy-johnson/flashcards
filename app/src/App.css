@@ -52,6 +52,12 @@ button,
   font: inherit;
 }
 
+:where(a, button, input, select, summary):focus-visible {
+  outline: 3px solid var(--color-bg-surface);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--color-text-primary);
+}
+
 input,
 select {
   border: 2px solid var(--color-border-default);
@@ -105,13 +111,11 @@ button,
 }
 
 .progress-skill-summary-grid {
-  display: inline-grid;
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--space-md);
-  width: calc(100% - 1.5em);
   min-width: 0;
-  vertical-align: top;
 }
 
 .progress-skill-name {

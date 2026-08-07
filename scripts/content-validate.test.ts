@@ -919,6 +919,63 @@ describe("content manifest count gate", () => {
 
     assert.throws(runValidator, /K unit .+ appears after a grade-1 unit/);
   });
+
+  it("rejects an unknown skill grade before grade-order checks run", () => {
+    writeSkills([{ skill_id: "skill_unknown", grade: "2", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "k_u1", grade: "K", skill_ids: ["skill_unknown"] }]);
+    writeItems([]);
+    writeAudioManifest([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 0 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /skill skill_unknown has unknown grade 2/);
+  });
+
+  it("rejects an unknown scope-unit grade before grade-order checks run", () => {
+    writeSkills([{ skill_id: "skill_k", grade: "K", prerequisites: [] }]);
+    writeScopeSequence([{ unit_id: "u2", grade: "2", skill_ids: ["skill_k"] }]);
+    writeItems([]);
+    writeAudioManifest([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 0 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.throws(runValidator, /scope unit u2 has unknown grade 2/);
+  });
+
+  it("accepts a valid K-then-grade-1 scope ordering", () => {
+    writeSkills([
+      { skill_id: "skill_k", grade: "K", prerequisites: [] },
+      { skill_id: "skill_1", grade: "1", prerequisites: [] }
+    ]);
+    writeScopeSequence([
+      { unit_id: "k_u1", grade: "K", skill_ids: ["skill_k"] },
+      { unit_id: "g1_u1", grade: "1", skill_ids: ["skill_1"] }
+    ]);
+    writeItems([]);
+    writeAudioManifest([]);
+    writeManifest({
+      phonics_skills: { v1_target: 12, required_now: 0 },
+      heart_words: { v1_target: 50, required_now: 0 },
+      decodable_words: { v1_target: 200, required_now: 0 },
+      fluency_sentences: { v1_target: 30, required_now: 0 },
+      recorded_sound_targets: { v1_target: 44, required_now: 0 },
+      grapheme_pattern_mappings: { v1_target: 12, required_now: 0 }
+    });
+
+    assert.match(runValidator(), /\[content-validate\] ok:/);
+  });
 });
 
 // The validator's on-branch immutability check (default content root, non-main

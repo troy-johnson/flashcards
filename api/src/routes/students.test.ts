@@ -191,6 +191,27 @@ describe("student routes", () => {
     }
   });
 
+  it("counts skipped attempts in the denominator without counting them as correct", async () => {
+    await insertAttempt({ id: "skipped", skillId: "phonics_k_u1_short_a", result: "skipped" });
+    const response = await SELF.fetch("https://api.test/students/student_owned/progress", {
+      headers: { cookie: "session=s1" }
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      progress: {
+        total_attempts: 1,
+        correct: 0,
+        skills: [{
+          skill_id: "phonics_k_u1_short_a",
+          display_name: "Short a",
+          guardian_description: "Recognizes the short a sound, as in “mat.”",
+          attempts: 1,
+          correct: 0
+        }]
+      }
+    });
+  });
+
   it("returns 404 for another guardian's student and an archived owned student", async () => {
     for (const studentId of ["student_other", "student_archived"]) {
       const response = await SELF.fetch(`https://api.test/students/${studentId}/progress`, {

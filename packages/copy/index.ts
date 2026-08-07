@@ -20,7 +20,30 @@ export const landing = {
   practice: "Short, structured reading practice with an adult nearby to listen, encourage, and record how it went.",
   instruction: "Evidence-informed practice builds phonemic awareness, phonics and decoding, heart words, and reading fluency.",
   privacy: "There are no ads, and we never sell guardian or child data.",
-  pilot: "Reader's Way is an invite-only early-access pilot."
+  pilot: "Reader's Way is an invite-only early-access pilot.",
+  storyHeading: "For caring adults and young readers",
+  privacyHeading: "Private, early-access practice",
+  stepsHeading: "How it works",
+  steps: [
+    {
+      title: "Set up your child.",
+      body: "First name, grade, a few preferences. About a minute."
+    },
+    {
+      title: "Sit together for 8–10 minutes a day.",
+      body: "The app shows one card at a time — a sound, a word, a short sentence. You tap to mark what they got."
+    },
+    {
+      title: "Watch the skill map fill in.",
+      body: "Mastery builds gradually across phonemic awareness, phonics, heart words, and fluency."
+    }
+  ],
+  antiGamification: "No streaks, no coins, no leaderboards. Practice is the point — there's nothing else to chase.",
+  ctaPrompt: "Interested in the invite-only pilot?",
+  contactCta: "Contact the pilot team",
+  signInCta: "Sign in",
+  privacyLink: "Privacy Policy",
+  termsLink: "Terms of Use"
 } as const;
 
 export const onboarding = {

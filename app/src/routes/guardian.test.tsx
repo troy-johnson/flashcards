@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 import React from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -44,6 +46,25 @@ describe("guardian and sign-in routes", () => {
     root.unmount();
     container.remove();
     vi.clearAllMocks();
+  });
+
+  it("uses a marker-independent disclosure layout", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/App.css"), "utf8");
+    const block = css.match(/\.progress-skill-summary-grid\s*\{[^}]+\}/)?.[0] ?? "";
+
+    expect(block).toContain("display: grid");
+    expect(block).not.toContain("calc(100% - 1.5em)");
+    expect(block).not.toContain("display: inline-grid");
+  });
+
+  it("keeps FR34 controls visibly focused for keyboard users", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/App.css"), "utf8");
+    const focusBlock = css.match(/:where\([^}]+\):focus-visible\s*\{[^}]+\}/)?.[0] ?? "";
+
+    expect(focusBlock).toContain(":focus-visible");
+    expect(focusBlock).toContain("outline: 3px solid var(--color-bg-surface)");
+    expect(focusBlock).toContain("outline-offset: 3px");
+    expect(focusBlock).toContain("box-shadow: 0 0 0 6px var(--color-text-primary)");
   });
 
   it("requests a magic link from /signin", async () => {

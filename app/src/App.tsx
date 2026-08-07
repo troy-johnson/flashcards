@@ -113,54 +113,47 @@ function LandingRoute() {
           <p className="eyebrow">{landing.eyebrow}</p>
           <h1>{landing.headline}</h1>
           <p className="landing-lede">{landing.subtitle}</p>
-          <a className="primary-link" href="/signin">Sign in</a>
+          <a className="primary-link" href="/signin">{landing.signInCta}</a>
         </section>
 
         <section className="panel landing-story">
-          <h2>For caring adults and young readers</h2>
+          <h2>{landing.storyHeading}</h2>
           <p>{landing.audience}</p>
           <p>{landing.practice}</p>
           <p>{landing.instruction}</p>
         </section>
 
         <section className="panel landing-privacy">
-          <h2>Private, early-access practice</h2>
+          <h2>{landing.privacyHeading}</h2>
           <p>{landing.privacy}</p>
           <p>{landing.pilot}</p>
         </section>
 
         <section className="panel landing-steps">
-          <h2>How it works</h2>
+          <h2>{landing.stepsHeading}</h2>
           <ol>
-            <li>
-              <strong>Set up your child.</strong> First name, grade, a few preferences. About a minute.
-            </li>
-            <li>
-              <strong>Sit together for 8&ndash;10 minutes a day.</strong> The app shows one card at a time
-              &mdash; a sound, a word, a short sentence. You tap to mark what they got.
-            </li>
-            <li>
-              <strong>Watch the skill map fill in.</strong> Mastery builds gradually across phonemic
-              awareness, phonics, heart words, and fluency.
-            </li>
+            {landing.steps.map((step) => (
+              <li key={step.title}>
+                <strong>{step.title}</strong> {step.body}
+              </li>
+            ))}
           </ol>
         </section>
 
         <section className="panel landing-not">
           <p>
-            No streaks, no coins, no leaderboards. Practice is the point &mdash; there&apos;s nothing
-            else to chase.
+            {landing.antiGamification}
           </p>
         </section>
 
         <section className="landing-cta">
-          <p className="muted">Interested in the invite-only pilot?</p>
-          <a className="primary-link" href={`mailto:${support.email}`}>Contact the pilot team</a>
+          <p className="muted">{landing.ctaPrompt}</p>
+          <a className="primary-link" href={`mailto:${support.email}`}>{landing.contactCta}</a>
         </section>
 
         <footer className="landing-footer">
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms of Use</a>
+          <a href="/privacy">{landing.privacyLink}</a>
+          <a href="/terms">{landing.termsLink}</a>
         </footer>
       </div>
     </main>
