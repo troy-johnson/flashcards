@@ -38,7 +38,14 @@ const fail = (message: string): never => {
 
 const GRADE_ORDER: Record<string, number> = { K: 0, "1": 1 };
 
-type Skill = { skill_id: string; grade: "K" | "1"; prerequisites?: string[]; deprecated?: boolean };
+type Skill = {
+  skill_id: string;
+  grade: "K" | "1";
+  prerequisites?: string[];
+  deprecated?: boolean;
+  display_name: string;
+  guardian_description: string;
+};
 type Item = {
   item_id: string;
   skill_id: string;
@@ -96,6 +103,24 @@ unique("audio_id", audioEntries.map((a) => a.audio_id));
 
 const skillsById = new Map(skills.map((s) => [s.skill_id, s]));
 const audioIds = new Set(audioEntries.map((a) => a.audio_id));
+for (const skill of skills) {
+  if (!Object.hasOwn(GRADE_ORDER, skill.grade)) {
+    fail(`skill ${skill.skill_id} has unknown grade ${skill.grade}`);
+  }
+}
+for (const unit of scope) {
+  if (!Object.hasOwn(GRADE_ORDER, unit.grade)) {
+    fail(`scope unit ${unit.unit_id} has unknown grade ${unit.grade}`);
+  }
+}
+for (const skill of skills) {
+  for (const field of ["display_name", "guardian_description"] as const) {
+    const value = skill[field];
+    if (typeof value !== "string" || value.trim().length === 0) {
+      fail(`skill ${skill.skill_id} requires nonblank ${field}`);
+    }
+  }
+}
 for (const item of items) {
   if (!skillsById.has(item.skill_id)) fail(`item ${item.item_id} references missing skill ${item.skill_id}`);
   if (!item.deprecated && item.item_id.startsWith("pa_")) {
@@ -162,12 +187,16 @@ for (const skill of skills) {
 // before any unit of a later grade. The cross-unit prerequisite check below relies
 // on a single global scope-array index, which is only sound under this ordering.
 let maxGradeSeen = -1;
+let maxGradeLabel: string | null = null;
 for (const unit of scope) {
   const gradeOrder = GRADE_ORDER[unit.grade];
   if (gradeOrder < maxGradeSeen) {
-    fail(`scope-sequence: ${unit.grade} unit ${unit.unit_id} appears after a grade-1 unit; all K units must precede grade-1 units`);
+    fail(`scope-sequence: ${unit.grade} unit ${unit.unit_id} appears after a grade-${maxGradeLabel} unit; all earlier-grade units must precede later-grade units`);
   }
-  maxGradeSeen = Math.max(maxGradeSeen, gradeOrder);
+  if (gradeOrder > maxGradeSeen) {
+    maxGradeSeen = gradeOrder;
+    maxGradeLabel = unit.grade;
+  }
 }
 
 const skillUnitIndex = new Map<string, number>();

@@ -6,13 +6,14 @@ import {
   getCurrentGuardian,
   getGuardianDiag,
   getStudent,
+  getStudentProgress,
   listStudents,
   logout,
   scoreAttempt,
   signIn,
   startPractice
 } from "./api/literacy";
-import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, SessionSummaryRow, Student } from "./api/types";
+import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, SessionSummaryRow, Student, StudentProgressResponse } from "./api/types";
 import { landing, onboarding, privacyPolicyDraft, productName, support, termsOfUseDraft } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
@@ -112,54 +113,47 @@ function LandingRoute() {
           <p className="eyebrow">{landing.eyebrow}</p>
           <h1>{landing.headline}</h1>
           <p className="landing-lede">{landing.subtitle}</p>
-          <a className="primary-link" href="/signin">Sign in</a>
+          <a className="primary-link" href="/signin">{landing.signInCta}</a>
         </section>
 
         <section className="panel landing-story">
-          <h2>For caring adults and young readers</h2>
+          <h2>{landing.storyHeading}</h2>
           <p>{landing.audience}</p>
           <p>{landing.practice}</p>
           <p>{landing.instruction}</p>
         </section>
 
         <section className="panel landing-privacy">
-          <h2>Private, early-access practice</h2>
+          <h2>{landing.privacyHeading}</h2>
           <p>{landing.privacy}</p>
           <p>{landing.pilot}</p>
         </section>
 
         <section className="panel landing-steps">
-          <h2>How it works</h2>
+          <h2>{landing.stepsHeading}</h2>
           <ol>
-            <li>
-              <strong>Set up your child.</strong> First name, grade, a few preferences. About a minute.
-            </li>
-            <li>
-              <strong>Sit together for 8&ndash;10 minutes a day.</strong> The app shows one card at a time
-              &mdash; a sound, a word, a short sentence. You tap to mark what they got.
-            </li>
-            <li>
-              <strong>Watch the skill map fill in.</strong> Mastery builds gradually across phonemic
-              awareness, phonics, heart words, and fluency.
-            </li>
+            {landing.steps.map((step) => (
+              <li key={step.title}>
+                <strong>{step.title}</strong> {step.body}
+              </li>
+            ))}
           </ol>
         </section>
 
         <section className="panel landing-not">
           <p>
-            No streaks, no coins, no leaderboards. Practice is the point &mdash; there&apos;s nothing
-            else to chase.
+            {landing.antiGamification}
           </p>
         </section>
 
         <section className="landing-cta">
-          <p className="muted">Interested in the invite-only pilot?</p>
-          <a className="primary-link" href={`mailto:${support.email}`}>Contact the pilot team</a>
+          <p className="muted">{landing.ctaPrompt}</p>
+          <a className="primary-link" href={`mailto:${support.email}`}>{landing.contactCta}</a>
         </section>
 
         <footer className="landing-footer">
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms of Use</a>
+          <a href="/privacy">{landing.privacyLink}</a>
+          <a href="/terms">{landing.termsLink}</a>
         </footer>
       </div>
     </main>
@@ -381,43 +375,18 @@ function AddStudentRoute() {
   );
 }
 
-type StudentProgress = {
-  totalAttempts: number;
-  correct: number;
-  perSkill: { skill_id: string; attempts: number; correct: number }[];
-};
-
-const summarizeForStudent = (rows: DiagnosticSummaryRow[], studentId: string): StudentProgress => {
-  const studentRows = rows.filter((row) => row.student_id === studentId);
-  let totalAttempts = 0;
-  let correct = 0;
-  const skillMap = new Map<string, { attempts: number; correct: number }>();
-  for (const row of studentRows) {
-    totalAttempts += row.attempts;
-    if (row.result === "correct") correct += row.attempts;
-    const skill = skillMap.get(row.skill_id) ?? { attempts: 0, correct: 0 };
-    skill.attempts += row.attempts;
-    if (row.result === "correct") skill.correct += row.attempts;
-    skillMap.set(row.skill_id, skill);
-  }
-  const perSkill = Array.from(skillMap.entries())
-    .map(([skill_id, s]) => ({ skill_id, ...s }))
-    .sort((a, b) => a.skill_id.localeCompare(b.skill_id));
-  return { totalAttempts, correct, perSkill };
-};
-
 function StudentDashboardRoute({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<Student | null>(null);
-  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [progress, setProgress] = useState<StudentProgressResponse["progress"] | null>(null);
   const [status, setStatus] = useState<FetchStatus>("loading");
 
   useEffect(() => {
     let active = true;
-    Promise.all([getStudent(studentId), getGuardianDiag().catch(() => ({ summary: [] as DiagnosticSummaryRow[], sessions: [], friction: [] }))])
-      .then(([{ student }, diag]) => {
+    Promise.all([getStudent(studentId), getStudentProgress(studentId)])
+      .then(([{ student }, { progress }]) => {
         if (!active) return;
         setStudent(student);
-        setProgress(summarizeForStudent(diag.summary, studentId));
+        setProgress(progress);
         setStatus("ready");
       })
       .catch(() => active && setStatus("error"));
@@ -426,8 +395,8 @@ function StudentDashboardRoute({ studentId }: { studentId: string }) {
     };
   }, [studentId]);
 
-  const accuracyPct = progress && progress.totalAttempts > 0
-    ? Math.round((progress.correct / progress.totalAttempts) * 100)
+  const accuracyPct = progress && progress.total_attempts > 0
+    ? Math.round((progress.correct / progress.total_attempts) * 100)
     : null;
 
   return (
@@ -443,25 +412,34 @@ function StudentDashboardRoute({ studentId }: { studentId: string }) {
               <a href={`/guardian/${studentId}/settings`}>Settings</a>
             </div>
             <h2>Overall</h2>
-            {progress.totalAttempts === 0 ? (
+            {progress.total_attempts === 0 ? (
               <p className="empty">No attempts yet. Start today&apos;s practice to begin tracking.</p>
             ) : (
               <p>
-                {progress.correct} of {progress.totalAttempts} correct
+                {progress.correct} of {progress.total_attempts} correct
                 {accuracyPct !== null ? ` (${accuracyPct}%)` : ""}.
               </p>
             )}
-            {progress.perSkill.length > 0 && (
+            {progress.skills.length > 0 && (
               <>
                 <h2>By skill</h2>
-                <ul className="card-list">
-                  {progress.perSkill.map((skill) => (
-                    <li key={skill.skill_id}>
-                      <span>{skill.skill_id}</span>
-                      <span>{skill.correct}/{skill.attempts}</span>
-                    </li>
+                <div className="progress-skill-list">
+                  {progress.skills.map((skill) => (
+                    <details className="progress-skill-card" key={skill.skill_id}>
+                      <summary>
+                        <span className="progress-skill-summary-grid">
+                          <span className="progress-skill-name">{skill.display_name}</span>
+                          <span className="progress-skill-score">
+                            {skill.correct}/{skill.attempts}
+                          </span>
+                        </span>
+                      </summary>
+                      <p className="progress-skill-description">
+                        {skill.guardian_description}
+                      </p>
+                    </details>
                   ))}
-                </ul>
+                </div>
               </>
             )}
           </>

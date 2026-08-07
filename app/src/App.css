@@ -52,6 +52,12 @@ button,
   font: inherit;
 }
 
+:where(a, button, input, select, summary):focus-visible {
+  outline: 3px solid var(--color-bg-surface);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--color-text-primary);
+}
+
 input,
 select {
   border: 2px solid var(--color-border-default);
@@ -84,6 +90,50 @@ button,
   border: 2px solid var(--color-border-default);
   border-radius: 18px;
   padding: var(--space-md);
+}
+
+.progress-skill-list {
+  display: grid;
+  gap: 12px;
+}
+
+.progress-skill-card {
+  min-width: 0;
+  border: 2px solid var(--color-border-default);
+  border-radius: 18px;
+}
+
+.progress-skill-card > summary {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-md);
+  cursor: pointer;
+}
+
+.progress-skill-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.progress-skill-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.progress-skill-score {
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.progress-skill-description {
+  margin: 0;
+  padding: 0 var(--space-md) var(--space-md);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 
 /* Student mode keeps the same warm bg as the rest of the app — the mode

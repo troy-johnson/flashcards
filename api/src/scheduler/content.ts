@@ -7,6 +7,9 @@ export type Skill = {
   skill_id: string;
   grade: string;
   prerequisites: string[];
+  display_name: string;
+  guardian_description: string;
+  deprecated?: boolean;
 };
 
 export type Unit = {

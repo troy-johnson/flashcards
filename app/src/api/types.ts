@@ -24,6 +24,22 @@ export type Student = {
   archived_at: string | null;
 };
 
+export type StudentProgressSkill = {
+  skill_id: string;
+  display_name: string;
+  guardian_description: string;
+  attempts: number;
+  correct: number;
+};
+
+export type StudentProgressResponse = {
+  progress: {
+    total_attempts: number;
+    correct: number;
+    skills: StudentProgressSkill[];
+  };
+};
+
 /** Instructional drill mode carried on each plan card (002i). */
 export type CardKind = "pa" | "phonics" | "heart" | "fluency";
 

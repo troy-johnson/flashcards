@@ -37,6 +37,14 @@ describe("public landing route", () => {
     expect(container.textContent).toContain(landing.instruction);
     expect(container.textContent).toContain(landing.privacy);
     expect(container.textContent).toContain(landing.pilot);
+    expect(container.textContent).toContain(landing.storyHeading);
+    expect(container.textContent).toContain(landing.privacyHeading);
+    expect(container.textContent).toContain(landing.stepsHeading);
+    expect(container.textContent).toContain(landing.steps[0].title);
+    expect(container.textContent).toContain(landing.steps[1].body);
+    expect(container.textContent).toContain(landing.antiGamification);
+    expect(container.textContent).toContain(landing.ctaPrompt);
+    expect(container.textContent).toContain(landing.contactCta);
     expect(container.querySelector(`a[href="mailto:${support.email}"]`)).not.toBeNull();
     expect(container.querySelector('a[href="/privacy"]')).not.toBeNull();
     expect(container.querySelector('a[href="/terms"]')).not.toBeNull();

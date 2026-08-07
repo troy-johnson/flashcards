@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildPracticePlan, planTerminalReason, type MasteryState } from "./planner";
-import { loadSchedulerContent, type SchedulerContent, type SchedulerItem } from "./content";
+import { loadSchedulerContent, type SchedulerContent, type SchedulerItem, type Skill } from "./content";
 import type { ReviewAttempt } from "./review";
 
 /** Fixed clock for deterministic selection (002i D2). */
@@ -9,6 +9,14 @@ const YESTERDAY = "2026-07-03T12:00:00.000Z";
 const IN_FOUR_DAYS = "2026-07-08T12:00:00.000Z";
 
 const emptyState = { skillMastery: {}, itemMastery: {}, recentAttempts: {}, now: NOW };
+
+const testSkill = (skill_id: string): Skill => ({
+  skill_id,
+  grade: "K",
+  prerequisites: [],
+  display_name: skill_id,
+  guardian_description: "A test-only skill description."
+});
 
 /** Builds synthetic content with `count` items under one K skill, to stress the daily-plan cap. */
 const overCapContent = (count: number): SchedulerContent => {
@@ -19,7 +27,7 @@ const overCapContent = (count: number): SchedulerContent => {
     kind: "phonics"
   }));
   return {
-    skills: [{ skill_id: "skill_a", grade: "K", prerequisites: [] }],
+    skills: [testSkill("skill_a")],
     units: [{ unit_id: "u1", grade: "K", skill_ids: ["skill_a"] }],
     itemsById: Object.fromEntries(items.map((it) => [it.item_id, it])),
     itemsBySkill: { skill_a: items },
@@ -39,8 +47,8 @@ const twoSkillContent = (): SchedulerContent => {
   const b = [mk("skill_b", 0), mk("skill_b", 1)];
   return {
     skills: [
-      { skill_id: "skill_a", grade: "K", prerequisites: [] },
-      { skill_id: "skill_b", grade: "K", prerequisites: [] }
+      testSkill("skill_a"),
+      testSkill("skill_b")
     ],
     units: [{ unit_id: "u1", grade: "K", skill_ids: ["skill_a", "skill_b"] }],
     itemsById: Object.fromEntries([...a, ...b].map((it) => [it.item_id, it])),
@@ -277,7 +285,7 @@ describe("buildPracticePlan — selection layer (002i D2)", () => {
     });
     const items = [mk("phonics_test_read", "reed"), mk("phonics_test_mat")];
     const content: SchedulerContent = {
-      skills: [{ skill_id: "phonics_test", grade: "K", prerequisites: [] }],
+      skills: [testSkill("phonics_test")],
       units: [{ unit_id: "k_u1", grade: "K", skill_ids: ["phonics_test"] }],
       itemsById: Object.fromEntries(items.map((it) => [it.item_id, it])),
       itemsBySkill: { phonics_test: items },
