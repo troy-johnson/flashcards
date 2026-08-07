@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AttemptResult, PracticeCard } from "../../api/types";
 import { createPlaybackController, type PlaybackController } from "../../audio/playback";
 import { CardShell } from "./CardShell";
@@ -24,13 +24,23 @@ function PracticeAudioButton({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
-  useEffect(() => () => playback.cancel(), [playback]);
+  useEffect(
+    () => () => {
+      requestIdRef.current += 1;
+      playback.cancel();
+    },
+    [playback]
+  );
 
   const play = async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setBusy(true);
     setError(null);
     const result = await playback.play({ kind: "tts", text: card.speech_text ?? card.text });
+    if (requestIdRef.current !== requestId) return;
     if (result.status === "failed" || result.status === "unavailable") {
       setError("Could not play that audio. You can keep practicing.");
     }
@@ -99,7 +109,7 @@ function HeartWordCard({ card, onScore, playback = practicePlayback }: DrillCard
             )
           : card.text}
       </div>
-      <PracticeAudioButton card={card} label="Hear this word" playback={playback} />
+      <PracticeAudioButton key={card.item_id} card={card} label="Hear this word" playback={playback} />
     </CardShell>
   );
 }
@@ -109,7 +119,12 @@ function FluencyCard({ card, onScore, playback = practicePlayback }: DrillCardPr
   return (
     <CardShell label="Fluency practice card" eyebrow={cardCopy.fluency.eyebrow} onScore={onScore}>
       <div className="card-sentence">{card.text}</div>
-      <PracticeAudioButton card={card} label="Hear this sentence" playback={playback} />
+      <PracticeAudioButton
+        key={card.item_id}
+        card={card}
+        label="Hear this sentence"
+        playback={playback}
+      />
     </CardShell>
   );
 }
@@ -118,7 +133,7 @@ function PhonicsCard({ card, onScore, playback = practicePlayback }: DrillCardPr
   return (
     <CardShell label="Phonics practice card" eyebrow={cardCopy.phonics.eyebrow} onScore={onScore}>
       <div className="card-word">{card.text}</div>
-      <PracticeAudioButton card={card} label="Hear this word" playback={playback} />
+      <PracticeAudioButton key={card.item_id} card={card} label="Hear this word" playback={playback} />
     </CardShell>
   );
 }

@@ -96,6 +96,23 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     expect(container.querySelector(".card-word")?.textContent).toBe("said");
   });
 
+  it("renders as as a heart word with only its irregular s highlighted", async () => {
+    await render({
+      skill_id: "heart_k_u1_batch_01",
+      item_id: "heart_k_u1_as",
+      text: "as",
+      kind: "heart",
+      regular_parts: ["a"],
+      irregular_parts: ["s"]
+    });
+
+    expect(container.querySelector(".eyebrow")?.textContent).toBe("Read this heart word");
+    expect(container.querySelector(".card-word")?.textContent).toBe("as");
+    expect(
+      [...container.querySelectorAll(".heart-part")].map((element) => element.textContent)
+    ).toEqual(["s"]);
+  });
+
   it("renders the full word when irregular_parts is missing or empty (codex review finding 3 refutation lock)", async () => {
     await render({
       skill_id: "heart_k_u1_batch_01",
@@ -210,6 +227,93 @@ describe("DrillCard mode rendering (002i rw-qjk)", () => {
     expect(
       [...container.querySelectorAll<HTMLButtonElement>(".tap-controls button")].every((button) => !button.disabled)
     ).toBe(true);
+  });
+
+  it("ignores a stale playback failure after advancing to a new card", async () => {
+    let settleFirst:
+      | ((result: Awaited<ReturnType<PlaybackController["play"]>>) => void)
+      | undefined;
+    let settleSecond:
+      | ((result: Awaited<ReturnType<PlaybackController["play"]>>) => void)
+      | undefined;
+    const playback: PlaybackController = {
+      play: vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              settleFirst = resolve;
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              settleSecond = resolve;
+            })
+        ),
+      cancel: vi.fn()
+    };
+
+    await render(
+      { skill_id: "phonics_k", item_id: "mat", text: "mat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      await flush();
+    });
+
+    await render(
+      { skill_id: "phonics_k", item_id: "sat", text: "sat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      await flush();
+    });
+
+    await act(async () => {
+      settleFirst?.({ status: "failed", reason: "old card failed" });
+      await flush();
+    });
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')?.ariaBusy
+    ).toBe("true");
+
+    await act(async () => {
+      settleSecond?.({ status: "completed" });
+      await flush();
+    });
+  });
+
+  it("cancels playback when the audio control unmounts", async () => {
+    const playback: PlaybackController = {
+      play: vi.fn(
+        () => new Promise<Awaited<ReturnType<PlaybackController["play"]>>>(() => {})
+      ),
+      cancel: vi.fn()
+    };
+    await render(
+      { skill_id: "phonics_k", item_id: "mat", text: "mat", kind: "phonics" },
+      () => {},
+      playback
+    );
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Hear this word"]')!.click();
+      root.render(
+        <DrillCard
+          card={{ skill_id: "pa_k", item_id: "blend", text: "Blend.", kind: "pa" }}
+          onScore={() => {}}
+          playback={playback}
+        />
+      );
+      await flush();
+    });
+
+    expect(playback.cancel).toHaveBeenCalled();
   });
 
   it("fires onScore once per card and re-enables on rejection, on every mode", async () => {
