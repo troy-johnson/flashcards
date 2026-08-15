@@ -549,6 +549,59 @@ button:disabled {
   padding-bottom: var(--space-md);
 }
 
+.methodology-shell {
+  align-items: start;
+  padding-block: var(--space-2xl);
+}
+
+.methodology-document {
+  display: grid;
+  gap: var(--space-lg);
+  line-height: var(--text-body-lh);
+}
+
+.methodology-document > :where(h1, p, section),
+.methodology-document section > :where(h2, p, ul, ol),
+.methodology-principle > :where(h3, p) {
+  margin-block: 0;
+}
+
+.methodology-document section,
+.methodology-principle,
+.methodology-source-list {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.methodology-lede {
+  max-width: 62ch;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-l-size);
+  line-height: var(--text-body-l-lh);
+}
+
+.methodology-caveat,
+.methodology-review {
+  border-left: 5px solid var(--color-accent-active);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-active);
+  padding: var(--space-md);
+}
+
+.methodology-citations,
+.methodology-source-list p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-label-size);
+}
+
+.methodology-document :where(ul, ol) {
+  padding-left: 1.4em;
+}
+
+.methodology-document li + li {
+  margin-top: var(--space-sm);
+}
+
 .dev-magic-link {
   display: grid;
   gap: var(--space-sm);

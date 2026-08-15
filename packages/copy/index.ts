@@ -42,8 +42,122 @@ export const landing = {
   ctaPrompt: "Interested in the invite-only pilot?",
   contactCta: "Contact the pilot team",
   signInCta: "Sign in",
+  methodologyLink: "Methodology",
   privacyLink: "Privacy Policy",
   termsLink: "Terms of Use"
+} as const;
+
+export const methodology = {
+  eyebrow: "For professional review",
+  title: "Methodology and SLP review",
+  introduction:
+    "Reader's Way is an adult-supported foundational-reading practice tool for kindergarten and 1st-grade readers. This page separates the evidence-backed principles we rely on from the implementation choices we are asking a speech-language pathologist to validate.",
+  reviewPurpose:
+    "The cited sources support broad instructional and professional principles. They do not independently validate Reader's Way, prescribe its exact sound inventory, or establish clinical efficacy.",
+  principlesHeading: "Evidence-backed principles",
+  principles: [
+    {
+      heading: "Phonemic awareness and letter–sound connections",
+      body:
+        "Beginning readers benefit from explicit practice hearing and manipulating speech sounds and connecting those sounds to letters. Reader's Way translates that principle into short, adult-supported prompts rather than asking a child to navigate technical terminology.",
+      sourceIds: ["ies-foundational", "nrp", "ufli-phonemic-awareness"]
+    },
+    {
+      heading: "Systematic phonics and decoding",
+      body:
+        "Practice follows a cumulative sequence: children blend sounds, connect common sound–spelling patterns, read decodable words, and then apply those skills in text. New material is constrained by what has already been introduced.",
+      sourceIds: ["ies-foundational", "nrp", "ufli-foundations"]
+    },
+    {
+      heading: "Heart words and fluency",
+      body:
+        "Regular and irregular high-frequency words are practiced alongside decoding, and children read short connected text to build accuracy and fluency. The app highlights the part of a heart word that needs special attention without presenting the whole word as visually irregular.",
+      sourceIds: ["ies-foundational"]
+    },
+    {
+      heading: "Adult co-engagement and professional collaboration",
+      body:
+        "A caring adult presents the prompt, listens, and records the practice result. Speech-language expertise is used to review sound models and linguistic safeguards; the app does not take on an SLP's diagnostic or clinical role.",
+      sourceIds: ["ufli-phonemic-awareness", "asha-written-language", "asha-speech-sounds"]
+    }
+  ],
+  choicesHeading: "Reader's Way implementation choices",
+  choices: [
+    "Sessions are designed for about 8–10 minutes with a caring adult present.",
+    "The adult records Correct, Try again, or Skip; Reader's Way does not automatically score a child's speech and does not record the child's voice in the pilot.",
+    "Practice rotates phonemic awareness, systematic phonics and decoding, heart words, and fluency using simple mastery and due-date signals. This scheduler is a product implementation, not a clinical assessment.",
+    "The audio inventory contains 44 instructional sound targets and 12 grapheme-pattern mappings derived from UFLI implementation resources. That inventory is a pedagogical reference set, not a claim that English has one universal, dialect-independent inventory.",
+    "Recorded isolated sounds are intended to model a target sound. Browser speech synthesis is a gesture-triggered fallback for whole words and sentences; it is not used as the authoritative model for isolated phonemes."
+  ],
+  boundariesHeading: "Audio, dialect, and release boundaries",
+  boundaries: [
+    "Every speaker has an accent, and dialect difference is not a disorder. Review must consider the named reference variety, regional and community variation, mergers and contrasts, and the possibility that a child's linguistic system differs from the model.",
+    "Reader's Way is an educational practice tool, not diagnosis or speech therapy. It does not determine whether a child has a speech sound, language, or reading disorder and should not replace individualized assessment or treatment.",
+    "A recorded clip cannot become learner-facing until the current recorder, owner, and SLP approvals all match its checksum-bound review subject. Replacing the bytes or relevant production metadata makes the prior approval stale. Rejection or requested changes keep the clip out of learner practice.",
+    "Browser voices and pronunciation vary by device and browser. Whole-item TTS is therefore treated as a convenient fallback, not proof that a pronunciation or isolated sound is clinically or instructionally appropriate."
+  ],
+  reviewHeading: "What we ask the SLP to validate",
+  reviewIntroduction:
+    "Please review the inventory and each candidate recording with these questions in mind:",
+  reviewItems: [
+    "Do the target identifiers, IPA symbols, example words, and production notes describe the intended instructional sounds accurately?",
+    "Do the isolated recordings model the intended sound cleanly, without adding a misleading schwa, clipping, excessive duration, or distracting coarticulation?",
+    "Are the 12 grapheme-pattern mappings instructionally sound, including mappings with more than one possible sound or a sequence of sounds?",
+    "Are the reference-variety and dialect notes respectful and sufficient, and do they avoid treating accent or dialect differences as errors or disorders?",
+    "Is each candidate suitable for kindergarten and 1st-grade listening on ordinary phones, tablets, and computers?",
+    "For each checksum-bound candidate, is the appropriate disposition approve, request changes, or reject—and what exact note should accompany that decision?"
+  ],
+  sourcesHeading: "Evidence base and limits",
+  sources: [
+    {
+      id: "ies-foundational",
+      label: "IES/What Works Clearinghouse: Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade",
+      href: "https://ies.ed.gov/ncee/wwc/Docs/PracticeGuide/wwc_foundationalreading_040717.pdf",
+      note: "Supports explicit sound-segment work, letter–sound connections, decoding, high-frequency-word instruction, and connected-text practice; it does not prescribe Reader's Way or its exact inventory."
+    },
+    {
+      id: "nrp",
+      label: "National Reading Panel: Teaching Children to Read",
+      href: "https://www.nichd.nih.gov/sites/default/files/publications/pubs/nrp/Documents/report.pdf",
+      note: "Supports explicit phonemic-awareness instruction, systematic phonics, and fluency as components of beginning reading instruction; it is not a complete product design."
+    },
+    {
+      id: "ufli-foundations",
+      label: "University of Florida Literacy Institute: UFLI Foundations",
+      href: "https://ufli.education.ufl.edu/foundations/",
+      note: "Supports the cumulative instructional scaffold and sound–spelling terminology; it is a university-developed curriculum resource, not independent validation of every Reader's Way choice."
+    },
+    {
+      id: "ufli-sound-wall",
+      label: "University of Florida Literacy Institute: UFLI Sound Wall",
+      href: "https://ufli.education.ufl.edu/wp-content/uploads/2023/09/UFLI-Sound-Wall-rev.pdf",
+      note: "Grounds the 44 instructional targets, separate sound and grapheme representations, and place/manner review context; its inventory is not dialect-independent."
+    },
+    {
+      id: "ufli-phonemic-awareness",
+      label: "University of Florida Literacy Institute: Phonemic Awareness routines",
+      href: "https://ufli.education.ufl.edu/resources/teaching-resources/instructional-activities/phonemic-awareness/",
+      note: "Supports routines that distinguish an adult's modeled sounds from the child's blending response; Reader's Way translates the educator routine for caregivers."
+    },
+    {
+      id: "asha-written-language",
+      label: "ASHA Practice Portal: Written Language Disorders",
+      href: "https://www.asha.org/practice-portal/clinical-topics/written-language-disorders/",
+      note: "Supports phoneme/grapheme terminology, phonological-processing context, and interprofessional collaboration; it does not support product diagnosis."
+    },
+    {
+      id: "asha-speech-sounds",
+      label: "ASHA Practice Portal: Speech Sound Disorders—Articulation and Phonology",
+      href: "https://www.asha.org/practice-portal/clinical-topics/articulation-and-phonology/",
+      note: "Supports dialect-, accent-, multilingual-, phonemic-, and allophonic-variation safeguards and the SLP's clinical role; it does not define a literacy-app inventory."
+    },
+    {
+      id: "web-speech",
+      label: "Web Speech Community Group: Web Speech API specification",
+      href: "https://webaudio.github.io/web-speech-api/",
+      note: "Documents browser speech-synthesis behavior; it does not guarantee voice availability, pronunciation quality, or consistent behavior across devices."
+    }
+  ]
 } as const;
 
 export const onboarding = {

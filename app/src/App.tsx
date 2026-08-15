@@ -14,7 +14,7 @@ import {
   startPractice
 } from "./api/literacy";
 import type { AttemptResult, AuthMeResponse, DiagnosticSummaryRow, ExitMarkers, FrictionRow, Guardian, SessionSummaryRow, Student, StudentProgressResponse } from "./api/types";
-import { landing, onboarding, privacyPolicyDraft, productName, support, termsOfUseDraft } from "copy";
+import { landing, methodology, onboarding, privacyPolicyDraft, productName, support, termsOfUseDraft } from "copy";
 import { DrillCard } from "./components/cards/DrillCard";
 import { AudioCatalogRoute } from "./routes/AudioCatalogRoute";
 import { advancePractice, currentCard, loadPractice, savePractice, type ActivePractice } from "./drill/session";
@@ -152,6 +152,7 @@ function LandingRoute() {
         </section>
 
         <footer className="landing-footer">
+          <a href="/methodology">{landing.methodologyLink}</a>
           <a href="/privacy">{landing.privacyLink}</a>
           <a href="/terms">{landing.termsLink}</a>
         </footer>
@@ -192,6 +193,78 @@ function PrivacyRoute() {
 
 function TermsRoute() {
   return <LegalRoute document={termsOfUseDraft} />;
+}
+
+function MethodologyRoute() {
+  const sourceById = new Map(methodology.sources.map((source) => [source.id, source]));
+  return (
+    <main className="page-shell methodology-shell">
+      <article className="panel methodology-document">
+        <p className="eyebrow">{methodology.eyebrow}</p>
+        <h1>{methodology.title}</h1>
+        <p className="methodology-lede">{methodology.introduction}</p>
+        <p className="methodology-caveat">{methodology.reviewPurpose}</p>
+
+        <section>
+          <h2>{methodology.principlesHeading}</h2>
+          {methodology.principles.map((principle) => (
+            <div className="methodology-principle" key={principle.heading}>
+              <h3>{principle.heading}</h3>
+              <p>{principle.body}</p>
+              <p className="methodology-citations">
+                Sources:{" "}
+                {principle.sourceIds.map((sourceId, index) => {
+                  const source = sourceById.get(sourceId);
+                  if (!source) return null;
+                  return (
+                    <span key={source.id}>
+                      {index > 0 ? "; " : ""}
+                      <a href={source.href}>{source.label}</a>
+                    </span>
+                  );
+                })}
+              </p>
+            </div>
+          ))}
+        </section>
+
+        <section>
+          <h2>{methodology.choicesHeading}</h2>
+          <ul>{methodology.choices.map((choice) => <li key={choice}>{choice}</li>)}</ul>
+        </section>
+
+        <section>
+          <h2>{methodology.boundariesHeading}</h2>
+          {methodology.boundaries.map((boundary) => <p key={boundary}>{boundary}</p>)}
+        </section>
+
+        <section className="methodology-review">
+          <h2>{methodology.reviewHeading}</h2>
+          <p>{methodology.reviewIntroduction}</p>
+          <ol className="methodology-review-list">
+            {methodology.reviewItems.map((item) => <li key={item}>{item}</li>)}
+          </ol>
+        </section>
+
+        <section>
+          <h2>{methodology.sourcesHeading}</h2>
+          <ol className="methodology-source-list">
+            {methodology.sources.map((source) => (
+              <li id={source.id} key={source.id}>
+                <a href={source.href}>{source.label}</a>
+                <p>{source.note}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <p>
+          Questions or review notes: <a href={`mailto:${support.email}`}>{support.email}</a>
+        </p>
+        <p><a href="/">Back to Reader&apos;s Way</a></p>
+      </article>
+    </main>
+  );
 }
 
 function SignInRoute() {
@@ -753,6 +826,7 @@ function App() {
   else if (path === "/auth/consume") route = <AuthConsumeRoute />;
   else if (path === "/privacy") route = <PrivacyRoute />;
   else if (path === "/terms") route = <TermsRoute />;
+  else if (path === "/methodology") route = <MethodologyRoute />;
   else if (path === "/guardian") route = <GuardianRoute operatorTools={auth?.capabilities?.operator_tools === true} />;
   else if (path === "/guardian/add-student") route = <AddStudentRoute />;
   else if (path === "/guardian/diag") route = <GuardianDiagRoute />;
@@ -768,7 +842,7 @@ function App() {
   }
 
   const isStudentMode = segments[0] === "play";
-  const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume" || path === "/privacy" || path === "/terms";
+  const isPublicRoute = path === "/" || path === "/signin" || path === "/auth/consume" || path === "/privacy" || path === "/terms" || path === "/methodology";
   const showNav = !isStudentMode && !isPublicRoute;
   const guardian = auth?.guardian ?? null;
   const operatorTools = auth?.capabilities?.operator_tools === true;
